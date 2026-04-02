@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+}
+
+model Tutor {
+  id        Int        @id @default(autoincrement())
+  name      String
+  type      String     // "tutor" | "professor"
+  role      String?    // optional extra label
+  subjects  Subject[]
+  schedules Schedule[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Subject {
+  id      Int    @id @default(autoincrement())
+  name    String // e.g. "BIOL 020"
+  field   String // e.g. "Biology"
+  tutor   Tutor  @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  tutorId Int
+}
+
+model Schedule {
+  id       Int    @id @default(autoincrement())
+  day      String // e.g. "Monday"
+  start    String // e.g. "10:00"
+  end      String // e.g. "14:00"
+  location String // e.g. "SQ-231"
+  tutor    Tutor  @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  tutorId  Int
+}
