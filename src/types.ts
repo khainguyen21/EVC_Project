@@ -10,11 +10,11 @@ export interface ScheduleEntry {
 }
 
 export interface Tutor {
+    id?: number,
     name: string, 
     subjects: string[],
     schedule: ScheduleEntry[], 
-    type?: 'professor' | 'staff',
-    role?: string
+    type?: 'professor' | 'staff' | 'tutor'
 }
 
 export interface ScheduleData {

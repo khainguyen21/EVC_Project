@@ -21,8 +21,7 @@ model User {
 model Tutor {
   id        Int        @id @default(autoincrement())
   name      String
-  type      String     // "tutor" | "professor"
-  role      String?    // optional extra label
+  type      String     // "tutor" | "professor" | "staff"
   subjects  Subject[]
   schedules Schedule[]
   createdAt DateTime   @default(now())

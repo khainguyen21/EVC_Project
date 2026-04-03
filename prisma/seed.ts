@@ -39,7 +39,6 @@ async function main() {
       data: {
         name: tutorData.name,
         type: tutorData.type ?? 'tutor',
-        role: tutorData.role ?? null,
         subjects: {
           create: tutorData.subjects.map((subjectName: string) => ({
             name: subjectName,

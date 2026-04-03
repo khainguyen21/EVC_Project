@@ -32,7 +32,6 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-.env
 
 # vercel
 .vercel
@@ -42,3 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+nextjs-course-sections-63be48.md
