@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { type Tutor } from "@/types";
+import Link from "next/link";
 
 export default function ManageTutorsPage() {
   const [tutors, setTutors] = useState<Tutor[]>([]);
@@ -64,9 +65,11 @@ export default function ManageTutorsPage() {
 
   const handleDeleteTutor = async (id?: number) => {
     if (!id) return;
-    
+
     // Added a simple browser confirmation dialog to prevent accidental deletes!
-    if (!window.confirm("Are you sure you want to permanently delete this tutor?")) {
+    if (
+      !window.confirm("Are you sure you want to permanently delete this tutor?")
+    ) {
       return;
     }
 
@@ -74,7 +77,7 @@ export default function ManageTutorsPage() {
       const res = await fetch(`/api/tutors/${id}`, {
         method: "DELETE",
       });
-      
+
       if (res.ok) {
         fetchTutors(); // Automatically reload the table data
       } else {
@@ -413,21 +416,23 @@ export default function ManageTutorsPage() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      <button
-                        style={{
-                          padding: "6px 14px",
-                          backgroundColor: "#f3f4f6",
-                          color: "#374151",
-                          border: "1px solid #d1d5db",
-                          borderRadius: "6px",
-                          marginRight: "8px",
-                          cursor: "pointer",
-                          fontSize: "0.875rem",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Edit
-                      </button>
+                      <Link href={`/admin/tutors/${tutor.id}`}>
+                        <button
+                          style={{
+                            padding: "6px 14px",
+                            backgroundColor: "#f3f4f6",
+                            color: "#374151",
+                            border: "1px solid #d1d5db",
+                            borderRadius: "6px",
+                            marginRight: "8px",
+                            cursor: "pointer",
+                            fontSize: "0.875rem",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Edit
+                        </button>
+                      </Link>
                       <button
                         onClick={() => handleDeleteTutor(tutor.id)}
                         style={{

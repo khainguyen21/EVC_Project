@@ -12,7 +12,8 @@ export interface ScheduleEntry {
 export interface Tutor {
     id?: number,
     name: string, 
-    subjects: string[],
+    subjects: { name: string, field: string }[],
+    fields?: string[],
     schedule: ScheduleEntry[], 
     type?: 'professor' | 'staff' | 'tutor'
 }

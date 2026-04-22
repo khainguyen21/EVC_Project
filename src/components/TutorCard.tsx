@@ -1,6 +1,5 @@
 import type { Tutor, Day } from "@/types";
 import LocationBadge from "./LocationBadge";
-import { formatSubjectsForDisplay } from "@/utils/subjectMapping";
 
 interface Props {
   tutor: Tutor;
@@ -14,11 +13,7 @@ const TutorCard = ({ tutor, displaySubjects, selectedDay }: Props) => {
   return (
     <div className={cardClass}>
       <div className="tutor-card__name">{tutor.name}</div>
-      {tutor.role && <div className="tutor-card__role">{tutor.role}</div>}
-
-      <div className="tutor-card__subjects">
-        {formatSubjectsForDisplay(displaySubjects)}
-      </div>
+      <div className="tutor-card__subjects">{displaySubjects.join(", ")}</div>
 
       <div className="schedule-list">
         {tutor.schedule.map((slot, index) => {

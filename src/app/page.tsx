@@ -19,20 +19,22 @@ const HomePage = () => {
   const [courseFilter, setCourseFilter] = useState("");
   const [dayFilter, setDayFilter] = useState<Day>("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filtering, setFiltering] = useState(false);
-
 
   // Fetch data on component mount
   useEffect(() => {
     setLoading(true);
+    setError(false);
     fetch("/api/tutors")
       .then((response) => response.json())
       .then((data) => {
-        setTutors(data.tutors);
+        setTutors(data.tutors ?? []); // ✅ safe fallback — prevents crash if DB is down
         setLoading(false);
       })
-      .catch((error) => {
-        console.error(error);
+      .catch((err) => {
+        console.error(err);
+        setError(true);
         setLoading(false);
       });
   }, []);
@@ -41,8 +43,10 @@ const HomePage = () => {
   const groupedByField: Record<string, Tutor[]> = {};
 
   tutors.forEach((tutor) => {
-    // Get all unique fields based on what course the tutor teaches
-    const fields = getUniqueFields(tutor.subjects);
+    // Rely completely on explicit backend fields binding
+    const fields = tutor.fields && tutor.fields.length > 0 
+      ? tutor.fields 
+      : getUniqueFields(tutor.subjects.map(s => s.name));
 
     // Add this tutor to each field they teach
     fields.forEach((field) => {
@@ -209,7 +213,6 @@ const HomePage = () => {
         </InfoSection>
 
         <div id="schedule-section">
-
           <FilterBar
             selectedCourse={courseFilter}
             selectedDay={dayFilter}
@@ -222,6 +225,12 @@ const HomePage = () => {
             <div className="loading-container">
               <div className="spinner"></div>
               <p>Loading tutor schedules...</p>
+            </div>
+          ) : error ? (
+            <div className="empty-state" style={{ minHeight: '300px' }}>
+              <span className="empty-state-icon" style={{ fontSize: '3rem' }}>⚠️</span>
+              <p style={{ fontWeight: 600 }}>Could not connect to the database.</p>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Please try refreshing the page. If the issue persists, contact the administrator.</p>
             </div>
           ) : (
             <section className={filtering ? "schedule filtering" : "schedule"}>

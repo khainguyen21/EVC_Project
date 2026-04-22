@@ -184,7 +184,7 @@ export function getLocationForField(field: string): string {
     "Computer Science": "MS-112 Math & Science Resource Center (MS3 Building)",
     "Physics": "MS-112 Math & Science Resource Center (MS3 Building)",
     "Chemistry": "MS-112 Math & Science Resource Center (MS3 Building)",
-    "Open Computer Lab": "MS-112 Math & Science Resource Center (MS3 Building)",
+    "Open Computer Lab": "LE-237 Campus Tutoring (Library Building)",
     "Sociology": "MS-112 Math & Science Resource Center (MS3 Building)",
     "Biology": "SQ-231 Biology Lab (Sequoia Building)",
     "English": "LE-237 Campus Tutoring (Library Building)",

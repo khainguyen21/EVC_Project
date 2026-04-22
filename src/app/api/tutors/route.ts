@@ -25,7 +25,8 @@ export async function GET(request: Request) {
       id: tutor.id,
       name: tutor.name,
       type: tutor.type,
-      subjects: tutor.subjects.map((s) => s.name),
+      subjects: tutor.subjects.map((s) => ({ name: s.name, field: s.field })),
+      fields: Array.from(new Set(tutor.subjects.map((s) => s.field))),
       schedule: tutor.schedules.map((s) => ({
         day: s.day,
         startTime: s.start,
