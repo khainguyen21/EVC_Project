@@ -1,11 +1,33 @@
+import { logout } from '@/app/actions/auth'
+
 export default function AdminDashboardPage() {
   return (
     <div>
-      <h1
-        style={{ fontSize: "2rem", marginBottom: "10px", fontWeight: "bold" }}
-      >
-        Dashboard Overview
-      </h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <h1 style={{ fontSize: "2rem", fontWeight: "bold" }}>
+          Dashboard Overview
+        </h1>
+        {/* LESSON: This form calls the logout() Server Action when submitted.
+            We use a form instead of a button with onClick because Server Actions
+            can only be called from forms (or via useTransition) in Server Components. */}
+        <form action={logout}>
+          <button
+            type="submit"
+            style={{
+              padding: '8px 18px',
+              background: '#fef2f2',
+              color: '#b91c1c',
+              border: '1px solid #fca5a5',
+              borderRadius: '8px',
+              fontWeight: '600',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+            }}
+          >
+            🚪 Sign Out
+          </button>
+        </form>
+      </div>
       <p style={{ color: "#4b5563", marginBottom: "30px" }}>
         Welcome to the EVC Tutor Schedule admin panel.
       </p>
