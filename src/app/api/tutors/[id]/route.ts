@@ -4,10 +4,11 @@ import { z } from 'zod'
 
 const updateTutorSchema = z.object({
   name: z.string().min(1, 'Name cannot be empty'),
-  type: z.enum(['tutor', 'professor', 'staff'], {
-    errorMap: () => ({ message: 'Type must be tutor, professor, or staff' }),
+  type: z.enum(['tutor', 'professor', 'staff']).refine(Boolean, {
+    error: 'Type must be tutor, professor, or staff',
   }),
 })
+
 
 export async function GET(
   request: Request,
