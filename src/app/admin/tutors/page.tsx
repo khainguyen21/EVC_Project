@@ -398,7 +398,9 @@ export default function ManageTutorsPage() {
                         }}
                       >
                         {tutor.subjects && tutor.subjects.length > 0 ? (
-                          tutor.subjects.join(", ")
+                          tutor.subjects
+                            .map((s: { name: string }) => s.name)
+                            .join(", ")
                         ) : (
                           <span
                             style={{ color: "#9ca3af", fontStyle: "italic" }}

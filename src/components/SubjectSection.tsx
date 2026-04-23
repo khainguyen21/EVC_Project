@@ -24,7 +24,7 @@ const SubjectSection = ({ fieldName, tutors, selectedDay }: Props) => {
 
           return (
             <TutorCard
-              key={tutor.name}
+              key={tutor.id}
               tutor={tutor}
               displaySubjects={displaySubjects}
               selectedDay={selectedDay}
