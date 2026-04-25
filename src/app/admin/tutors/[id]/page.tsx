@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useToast } from "@/components/admin/ToastProvider";
+import ConfirmModal from "@/components/admin/ConfirmModal";
 
 export default function EditTutorPage() {
+  const { showToast } = useToast();
   const params = useParams();
   const id = params.id as string;
 
   const [tutor, setTutor] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   // Basic Info Form states
   const [name, setName] = useState("");
@@ -56,10 +62,10 @@ export default function EditTutorPage() {
         body: JSON.stringify({ name, type }),
       });
       if (res.ok) {
-        alert("Basic info saved successfully!");
+        showToast("Basic info saved successfully!", "success");
       }
     } catch {
-      alert("Failed to save.");
+      showToast("Failed to save. Please try again.", "error");
     } finally {
       setIsSavingBasics(false);
     }
@@ -78,22 +84,29 @@ export default function EditTutorPage() {
         setNewSubjectName("");
         setNewSubjectField("");
         fetchTutorProfile();
+        showToast("Subject added!", "success");
       }
-    } catch (err) {
-      alert("Failed to add subject");
+    } catch {
+      showToast("Failed to add subject.", "error");
     }
   };
 
-  const handleDeleteSubject = async (subjectId: number) => {
-    if (!window.confirm("Remove this subject from their profile?")) return;
-    try {
-      const res = await fetch(`/api/tutors/${id}/subjects/${subjectId}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) fetchTutorProfile();
-    } catch (err) {
-      alert("Failed to remove subject");
-    }
+  const handleDeleteSubject = (subjectId: number) => {
+    setConfirmModal({
+      message: "Remove this subject from the tutor's profile?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/tutors/${id}/subjects/${subjectId}`, { method: 'DELETE' });
+          if (res.ok) {
+            fetchTutorProfile();
+            showToast("Subject removed.", "success");
+          }
+        } catch {
+          showToast("Failed to remove subject.", "error");
+        }
+      },
+    });
   };
 
   const handleAddShift = async (e: React.FormEvent) => {
@@ -109,22 +122,29 @@ export default function EditTutorPage() {
         setShiftStart("");
         setShiftEnd("");
         fetchTutorProfile();
+        showToast("Shift added!", "success");
       }
-    } catch (err) {
-      alert("Failed to add shift");
+    } catch {
+      showToast("Failed to add shift.", "error");
     }
   };
 
-  const handleDeleteShift = async (scheduleId: number) => {
-    if (!window.confirm("Remove this shift from their schedule?")) return;
-    try {
-      const res = await fetch(`/api/tutors/${id}/schedules/${scheduleId}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) fetchTutorProfile();
-    } catch (err) {
-      alert("Failed to remove shift");
-    }
+  const handleDeleteShift = (scheduleId: number) => {
+    setConfirmModal({
+      message: "Remove this shift from the tutor's schedule?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/tutors/${id}/schedules/${scheduleId}`, { method: 'DELETE' });
+          if (res.ok) {
+            fetchTutorProfile();
+            showToast("Shift removed.", "success");
+          }
+        } catch {
+          showToast("Failed to remove shift.", "error");
+        }
+      },
+    });
   };
 
   if (loading)
@@ -133,6 +153,14 @@ export default function EditTutorPage() {
 
   return (
     <div>
+      {confirmModal && (
+        <ConfirmModal
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+        />
+      )}
+
       <div style={{ marginBottom: "20px" }}>
         <Link
           href="/admin/tutors"

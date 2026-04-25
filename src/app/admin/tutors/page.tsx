@@ -3,10 +3,16 @@
 import { useEffect, useState } from "react";
 import { type Tutor } from "@/types";
 import Link from "next/link";
+import { useToast } from "@/components/admin/ToastProvider";
+import ConfirmModal from "@/components/admin/ConfirmModal";
 
 export default function ManageTutorsPage() {
+  const { showToast } = useToast();
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   // POST request UI state
   const [isAdding, setIsAdding] = useState(false);
@@ -47,50 +53,55 @@ export default function ManageTutorsPage() {
       });
 
       if (res.ok) {
-        // Success! Hide the form, clear inputs, and refresh data
         setIsAdding(false);
         setNewName("");
         setNewType("tutor");
         fetchTutors();
+        showToast("Tutor added successfully!", "success");
       } else {
         const errorData = await res.json();
-        alert("Failed to add tutor: " + JSON.stringify(errorData));
+        showToast(errorData?.error || "Failed to add tutor.", "error");
       }
     } catch (err) {
-      alert("Network Error");
+      showToast("Network error. Please try again.", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDeleteTutor = async (id?: number) => {
+  const handleDeleteTutor = (id?: number) => {
     if (!id) return;
-
-    // Added a simple browser confirmation dialog to prevent accidental deletes!
-    if (
-      !window.confirm("Are you sure you want to permanently delete this tutor?")
-    ) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/tutors/${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        fetchTutors(); // Automatically reload the table data
-      } else {
-        const errorData = await res.json();
-        alert("Failed to delete: " + (errorData.error || "Unknown error"));
-      }
-    } catch (err) {
-      alert("Network Error");
-    }
+    setConfirmModal({
+      message: "This will permanently remove the tutor and all their subjects and shifts.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/tutors/${id}`, { method: "DELETE" });
+          if (res.ok) {
+            fetchTutors();
+            showToast("Tutor deleted.", "success");
+          } else {
+            const errorData = await res.json();
+            showToast(errorData?.error || "Failed to delete.", "error");
+          }
+        } catch {
+          showToast("Network error. Please try again.", "error");
+        }
+      },
+    });
   };
 
   return (
     <div>
+      {/* Custom confirm dialog — renders when a delete is triggered */}
+      {confirmModal && (
+        <ConfirmModal
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+        />
+      )}
+
       <div
         style={{
           display: "flex",
