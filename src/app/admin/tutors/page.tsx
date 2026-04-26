@@ -62,7 +62,7 @@ export default function ManageTutorsPage() {
         const errorData = await res.json();
         showToast(errorData?.error || "Failed to add tutor.", "error");
       }
-    } catch (err) {
+    } catch {
       showToast("Network error. Please try again.", "error");
     } finally {
       setIsSubmitting(false);

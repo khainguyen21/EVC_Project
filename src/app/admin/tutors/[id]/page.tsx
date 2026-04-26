@@ -6,12 +6,16 @@ import Link from "next/link";
 import { useToast } from "@/components/admin/ToastProvider";
 import ConfirmModal from "@/components/admin/ConfirmModal";
 
+type TutorSubject = { id: number; name: string; field: string };
+type TutorSchedule = { id: number; day: string; start: string; end: string; location: string };
+type TutorDetail = { id: number; name: string; type: string; subjects: TutorSubject[]; schedules: TutorSchedule[] };
+
 export default function EditTutorPage() {
   const { showToast } = useToast();
   const params = useParams();
   const id = params.id as string;
 
-  const [tutor, setTutor] = useState<any>(null);
+  const [tutor, setTutor] = useState<TutorDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Confirm modal state
@@ -47,9 +51,8 @@ export default function EditTutorPage() {
       });
   };
 
-  useEffect(() => {
-    fetchTutorProfile();
-  }, [id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchTutorProfile(); }, [id]);
 
   const handleSaveBasics = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -297,7 +300,7 @@ export default function EditTutorPage() {
           <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "0.9rem" }}>Manage the subjects this staff member is authorized to teach.</p>
           
           <ul style={{ marginBottom: "15px", paddingLeft: "0", color: "#374151", listStyle: "none" }}>
-            {tutor.subjects.length > 0 ? tutor.subjects.map((s: any) => (
+            {tutor.subjects.length > 0 ? tutor.subjects.map((s: TutorSubject) => (
               <li key={s.id} style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#f9fafb", padding: "10px 15px", borderRadius: "6px", border: "1px solid #f3f4f6" }}>
                 <div>
                   <span style={{ fontWeight: "600" }}>{s.name}</span>
@@ -389,7 +392,7 @@ export default function EditTutorPage() {
             >
               <tbody>
                 {tutor.schedules.length > 0 ? (
-                  tutor.schedules.map((s: any) => (
+                  tutor.schedules.map((s: TutorSchedule) => (
                     <tr
                       key={s.id}
                       style={{ borderBottom: "1px solid #e5e7eb" }}

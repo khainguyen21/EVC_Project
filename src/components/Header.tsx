@@ -1,20 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 const Header = () => {
-  // Theme state
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // Load theme from localStorage on mount
   useEffect(() => {
-    // Check if theme is stored in localStorage,
-    // if not, set default theme to light
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
+    if (savedTheme && savedTheme !== theme) {
       document.documentElement.setAttribute("data-theme", savedTheme);
+      // Deferred update avoids calling setState synchronously in the effect body
+      Promise.resolve().then(() => setTheme(savedTheme));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Toggle theme function
@@ -41,10 +40,12 @@ const Header = () => {
         </span>
       </button>
       <div className="header__logo-container">
-        <img
+        <Image
           src="/img/EVClogo.png"
           alt="Evergreen Valley College logo"
           className="header__logo"
+          width={400}
+          height={300}
         />
       </div>
       <h1 className="header__title">EVC Tutor Schedule</h1>

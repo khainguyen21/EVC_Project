@@ -86,7 +86,7 @@ const TutoringRules = () => {
               fontSize: "1.1rem",
             }}
           >
-            Dos and Don'ts
+            Dos and Don&apos;ts
           </h3>
           <ol className="nettutor-steps" style={{ marginTop: 0 }}>
             <li>Log-in and log-out every time you use the center.</li>
@@ -97,7 +97,7 @@ const TutoringRules = () => {
               Please try the problem first yourself prior to asking the tutor.
             </li>
             <li>
-              Homework/classwork assignments are the students' responsibility.
+              Homework/classwork assignments are the students&apos; responsibility.
               We clarify concepts.
             </li>
             <li>No computer/internet use if it is not Math/Science related.</li>
@@ -123,7 +123,7 @@ const TutoringRules = () => {
         </p>
         <p>
           Students can come to study or use computers for class-related works,
-          but must be willing to share tutors' time. Each individual tutoring
+          but must be willing to share tutors&apos; time. Each individual tutoring
           session can last up to 15 minutes. Tutors can return for additional
           sessions after attending to other students.
         </p>

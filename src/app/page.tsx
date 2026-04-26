@@ -24,8 +24,6 @@ const HomePage = () => {
 
   // Fetch data on component mount
   useEffect(() => {
-    setLoading(true);
-    setError(false);
     fetch("/api/tutors")
       .then((response) => response.json())
       .then((data) => {
