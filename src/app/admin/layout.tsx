@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { ToastProvider } from '@/components/admin/ToastProvider'
+import Sidebar from '@/components/admin/Sidebar'
 
 export default function AdminLayout({
   children,
@@ -8,32 +8,12 @@ export default function AdminLayout({
 }) {
   return (
     <ToastProvider>
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f3f4f6', color: '#111827' }}>
-        {/* Sidebar */}
-        <aside style={{ width: '260px', backgroundColor: '#1f2937', color: 'white', padding: '30px 20px', display: 'flex', flexDirection: 'column' }}>
-          <h2 style={{ marginBottom: '40px', fontSize: '1.25rem', fontWeight: 'bold', letterSpacing: '0.05em', color: '#10b981' }}>
-            EVC ADMIN
-          </h2>
-          
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
-            <Link href="/admin" style={{ color: '#e5e7eb', textDecoration: 'none', fontWeight: '500', padding: '8px 12px', borderRadius: '6px', transition: 'background-color 0.2s' }}>
-              📊 Dashboard
-            </Link>
-            <Link href="/admin/tutors" style={{ color: '#e5e7eb', textDecoration: 'none', fontWeight: '500', padding: '8px 12px', borderRadius: '6px', transition: 'background-color 0.2s' }}>
-              👩‍🏫 Manage Tutors
-            </Link>
-            
-            <div style={{ marginTop: 'auto', borderTop: '1px solid #374151', paddingTop: '20px' }}>
-              <Link href="/" style={{ color: '#9ca3af', textDecoration: 'none', fontSize: '0.9rem', display: 'block', padding: '8px 12px' }}>
-                ← Public Schedule
-              </Link>
-            </div>
-          </nav>
-        </aside>
-
-        {/* Main Content Area */}
-        <main style={{ flex: 1, padding: '40px 60px', overflowY: 'auto' }}>
-          {children}
+      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <Sidebar />
+        <main style={{ flex: 1, padding: '48px 64px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto' }}>
+            {children}
+          </div>
         </main>
       </div>
     </ToastProvider>
