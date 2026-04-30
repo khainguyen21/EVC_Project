@@ -27,7 +27,7 @@ const LocationBadge = ({ location }: Props) => {
       case "SQ-231":
         return "https://www.google.com/maps/dir/?api=1&destination=37.300694,-121.761333";
       default:
-        return "#";
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`;
     }
   };
 
@@ -46,14 +46,6 @@ const LocationBadge = ({ location }: Props) => {
 
   const mapLink = getMapLink(location);
   const fullName = getFullName(location);
-
-  if (mapLink === "#") {
-    return (
-      <span className={`schedule-item__location ${getClassName(location)}`} title={fullName}>
-        {location}
-      </span>
-    );
-  }
 
   return (
     <a 

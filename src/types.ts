@@ -1,4 +1,4 @@
-export type Location = 'LE-237' | 'MS-112' | 'SQ-231';
+export type Location = string;
 
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | '';
 

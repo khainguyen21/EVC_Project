@@ -149,7 +149,7 @@ export default function ManageTutorsPage() {
           <form onSubmit={handleAddTutor} style={{ display: "flex", gap: "20px", alignItems: "flex-end", flexWrap: "wrap" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: "1 1 300px" }}>
               <label style={{ fontSize: "0.95rem", fontWeight: "600", color: "#475569" }}>Full Name</label>
-              <input required type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Brandon Ong" style={{ padding: "12px 16px", border: "2px solid #e2e8f0", borderRadius: "12px", fontSize: "1rem", outline: "none", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+              <input required type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Khai Nguyen" style={{ padding: "12px 16px", border: "2px solid #e2e8f0", borderRadius: "12px", fontSize: "1rem", outline: "none", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "250px" }}>

@@ -382,12 +382,22 @@ export default function EditTutorPage() {
                   </div>
                   <div style={{ flex: '1 1 200px' }}>
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Location</label>
-                    <select required value={shiftLocation} onChange={e => setShiftLocation(e.target.value)} style={{ width: '100%', padding: "10px 14px", borderRadius: "10px", border: "1px solid #cbd5e1", backgroundColor: "white", outline: 'none' }} onFocus={e => e.target.style.borderColor = '#10b981'} onBlur={e => e.target.style.borderColor = '#cbd5e1'}>
-                      <option value="LE-237">LE-237 (Library)</option>
-                      <option value="MS-112">MS-112 (MSRC)</option>
-                      <option value="SQ-231">SQ-231 (Biology)</option>
-                      <option value="Online">Online / NetTutor</option>
-                    </select>
+                    <input
+                      required
+                      list="location-options"
+                      placeholder="e.g. LE-237"
+                      value={shiftLocation}
+                      onChange={e => setShiftLocation(e.target.value)}
+                      style={{ width: '100%', padding: "10px 14px", borderRadius: "10px", border: "1px solid #cbd5e1", outline: 'none' }}
+                      onFocus={e => e.target.style.borderColor = '#10b981'}
+                      onBlur={e => e.target.style.borderColor = '#cbd5e1'}
+                    />
+                    <datalist id="location-options">
+                      <option value="LE-237" />
+                      <option value="MS-112" />
+                      <option value="SQ-231" />
+                      <option value="Online" />
+                    </datalist>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "12px", flexWrap: 'wrap' }}>

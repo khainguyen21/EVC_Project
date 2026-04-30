@@ -34,8 +34,8 @@ export default function Sidebar() {
       >
         <div
           style={{
-            width: "40px",
-            height: "40px",
+            width: "50px",
+            height: "50px",
             borderRadius: "10px",
             background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
             display: "flex",
@@ -47,7 +47,7 @@ export default function Sidebar() {
             boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
           }}
         >
-          E
+          EVC
         </div>
         <h2
           style={{
