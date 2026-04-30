@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
+import { touchScheduleTimestamp } from '@/lib/touchSettings'
 
 export async function DELETE(
   request: Request,
@@ -15,6 +16,7 @@ export async function DELETE(
       where: { id: scheduleId }
     });
 
+    await touchScheduleTimestamp()
     return NextResponse.json({ message: 'Shift deleted successfully' });
   } catch (error) {
     console.error('[DELETE schedule]', error);

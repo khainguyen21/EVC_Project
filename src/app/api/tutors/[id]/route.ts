@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
 import { z } from 'zod'
+import { touchScheduleTimestamp } from '@/lib/touchSettings'
 
 const updateTutorSchema = z.object({
   name: z.string().min(1, 'Name cannot be empty'),
@@ -60,6 +61,7 @@ export async function PUT(
       }
     })
 
+    await touchScheduleTimestamp()
     return NextResponse.json({ tutor: updatedTutor })
   } catch (error) {
     console.error('[PUT /api/tutors/[id]]', error)
@@ -95,6 +97,7 @@ export async function DELETE(
       where: { id }
     })
 
+    await touchScheduleTimestamp()
     return NextResponse.json({ message: 'Tutor deleted successfully' })
   } catch (error) {
     console.error('[DELETE /api/tutors/[id]]', error)

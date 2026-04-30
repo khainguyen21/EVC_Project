@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
+import { touchScheduleTimestamp } from '@/lib/touchSettings'
 
 export async function POST(
   request: Request,
@@ -26,6 +27,7 @@ export async function POST(
       }
     });
 
+    await touchScheduleTimestamp()
     return NextResponse.json({ schedule: newSchedule }, { status: 201 });
   } catch (error) {
     console.error('[POST /api/tutors/[id]/schedules]', error);

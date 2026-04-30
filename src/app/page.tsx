@@ -21,6 +21,7 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [filtering, setFiltering] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -35,6 +36,21 @@ const HomePage = () => {
         setError(true);
         setLoading(false);
       });
+
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.scheduleLastUpdated) {
+          setLastUpdated(
+            new Date(data.scheduleLastUpdated).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+          );
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Group tutors by subject field using an empty object
@@ -42,9 +58,10 @@ const HomePage = () => {
 
   tutors.forEach((tutor) => {
     // Rely completely on explicit backend fields binding
-    const fields = tutor.fields && tutor.fields.length > 0 
-      ? tutor.fields 
-      : getUniqueFields(tutor.subjects.map(s => s.name));
+    const fields =
+      tutor.fields && tutor.fields.length > 0
+        ? tutor.fields
+        : getUniqueFields(tutor.subjects.map((s) => s.name));
 
     // Add this tutor to each field they teach
     fields.forEach((field) => {
@@ -211,6 +228,19 @@ const HomePage = () => {
         </InfoSection>
 
         <div id="schedule-section">
+          {lastUpdated && (
+            <p
+              style={{
+                textAlign: "right",
+                fontSize: "0.85rem",
+                color: "var(--text-secondary)",
+                marginBottom: "8px",
+              }}
+            >
+              Last updated: {lastUpdated}
+            </p>
+          )}
+
           <FilterBar
             selectedCourse={courseFilter}
             selectedDay={dayFilter}
@@ -225,10 +255,17 @@ const HomePage = () => {
               <p>Loading tutor schedules...</p>
             </div>
           ) : error ? (
-            <div className="empty-state" style={{ minHeight: '300px' }}>
-              <span className="empty-state-icon" style={{ fontSize: '3rem' }}>⚠️</span>
-              <p style={{ fontWeight: 600 }}>Could not connect to the database.</p>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Please try refreshing the page. If the issue persists, contact the administrator.</p>
+            <div className="empty-state" style={{ minHeight: "300px" }}>
+              <span className="empty-state-icon" style={{ fontSize: "3rem" }}>
+                ⚠️
+              </span>
+              <p style={{ fontWeight: 600 }}>
+                Could not connect to the database.
+              </p>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                Please try refreshing the page. If the issue persists, contact
+                the administrator.
+              </p>
             </div>
           ) : (
             <section className={filtering ? "schedule filtering" : "schedule"}>

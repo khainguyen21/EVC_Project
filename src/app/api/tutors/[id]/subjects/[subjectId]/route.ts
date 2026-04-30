@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
+import { touchScheduleTimestamp } from '@/lib/touchSettings'
 
 export async function DELETE(
   request: Request,
@@ -15,6 +16,7 @@ export async function DELETE(
       where: { id: subjectId }
     });
 
+    await touchScheduleTimestamp()
     return NextResponse.json({ message: 'Subject unassigned successfully' });
   } catch (error) {
     console.error('[DELETE subject]', error);

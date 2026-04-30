@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
 import { z } from 'zod'
+import { touchScheduleTimestamp } from '@/lib/touchSettings'
 
 const createTutorSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       }
     })
 
+    await touchScheduleTimestamp()
     return NextResponse.json({ tutor: newTutor }, { status: 201 })
   } catch (error) {
     console.error('[POST /api/tutors]', error)

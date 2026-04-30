@@ -45,3 +45,8 @@ model Schedule {
   tutor    Tutor  @relation(fields: [tutorId], references: [id], onDelete: Cascade)
   tutorId  Int
 }
+
+model SiteSettings {
+  id                  Int      @id @default(1)
+  scheduleLastUpdated DateTime @default(now())
+}
