@@ -326,35 +326,6 @@ const HomePage = () => {
             </section>
           )}
         </div>
-
-        <section
-          className="action-banner"
-          style={{
-            background:
-              "linear-gradient(135deg, var(--accent-green), var(--primary-dark))",
-            marginBottom: "32px",
-          }}
-        >
-          <h2>General Information &amp; MSRC Rules</h2>
-          <p>
-            Hours, registration, and dos &amp; don&apos;ts for the MATH and
-            SCIENCE RESOURCE CENTER.
-          </p>
-          <Link href="/tutoring-rules" className="action-banner__link">
-            View Rules &amp; Hours →
-          </Link>
-        </section>
-
-        <section className="action-banner">
-          <h2>Become an EVC Tutor</h2>
-          <p>
-            Now hiring student tutors! Earn <strong>$18.00/hour</strong> while
-            helping fellow students.
-          </p>
-          <Link href="/become-a-tutor" className="action-banner__link">
-            Learn More &amp; Apply →
-          </Link>
-        </section>
       </main>
 
       <ScrollToTop />
