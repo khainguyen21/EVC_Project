@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
 import { touchScheduleTimestamp } from '@/lib/touchSettings'
+import { verifySession } from '@/lib/session'
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string, subjectId: string }> }
 ) {
   try {
+    await verifySession()
     const { subjectId: subjectIdStr } = await params;
     const subjectId = parseInt(subjectIdStr);
     

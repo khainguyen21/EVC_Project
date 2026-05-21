@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
 import { z } from 'zod'
 import { touchScheduleTimestamp } from '@/lib/touchSettings'
+import { verifySession } from '@/lib/session'
 
 const updateTutorSchema = z.object({
   name: z.string().min(1, 'Name cannot be empty'),
@@ -42,6 +43,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await verifySession()
     const { id: idStr } = await params;
     const id = parseInt(idStr);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
@@ -76,6 +78,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await verifySession()
     const { id: idStr } = await params;
     const id = parseInt(idStr);
     

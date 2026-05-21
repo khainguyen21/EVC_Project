@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
 import { z } from 'zod'
 import { touchScheduleTimestamp } from '@/lib/touchSettings'
+import { verifySession } from '@/lib/session'
 
 const createTutorSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await verifySession()
     const body = await request.json()
     const validation = createTutorSchema.safeParse(body)
     
