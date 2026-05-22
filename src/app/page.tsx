@@ -235,6 +235,8 @@ const HomePage = () => {
                 fontSize: "0.85rem",
                 color: "var(--text-secondary)",
                 marginBottom: "8px",
+                marginRight: "20px",
+                fontWeight: "bold",
               }}
             >
               Last updated: {lastUpdated}
