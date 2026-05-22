@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash-8b",
+      model: "gemini-2.5-flash-lite",
       contents: `${PROMPT}\n\nEmail replies to parse:\n\n${text}`,
       config: { responseMimeType: "application/json" },
     });
