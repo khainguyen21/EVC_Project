@@ -3,6 +3,7 @@ import { prisma } from '@/lib/client'
 import { z } from 'zod'
 import { touchScheduleTimestamp } from '@/lib/touchSettings'
 import { verifySession } from '@/lib/session'
+import { formatTime } from '@/utils/formatTime'
 
 const createTutorSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -31,8 +32,8 @@ export async function GET(request: Request) {
       fields: Array.from(new Set(tutor.subjects.map((s) => s.field))),
       schedule: tutor.schedules.map((s) => ({
         day: s.day,
-        startTime: s.start,
-        endTime: s.end,
+        startTime: formatTime(s.start),
+        endTime: formatTime(s.end),
         location: s.location,
       })),
     }))

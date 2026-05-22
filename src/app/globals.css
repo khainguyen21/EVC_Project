@@ -24,28 +24,31 @@
 
   /* Accent Colors for Special Elements */
   --professor-accent: #6366f1; /* Indigo Bloom */
-  --staff-accent: #059669; /* EVC Green */
+  --staff-accent: #14aa06; /* Slate Blue */
   --info-accent: #0284c7; /* Sky Blue */
   --warning-accent: #d97706; /* Amber Amber */
   --success-accent: #16a34a; /* Garden Green */
 
   /* Location Colors */
-  --loc-library-bg: #4f46e5;       /* Indigo for Library */
+  --loc-library-bg: #4f46e5; /* Indigo for Library */
   --loc-library-text: #ffffff;
-  --loc-msrc-bg: #0891b2;          /* Cyan for Math/Science */
+  --loc-msrc-bg: #0891b2; /* Cyan for Math/Science */
   --loc-msrc-text: #ffffff;
-  --loc-bio-bg: #139241;           /* Green for Biology */
+  --loc-bio-bg: #139241; /* Green for Biology */
   --loc-bio-text: #ffffff;
-  --loc-online-bg: #7c3aed;        /* Violet for NetTutor */
+  --loc-online-bg: #7c3aed; /* Violet for NetTutor */
   --loc-online-text: #ffffff;
 
   /* Shadows & Effects (Using Greenish Tints) */
   --shadow-sm: 0 1px 2px 0 rgba(5, 150, 105, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(5, 150, 105, 0.1),
+  --shadow-md:
+    0 4px 6px -1px rgba(5, 150, 105, 0.1),
     0 2px 4px -1px rgba(5, 150, 105, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(5, 150, 105, 0.15),
+  --shadow-lg:
+    0 10px 15px -3px rgba(5, 150, 105, 0.15),
     0 4px 6px -2px rgba(5, 150, 105, 0.08);
-  --shadow-xl: 0 20px 25px -5px rgba(5, 150, 105, 0.2),
+  --shadow-xl:
+    0 20px 25px -5px rgba(5, 150, 105, 0.2),
     0 10px 10px -5px rgba(5, 150, 105, 0.1);
 
   /* Border Radius */
@@ -84,12 +87,12 @@
   --loc-msrc-bg: #06b6d4;
   --loc-bio-bg: #20ba58;
   --loc-online-bg: #8b5cf6;
-  
+
   /* Borders & Shadows */
   --border-color: #24352e; /* Deep Forest Border */
 
   --professor-accent: #818cf8; /* Soft Indigo */
-  --staff-accent: #10b981; /* Emerald */
+  --staff-accent: #8ba3d4; /* Light Slate Blue */
   --info-accent: #0ea5e9; /* Ocean Blue */
   --warning-accent: #f59e0b; /* Amber */
   --success-accent: #10b981; /* Emerald */
@@ -107,12 +110,14 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   background-color: var(--background);
   color: var(--text-primary);
   line-height: 1.6;
-  transition: background-color var(--transition-base),
+  transition:
+    background-color var(--transition-base),
     color var(--transition-base);
 }
 
@@ -224,13 +229,13 @@ body {
   /* align-items: flex-end; */
 }
 
- .filter {
+.filter {
   position: sticky;
   top: 4px;
   z-index: 999;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
- }
+}
 
 .filter__group {
   display: flex;
@@ -754,9 +759,11 @@ body {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 14px;
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow var(--transition-base), border-color var(--transition-base);
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
   box-shadow: var(--shadow-sm);
 }
 
@@ -778,10 +785,18 @@ body {
 
 /* Modifiers */
 .tutor-card--professor {
-  border-left: 4px solid var(--professor-accent);
+  box-shadow: inset 4px 0 0 var(--professor-accent), var(--shadow-sm);
+}
+.tutor-card--professor:hover {
+  box-shadow: inset 4px 0 0 var(--professor-accent), var(--shadow-lg);
+  border-color: var(--professor-accent);
 }
 .tutor-card--staff {
-  border-left: 4px solid var(--staff-accent);
+  box-shadow: inset 4px 0 0 var(--staff-accent), var(--shadow-sm);
+}
+.tutor-card--staff:hover {
+  box-shadow: inset 4px 0 0 var(--staff-accent), var(--shadow-lg);
+  border-color: var(--staff-accent);
 }
 
 /* Elements */
@@ -844,6 +859,7 @@ body {
 
 .schedule-item__time {
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .schedule-item__location {
@@ -885,8 +901,12 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Empty State Animations */
@@ -908,9 +928,15 @@ body {
 }
 
 @keyframes floatingIcon {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
 /* Search Clear Button */
@@ -1001,7 +1027,7 @@ body {
   }
 
   .schedule-item {
-    grid-template-columns: 110px 130px 70px;
+    grid-template-columns: 90px 150px 70px;
     gap: 8px;
     align-items: center;
   }
@@ -1104,7 +1130,11 @@ body {
 
 /* Action Banner */
 .action-banner {
-  background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark),
+    var(--primary-color)
+  );
   color: #ffffff;
   border-radius: 16px;
   padding: 32px;
@@ -1132,7 +1162,9 @@ body {
   border-radius: 8px;
   text-decoration: none;
   font-size: 0.95rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .action-banner__link:hover {

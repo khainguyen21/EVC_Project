@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { formatTime } from "@/utils/formatTime";
 
 type TutorSubject = { id: number; name: string; field: string };
 type TutorSchedule = {
@@ -1520,8 +1521,8 @@ export default function EditTutorPage() {
                               gap: "6px",
                             }}
                           >
-                            <Clock size={14} color="#94a3b8" /> {s.start} —{" "}
-                            {s.end}
+                            <Clock size={14} color="#94a3b8" />{" "}
+                            {formatTime(s.start)} — {formatTime(s.end)}
                           </div>
                         </td>
                         <td style={{ padding: "16px 20px", color: "#0f172a" }}>
