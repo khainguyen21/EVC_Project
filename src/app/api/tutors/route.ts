@@ -1,27 +1,27 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/client'
-import { z } from 'zod'
-import { touchScheduleTimestamp } from '@/lib/touchSettings'
-import { verifySession } from '@/lib/session'
-import { formatTime } from '@/utils/formatTime'
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/client";
+import { z } from "zod";
+import { touchScheduleTimestamp } from "@/lib/touchSettings";
+import { verifySession } from "@/lib/session";
+import { formatTime } from "@/utils/formatTime";
 
 const createTutorSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  type: z.enum(['tutor', 'professor', 'staff']),
-})
+  name: z.string().min(1, "Name is required"),
+  type: z.enum(["tutor", "professor", "staff"]),
+});
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const sort = searchParams.get('sort')
+    const { searchParams } = new URL(request.url);
+    const sort = searchParams.get("sort");
 
     const tutors = await prisma.tutor.findMany({
       include: {
         subjects: true,
         schedules: true,
       },
-      orderBy: sort === 'recent' ? { createdAt: 'desc' } : { name: 'asc' },
-    })
+      orderBy: sort === "recent" ? { createdAt: "desc" } : { name: "asc" },
+    });
 
     // Transform DB shape → the shape page.tsx already expects
     const formatted = tutors.map((tutor) => ({
@@ -36,27 +36,46 @@ export async function GET(request: Request) {
         endTime: formatTime(s.end),
         location: s.location,
       })),
-    }))
+    }));
 
-    return NextResponse.json({ tutors: formatted })
+    return NextResponse.json({ tutors: formatted });
   } catch (error) {
-    console.error('[GET /api/tutors]', error)
+    console.error("[GET /api/tutors]", error);
     return NextResponse.json(
-      { error: 'Failed to fetch tutors' },
-      { status: 500 }
-    )
+      { error: "Failed to fetch tutors" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE() {
+  try {
+    await verifySession();
+    // Subjects and schedules cascade-delete via the Prisma schema onDelete: Cascade
+    const { count } = await prisma.tutor.deleteMany({});
+    await touchScheduleTimestamp();
+    return NextResponse.json({ deleted: count });
+  } catch (error) {
+    console.error("[DELETE /api/tutors]", error);
+    return NextResponse.json(
+      { error: "Failed to delete all tutors" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(request: Request) {
   try {
-    await verifySession()
-    const body = await request.json()
-    const validation = createTutorSchema.safeParse(body)
-    
+    await verifySession();
+    const body = await request.json();
+    const validation = createTutorSchema.safeParse(body);
+
     if (!validation.success) {
       // 400 Bad Request if the JSON doesn't match our Zod schema
-      return NextResponse.json({ error: validation.error.format() }, { status: 400 })
+      return NextResponse.json(
+        { error: validation.error.format() },
+        { status: 400 },
+      );
     }
 
     // Insert into Postgres!
@@ -64,13 +83,16 @@ export async function POST(request: Request) {
       data: {
         name: validation.data.name,
         type: validation.data.type,
-      }
-    })
+      },
+    });
 
-    await touchScheduleTimestamp()
-    return NextResponse.json({ tutor: newTutor }, { status: 201 })
+    await touchScheduleTimestamp();
+    return NextResponse.json({ tutor: newTutor }, { status: 201 });
   } catch (error) {
-    console.error('[POST /api/tutors]', error)
-    return NextResponse.json({ error: 'Failed to create tutor' }, { status: 500 })
+    console.error("[POST /api/tutors]", error);
+    return NextResponse.json(
+      { error: "Failed to create tutor" },
+      { status: 500 },
+    );
   }
 }

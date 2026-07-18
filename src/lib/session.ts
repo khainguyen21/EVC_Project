@@ -59,6 +59,15 @@ export async function deleteSession() {
   cookieStore.delete('session')
 }
 
+// LESSON: For JSON API routes we can't use verifySession() — its redirect() throws,
+// which a route's try/catch would swallow into a misleading 500. This variant just
+// returns the session payload (or null) so the route can respond with a clean 401.
+export async function getSession() {
+  const cookieStore = await cookies()
+  const cookie = cookieStore.get('session')?.value
+  return decrypt(cookie)
+}
+
 // Called by middleware/pages to check if user is logged in
 export async function verifySession() {
   const cookieStore = await cookies()

@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 
 const PROMPT = `You are parsing tutor recruitment email replies for a college tutoring center.
 
@@ -39,6 +40,12 @@ Return ONLY valid JSON matching this exact schema:
 
 export async function POST(request: Request) {
   try {
+    // Only logged-in admins may hit this endpoint — it spends Gemini API quota
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { text } = await request.json();
 
     if (!text || typeof text !== "string" || text.trim().length === 0) {
