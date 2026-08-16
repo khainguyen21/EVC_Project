@@ -175,6 +175,9 @@ export default function EditTutorPage() {
         setShiftEnd("");
         fetchTutorProfile();
         showToast("Shift added!", "success");
+      } else {
+        const data = await res.json().catch(() => null);
+        showToast(data?.error ?? "Failed to add shift.", "error");
       }
     } catch {
       showToast("Failed to add shift.", "error");
@@ -212,25 +215,35 @@ export default function EditTutorPage() {
     if (!aiPreview) return;
     setAiApplying(true);
     try {
+      let failed = 0;
       for (const s of aiPreview.subjects) {
-        await fetch(`/api/tutors/${id}/subjects`, {
+        const res = await fetch(`/api/tutors/${id}/subjects`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(s),
         });
+        if (!res.ok) failed++;
       }
       for (const s of aiPreview.schedules) {
-        await fetch(`/api/tutors/${id}/schedules`, {
+        const res = await fetch(`/api/tutors/${id}/schedules`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(s),
         });
+        if (!res.ok) failed++;
       }
       fetchTutorProfile();
       setAiPreview(null);
       setAiEmailText("");
       setShowAISection(false);
-      showToast("Auto-fill applied!", "success");
+      if (failed > 0) {
+        showToast(
+          `Auto-fill applied, but ${failed} item${failed === 1 ? "" : "s"} failed (check the times/fields).`,
+          "error",
+        );
+      } else {
+        showToast("Auto-fill applied!", "success");
+      }
     } catch {
       showToast("Failed to apply some items.", "error");
     } finally {
@@ -1694,11 +1707,11 @@ export default function EditTutorPage() {
                         marginBottom: "6px",
                       }}
                     >
-                      Start Time (e.g. 9:00)
+                      Start Time
                     </label>
                     <input
                       required
-                      placeholder="e.g. 9:00"
+                      type="time"
                       value={shiftStart}
                       onChange={(e) => setShiftStart(e.target.value)}
                       style={{
@@ -1722,11 +1735,11 @@ export default function EditTutorPage() {
                         marginBottom: "6px",
                       }}
                     >
-                      End Time (e.g. 17:00)
+                      End Time
                     </label>
                     <input
                       required
-                      placeholder="e.g. 17:00"
+                      type="time"
                       value={shiftEnd}
                       onChange={(e) => setShiftEnd(e.target.value)}
                       style={{

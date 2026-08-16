@@ -1,4 +1,5 @@
 import type { Tutor, Day } from "@/types";
+import type { CampusNow } from "@/utils/availability";
 import {
   sortTutorsByType,
 } from "@/utils/subjectMapping";
@@ -8,9 +9,10 @@ interface Props {
   fieldName: string;
   tutors: Tutor[];
   selectedDay?: Day;
+  now?: CampusNow;
 }
 
-const SubjectSection = ({ fieldName, tutors, selectedDay }: Props) => {
+const SubjectSection = ({ fieldName, tutors, selectedDay, now }: Props) => {
   const sortedTutors = sortTutorsByType(tutors);
   return (
     <section className="subject">
@@ -28,6 +30,7 @@ const SubjectSection = ({ fieldName, tutors, selectedDay }: Props) => {
               tutor={tutor}
               displaySubjects={displaySubjects}
               selectedDay={selectedDay}
+              now={now}
             />
           );
         })}

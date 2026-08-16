@@ -34,6 +34,8 @@ export async function GET(request: Request) {
         day: s.day,
         startTime: formatTime(s.start),
         endTime: formatTime(s.end),
+        start: s.start,
+        end: s.end,
         location: s.location,
       })),
     }));

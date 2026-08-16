@@ -13,6 +13,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import InfoSection from "@/components/InfoSection";
 import ScrollToTop from "@/components/ScrollToTop";
+import AvailableNowSection from "@/components/AvailableNowSection";
+import { useCampusNow } from "@/hooks/useCampusNow";
 
 const HomePage = () => {
   const [tutors, setTutors] = useState<Tutor[]>([]);
@@ -22,6 +24,8 @@ const HomePage = () => {
   const [error, setError] = useState(false);
   const [filtering, setFiltering] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  // Undefined until mounted, so the first client paint matches the server.
+  const now = useCampusNow();
 
   // Fetch data on component mount
   useEffect(() => {
@@ -85,7 +89,9 @@ const HomePage = () => {
   // Functions to handle state updates
   const scrollToSchedule = () => {
     setTimeout(() => {
-      const scheduleSection = document.getElementById("schedule-section");
+      const scheduleSection =
+        document.getElementById("last-updated") ||
+        document.getElementById("filter-section");
       if (scheduleSection) {
         const yOffset = -20;
         const y =
@@ -228,8 +234,13 @@ const HomePage = () => {
         </InfoSection>
 
         <div id="schedule-section">
+          {!loading && !error && (
+            <AvailableNowSection tutors={tutors} now={now} />
+          )}
+
           {lastUpdated && (
             <p
+              id="last-updated"
               style={{
                 textAlign: "right",
                 fontSize: "0.85rem",
@@ -243,13 +254,15 @@ const HomePage = () => {
             </p>
           )}
 
-          <FilterBar
-            selectedCourse={courseFilter}
-            selectedDay={dayFilter}
-            subjects={sortSubjectAlphabetically(Object.keys(groupedByField))}
-            onCourseChange={handleCourseChange}
-            onDayChange={handleDayChange}
-          />
+          <div id="filter-section">
+            <FilterBar
+              selectedCourse={courseFilter}
+              selectedDay={dayFilter}
+              subjects={sortSubjectAlphabetically(Object.keys(groupedByField))}
+              onCourseChange={handleCourseChange}
+              onDayChange={handleDayChange}
+            />
+          </div>
 
           {loading ? (
             <div className="loading-container">
@@ -291,6 +304,7 @@ const HomePage = () => {
                         fieldName={field}
                         tutors={filteredTutors}
                         selectedDay={dayFilter || undefined}
+                        now={now}
                       />
                     );
                   });

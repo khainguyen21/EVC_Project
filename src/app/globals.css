@@ -1190,3 +1190,115 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+/* ==========================================
+   BLOCK: open-now (Available Now section)
+   ========================================== */
+.subject--open-now {
+  margin-bottom: 24px;
+  border: 2px solid var(--accent-green);
+  box-shadow: var(--shadow-lg);
+}
+
+.subject__title--open-now {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(
+    90deg,
+    var(--success-accent) 0%,
+    var(--primary-light) 100%
+  );
+}
+
+.open-now__count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.95;
+}
+
+.open-now__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  animation: openNowPulse 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes openNowPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.open-now__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.availability-chip {
+  align-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.availability-chip--now {
+  background: var(--background-secondary);
+  color: var(--success-accent);
+  border: 1px solid var(--success-accent);
+}
+
+.availability-chip--soon {
+  background: #fef3c7;
+  color: var(--warning-accent);
+  border: 1px solid var(--warning-accent);
+}
+
+/* Active shift highlight inside any tutor card */
+.schedule-item--active {
+  background: var(--background-secondary);
+  box-shadow: inset 3px 0 0 var(--success-accent);
+}
+
+.schedule-item__now-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--success-accent);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+[data-theme="dark"] .availability-chip--now {
+  background: rgba(22, 163, 74, 0.15);
+  color: var(--primary-light);
+  border-color: var(--primary-light);
+}
+
+[data-theme="dark"] .availability-chip--soon {
+  background: rgba(217, 119, 6, 0.15);
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+}
+
+[data-theme="dark"] .schedule-item--active {
+  background: rgba(22, 163, 74, 0.12);
+}

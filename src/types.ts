@@ -3,9 +3,13 @@ export type Location = string;
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | '';
 
 export interface ScheduleEntry {
-    day: Day, 
-    startTime: string, 
-    endTime: string, 
+    day: Day,
+    startTime: string,
+    endTime: string,
+    // Raw 24-hour times ("14:00") from the API — used for "available now" math.
+    // Optional because admin pages build entries without them.
+    start?: string,
+    end?: string,
     location: Location
 }
 
