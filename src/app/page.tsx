@@ -125,10 +125,10 @@ const HomePage = () => {
           title="EVC Campus Tutoring Drop-In Schedule & NetTutor Online Tutoring"
           intro={
             <>
-              <strong>Summer 2026 Drop-In Tutoring</strong> – Students can
+              <strong>Fall 2026 Drop-In Tutoring</strong> – Students can
               access our EVC tutoring team during the below drop-in days and
-              times from <strong>June 15th</strong> through{" "}
-              <strong>August 4th, 2026</strong>. Tutors are available for drop-in
+              times from <strong>August 31st, 2026</strong> through{" "}
+              <strong>December 10th, 2026</strong>. Tutors are available for drop-in
               tutoring on a first come, first served basis.
             </>
           }
