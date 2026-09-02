@@ -38,6 +38,8 @@
   --loc-bio-text: #ffffff;
   --loc-online-bg: #7c3aed; /* Violet for NetTutor */
   --loc-online-text: #ffffff;
+  --loc-music-bg: #db2777; /* Pink for Performing Arts */
+  --loc-music-text: #ffffff;
 
   /* Shadows & Effects (Using Greenish Tints) */
   --shadow-sm: 0 1px 2px 0 rgba(5, 150, 105, 0.05);
@@ -87,6 +89,7 @@
   --loc-msrc-bg: #06b6d4;
   --loc-bio-bg: #20ba58;
   --loc-online-bg: #8b5cf6;
+  --loc-music-bg: #f472b6;
 
   /* Borders & Shadows */
   --border-color: #24352e; /* Deep Forest Border */
@@ -569,6 +572,11 @@ body {
   color: var(--loc-online-text);
 }
 
+.location-badge--music {
+  background: var(--loc-music-bg);
+  color: var(--loc-music-text);
+}
+
 .location-badge--clickable.location-badge--library:hover {
   background: #4338ca;
   border-color: var(--loc-library-bg);
@@ -584,6 +592,11 @@ body {
   border-color: var(--loc-bio-bg);
 }
 
+.location-badge--clickable.location-badge--music:hover {
+  background: #be185d;
+  border-color: var(--loc-music-bg);
+}
+
 [data-theme="dark"] .location-badge--clickable.location-badge--library:hover {
   background: #818cf8;
 }
@@ -594,6 +607,10 @@ body {
 
 [data-theme="dark"] .location-badge--clickable.location-badge--bio:hover {
   background: #4ade80;
+}
+
+[data-theme="dark"] .location-badge--clickable.location-badge--music:hover {
+  background: #f9a8d4;
 }
 
 .location-badge--clickable:hover .location-badge__external-icon {
@@ -616,6 +633,11 @@ body {
   color: white;
 }
 
+.schedule-item__location.location-text--music {
+  background: var(--loc-music-bg);
+  color: white;
+}
+
 [data-theme="dark"] .schedule-item__location.location-text--library {
   background: #6366f1;
 }
@@ -626,6 +648,10 @@ body {
 
 [data-theme="dark"] .schedule-item__location.location-text--bio {
   background: #22c55e;
+}
+
+[data-theme="dark"] .schedule-item__location.location-text--music {
+  background: #f472b6;
 }
 
 .location-badge--clickable {

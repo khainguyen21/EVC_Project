@@ -11,7 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const LOCATIONS = ["Online", "LE-237", "MS-112", "SQ-231"] as const;
+const LOCATIONS = ["Online", "LE-237", "MS-112", "SQ-231", "VPA-109/111"] as const;
 type Location = (typeof LOCATIONS)[number];
 type InputMode = "email" | "schedule";
 

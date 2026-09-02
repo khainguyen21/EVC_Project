@@ -22,7 +22,7 @@ Extract every tutor from the text. Rules:
 - Group subjects that share the same department prefix into a single entry. Format: "PREFIX-NUM1, NUM2, NUM3" (e.g., COMSC-075, COMSC-076, COMSC-028 → "COMSC-075, 076, 028" with field "Computer Science"). If only one subject for a prefix, keep as-is (e.g., "MATH-021")
 - Expand combined days: "Mon/Wed 9am-6pm" becomes two schedule entries (Monday and Wednesday, same times)
 - Convert times to 24-hour HH:MM format (e.g., "9am" → "09:00", "6pm" → "18:00", "12pm" → "12:00")
-- Extract location from the email if provided (e.g. "Location = LE-237" or "Location = MS-112"); valid values are "LE-237", "MS-112", "SQ-231", "Online"; default to "Online" only if no location is mentioned
+- Extract location from the email if provided (e.g. "Location = LE-237" or "Location = MS-112"); valid values are "LE-237", "MS-112", "SQ-231", "VPA-109/111", "Online"; default to "Online" only if no location is mentioned
 - Skip any availability entry that says "all day available" with no specific times
 - If the text contains multiple replies separated by blank lines or "---", extract all of them
 

@@ -26,7 +26,7 @@ Extract every tutor and their shifts. Rules:
   Abbreviation map: Mon->Monday, Tue/Tues->Tuesday, Wed->Wednesday, Thu/Thurs->Thursday, Fri->Friday.
 - Each expanded day shares the same start, end, and location as its line.
 - Convert times to 24-hour HH:MM. The am/pm at the end of a range applies to both sides when sensible. Examples: "2:00-3:00pm" -> "14:00"-"15:00"; "9:00am-2:00pm" -> "09:00"-"14:00"; "1:30pm-5:30pm" -> "13:30"-"17:30"; "2:00-4:00pm" -> "14:00"-"16:00".
-- Location is the text after "in " inside the parentheses. Valid values: "LE-237", "MS-112", "SQ-231", "Online". If the parenthetical has extra notes (e.g. "in LE-237, Library building"), use only the room code "LE-237". If no location is given, use "Online".
+- Location is the text after "in " inside the parentheses. Valid values: "LE-237", "MS-112", "SQ-231", "VPA-109/111", "Online". If the parenthetical has extra notes (e.g. "in LE-237, Library building"), use only the room code "LE-237". If no location is given, use "Online".
 - Do NOT treat field headings as tutors.
 
 Return ONLY valid JSON matching this exact schema:

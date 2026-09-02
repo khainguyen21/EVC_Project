@@ -1010,7 +1010,7 @@ export default function EditTutorPage() {
                                   cursor: "pointer",
                                 }}
                               >
-                                {["Online", "LE-237", "MS-112", "SQ-231"].map(
+                                {["Online", "LE-237", "MS-112", "SQ-231", "VPA-109/111"].map(
                                   (loc) => (
                                     <option key={loc} value={loc}>
                                       {loc}
@@ -1692,6 +1692,7 @@ export default function EditTutorPage() {
                       <option value="LE-237" />
                       <option value="MS-112" />
                       <option value="SQ-231" />
+                      <option value="VPA-109/111" />
                       <option value="Online" />
                     </datalist>
                   </div>

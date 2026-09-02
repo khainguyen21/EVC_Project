@@ -182,6 +182,16 @@ const HomePage = () => {
               SQ-231 Biology Lab (Sequoia Building)
               <span className="location-badge__external-icon">↗</span>
             </a>
+            <a
+              href="https://www.google.com/maps/dir/?api=1&destination=37.300413,-121.761227"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="location-badge location-badge--clickable location-badge--music"
+              title="Get directions to VPA-109/111 Music"
+            >
+              VPA-109/111 Music (Visual &amp; Performing Arts Building)
+              <span className="location-badge__external-icon">↗</span>
+            </a>
           </div>
           <h3
             style={{

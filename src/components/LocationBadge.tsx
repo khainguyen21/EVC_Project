@@ -13,6 +13,8 @@ const LocationBadge = ({ location }: Props) => {
         return "location-text--msrc";
       case "SQ-231":
         return "location-text--bio";
+      case "VPA-109/111":
+        return "location-text--music";
       default:
         return "";
     }
@@ -26,6 +28,8 @@ const LocationBadge = ({ location }: Props) => {
         return "https://www.google.com/maps/dir/?api=1&destination=37.300333,-121.764194";
       case "SQ-231":
         return "https://www.google.com/maps/dir/?api=1&destination=37.300694,-121.761333";
+      case "VPA-109/111":
+        return "https://www.google.com/maps/dir/?api=1&destination=37.300413,-121.761227";
       default:
         return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`;
     }
@@ -39,6 +43,8 @@ const LocationBadge = ({ location }: Props) => {
         return "MS-112 Math & Science Resource Center";
       case "SQ-231":
         return "SQ-231 Biology Lab (Sequoia Building)";
+      case "VPA-109/111":
+        return "VPA-109/111 Music (Visual & Performing Arts Building)";
       default:
         return loc;
     }
