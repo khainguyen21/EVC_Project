@@ -4,6 +4,7 @@ import { z } from "zod";
 import { touchScheduleTimestamp } from "@/lib/touchSettings";
 import { verifySession } from "@/lib/session";
 import { formatTime } from "@/utils/formatTime";
+import { sortSchedules } from "@/utils/sortSchedules";
 
 const createTutorSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
       type: tutor.type,
       subjects: tutor.subjects.map((s) => ({ name: s.name, field: s.field })),
       fields: Array.from(new Set(tutor.subjects.map((s) => s.field))),
-      schedule: tutor.schedules.map((s) => ({
+      schedule: sortSchedules(tutor.schedules).map((s) => ({
         day: s.day,
         startTime: formatTime(s.start),
         endTime: formatTime(s.end),

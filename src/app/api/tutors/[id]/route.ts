@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
+import { sortSchedules } from '@/utils/sortSchedules'
 import { z } from 'zod'
 import { touchScheduleTimestamp } from '@/lib/touchSettings'
 import { verifySession } from '@/lib/session'
@@ -31,7 +32,9 @@ export async function GET(
 
     if (!tutor) return NextResponse.json({ error: 'Tutor not found' }, { status: 404 })
 
-    return NextResponse.json({ tutor })
+    return NextResponse.json({
+      tutor: { ...tutor, schedules: sortSchedules(tutor.schedules) },
+    })
   } catch (error) {
     console.error('[GET /api/tutors/[id]]', error)
     return NextResponse.json({ error: 'Failed to fetch tutor' }, { status: 500 })

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
+import { sortSchedules } from '@/utils/sortSchedules'
 
 export async function GET(request: Request) {
   try {
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
         name: tutor.name,
         type: tutor.type,
         subjects: tutor.subjects.map((s) => ({ name: s.name, field: s.field })),
-        schedules: tutor.schedules.map((s) => ({
+        schedules: sortSchedules(tutor.schedules).map((s) => ({
           day: s.day,
           start: s.start,
           end: s.end,
