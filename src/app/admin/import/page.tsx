@@ -9,6 +9,9 @@ import {
   FileUp,
   FileText,
   CheckCircle2,
+  GraduationCap,
+  Briefcase,
+  UserSquare2,
 } from "lucide-react";
 
 const LOCATIONS = ["Online", "LE-237", "MS-112", "SQ-231", "VPA-109/111"] as const;
@@ -27,15 +30,31 @@ interface ParsedSchedule {
   location: Location;
 }
 
+type StaffType = "tutor" | "professor" | "staff";
+
 interface ParsedTutor {
   name: string;
-  type: "tutor";
+  type: StaffType;
   subjects: ParsedSubject[];
   schedules: ParsedSchedule[];
   matchedTutorId?: number | null;
   matchedName?: string;
   existingSubjects?: ParsedSubject[];
   existingSchedules?: ParsedSchedule[];
+}
+
+const TYPE_BADGES: Record<
+  StaffType,
+  { label: string; background: string; color: string }
+> = {
+  tutor: { label: "tutor", background: "#eff6ff", color: "#2563eb" },
+  professor: { label: "professor", background: "#eef2ff", color: "#4f46e5" },
+  staff: { label: "staff", background: "#f0fdf4", color: "#16a34a" },
+};
+
+// The AI may omit or invent a type — anything unrecognized falls back to tutor
+function normalizeType(value: unknown): StaffType {
+  return value === "professor" || value === "staff" ? value : "tutor";
 }
 
 const spinnerStyle: React.CSSProperties = {
@@ -181,7 +200,8 @@ export default function ImportPage() {
 
   async function enrichMatches(list: ParsedTutor[]): Promise<ParsedTutor[]> {
     return Promise.all(
-      list.map(async (t) => {
+      list.map(async (raw) => {
+        const t: ParsedTutor = { ...raw, type: normalizeType(raw.type) };
         try {
           const res = await fetch(
             `/api/tutors/match?name=${encodeURIComponent(t.name)}`,
@@ -652,11 +672,18 @@ export default function ImportPage() {
                         padding: "2px 8px",
                         borderRadius: "999px",
                         marginTop: "4px",
-                        background: "#eff6ff",
-                        color: "#2563eb",
+                        background: TYPE_BADGES[tutor.type].background,
+                        color: TYPE_BADGES[tutor.type].color,
                       }}
                     >
-                      New tutor
+                      {tutor.type === "professor" ? (
+                        <GraduationCap size={12} />
+                      ) : tutor.type === "staff" ? (
+                        <Briefcase size={12} />
+                      ) : (
+                        <UserSquare2 size={12} />
+                      )}
+                      New {TYPE_BADGES[tutor.type].label}
                     </div>
                   )}
                 </div>

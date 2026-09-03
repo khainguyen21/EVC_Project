@@ -15,9 +15,10 @@ Example:
     • Tues/Wed 2:00-3:00pm (in LE-237)
 
 Extract every tutor and their shifts. Rules:
-- "type" is always "tutor".
+- Keep the entry's name as written meaning that if it's written Professor, then keep it as Professor then following with their name, including any accents or special characters.
+- If the entry name is "Professor", then "type" is "professor". If the entry information after the name in the bracket has "(Math Instructional Assistant", then "type" is "staff". Otherwise, use "tutor". 
 - The field heading directly above an entry is the academic "field" for that entry's subject. For "English as a Second Language" use field "ESL" and subject name "ESL".
-- Build the subject "name" from the text after the tutor's name, kept as written and grouped on one line. Examples: "Business 71, 82" -> name "Business 71, 82" field "Business"; "Chem 15" -> name "Chem 15" field "Chemistry"; "Econ 10A" -> name "Econ 10A" field "Economics"; "English C1000, C1001" -> name "English C1000, C1001" field "English"; "History 17A/B" -> name "History 17A/B" field "History".
+- Build the subject "name" from the text after the tutor's name, kept as written and grouped on one line. Examples: "Business 71, 82" -> name "Business 71, 82" field "Business"; "Chem 15" -> name "Chem 15" field "Chemistry"; "Econ 10A" -> name "Econ 10A" field "Economics"; "English C1000, C1001" -> name "English C1000, C1001" field "English"; "History 17A/B" -> name "History 17A/B" field "History". Any Math will be under "Mathematics" field. ESL -> name "ESL" field "ESL".
 - THE SAME PERSON MAY APPEAR UNDER MULTIPLE FIELDS. Merge them into ONE tutor object (match by name, case-insensitive). Combine all their subjects (one subject entry per line/field) and all their schedule shifts. NEVER output duplicate tutor objects for the same name.
 - Expand combined days into separate schedule entries:
   - "Tues/Wed" -> Tuesday and Wednesday
@@ -34,7 +35,7 @@ Return ONLY valid JSON matching this exact schema:
   "tutors": [
     {
       "name": "string",
-      "type": "tutor",
+      "type": "tutor" | "professor" | "staff",
       "subjects": [{ "name": "string", "field": "string" }],
       "schedules": [{ "day": "string", "start": "string", "end": "string", "location": "string" }]
     }
