@@ -232,10 +232,17 @@ body {
   /* align-items: flex-end; */
 }
 
-.filter {
+/* Sticky lives on the wrapper, not on .filter itself: a sticky element can only
+   travel inside its parent's box, and #filter-section is exactly as tall as the
+   bar. Its parent (#schedule-section) spans the whole tutor list, so the bar
+   stays pinned for the entire scroll. top: 4px clears the scroll progress bar. */
+#filter-section {
   position: sticky;
   top: 4px;
   z-index: 999;
+}
+
+.filter {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
