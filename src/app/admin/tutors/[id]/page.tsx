@@ -795,6 +795,7 @@ export default function EditTutorPage() {
                                 <option value="Chemistry" />
                                 <option value="Computer Science" />
                                 <option value="English" />
+                                <option value="ESL" />
                                 <option value="Ethnic Studies" />
                                 <option value="History" />
                                 <option value="Mathematics" />
