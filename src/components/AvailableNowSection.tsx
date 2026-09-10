@@ -1,23 +1,67 @@
 "use client";
 
-import type { Tutor } from "@/types";
+import type { Term, Tutor } from "@/types";
 import type { CampusNow, TutorAvailability } from "@/utils/availability";
 import { getTutorAvailability, toMinutes } from "@/utils/availability";
+import { formatTermDate, type CampusStatus } from "@/utils/term";
 import TutorCard from "./TutorCard";
 
 interface Props {
   tutors: Tutor[];
   now?: CampusNow;
+  term: Term | null;
+  status?: CampusStatus;
 }
 
 interface AvailableTutor extends TutorAvailability {
   tutor: Tutor;
 }
 
-const AvailableNowSection = ({ tutors, now }: Props) => {
-  // `now` is undefined until the client resolves campus time, which keeps
-  // the first paint identical to the server render.
-  if (!now) return null;
+// Copy for days the schedule below doesn't apply (holiday, semester break).
+function closedNotice(status: CampusStatus, term: Term | null) {
+  switch (status.reason) {
+    case "holiday":
+      return {
+        title: "Closed Today",
+        message: `Campus tutoring is closed for ${status.holidayName}.`,
+      };
+    case "before-term":
+      return {
+        title: "Not Yet In Session",
+        message: term
+          ? `${term.name} drop-in tutoring begins ${formatTermDate(term.startDate)}.`
+          : "Drop-in tutoring has not started yet.",
+      };
+    case "after-term":
+      return {
+        title: "Semester Over",
+        message: term
+          ? `${term.name} drop-in tutoring ended ${formatTermDate(term.endDate)}.`
+          : "Drop-in tutoring has ended for the semester.",
+      };
+    default:
+      return null;
+  }
+}
+
+const AvailableNowSection = ({ tutors, now, term, status }: Props) => {
+  // `now` and `status` are undefined until the client resolves campus time and
+  // the active term, which keeps the first paint identical to the server render.
+  if (!now || !status) return null;
+
+  if (!status.open) {
+    const notice = closedNotice(status, term);
+    if (!notice) return null;
+    return (
+      <section className="subject subject--open-now subject--closed">
+        <div className="subject__title subject__title--open-now subject__title--closed">
+          <span className="open-now__dot open-now__dot--closed" aria-hidden="true" />
+          {notice.title}
+          <span className="open-now__count">{notice.message}</span>
+        </div>
+      </section>
+    );
+  }
 
   const available: AvailableTutor[] = [];
   for (const tutor of tutors) {

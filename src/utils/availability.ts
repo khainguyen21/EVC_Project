@@ -9,6 +9,7 @@ export const SOON_WINDOW_MINUTES = 60;
 export interface CampusNow {
   day: string; // "Monday" ... "Sunday"
   minutes: number; // minutes since midnight, campus time
+  date: string; // "YYYY-MM-DD", campus time — compared against term/holiday dates
 }
 
 export type SlotStatus = "now" | "soon";
@@ -32,6 +33,9 @@ export interface TutorAvailability {
 const campusClock = new Intl.DateTimeFormat("en-US", {
   timeZone: CAMPUS_TIME_ZONE,
   weekday: "long",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
   hourCycle: "h23",
@@ -43,13 +47,23 @@ export function getCampusNow(): CampusNow {
   let day = "";
   let hour = 0;
   let minute = 0;
+  let year = "";
+  let month = "";
+  let dayOfMonth = "";
   for (const part of parts) {
     if (part.type === "weekday") day = part.value;
     else if (part.type === "hour") hour = parseInt(part.value, 10);
     else if (part.type === "minute") minute = parseInt(part.value, 10);
+    else if (part.type === "year") year = part.value;
+    else if (part.type === "month") month = part.value;
+    else if (part.type === "day") dayOfMonth = part.value;
   }
 
-  return { day, minutes: hour * 60 + minute };
+  return {
+    day,
+    minutes: hour * 60 + minute,
+    date: `${year}-${month}-${dayOfMonth}`,
+  };
 }
 
 /** Parses "14:00" → 840. Returns null for missing/invalid input. */

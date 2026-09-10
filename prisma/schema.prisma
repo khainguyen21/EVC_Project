@@ -50,3 +50,26 @@ model SiteSettings {
   id                  Int      @id @default(1)
   scheduleLastUpdated DateTime @default(now())
 }
+
+// An academic term. The active one drives the homepage banner and decides
+// whether "Available Now" should run at all (no shifts outside the term).
+model Term {
+  id        Int       @id @default(autoincrement())
+  name      String    // e.g. "Fall 2026"
+  startDate DateTime  @db.Date
+  endDate   DateTime  @db.Date
+  isActive  Boolean   @default(false)
+  holidays  Holiday[]
+  createdAt DateTime  @default(now())
+}
+
+// A day inside a term when campus tutoring is closed (Labor Day, Thanksgiving, ...).
+model Holiday {
+  id     Int      @id @default(autoincrement())
+  name   String   // e.g. "Labor Day"
+  date   DateTime @db.Date
+  term   Term     @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId Int
+
+  @@unique([termId, date])
+}

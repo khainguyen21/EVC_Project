@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { type Tutor, type Day } from "@/types";
 import FilterBar from "@/components/FilterBar";
 import SubjectSection from "@/components/SubjectSection";
@@ -15,6 +14,8 @@ import InfoSection from "@/components/InfoSection";
 import ScrollToTop from "@/components/ScrollToTop";
 import AvailableNowSection from "@/components/AvailableNowSection";
 import { useCampusNow } from "@/hooks/useCampusNow";
+import { useActiveTerm } from "@/hooks/useActiveTerm";
+import { formatTermDate, getCampusStatus } from "@/utils/term";
 
 const HomePage = () => {
   const [tutors, setTutors] = useState<Tutor[]>([]);
@@ -26,6 +27,13 @@ const HomePage = () => {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   // Undefined until mounted, so the first client paint matches the server.
   const now = useCampusNow();
+  // The active term fills the banner and gates "Available Now" (holidays, breaks).
+  const { term, loaded: termLoaded } = useActiveTerm();
+  // Wait for the term before judging availability so a holiday can't flash "Open Now".
+  const campusStatus =
+    now && termLoaded ? getCampusStatus(now, term) : undefined;
+  // Live "Now" badges only when drop-in tutoring is actually running today.
+  const liveNow = campusStatus?.open ? now : undefined;
 
   // Fetch data on component mount
   useEffect(() => {
@@ -124,13 +132,23 @@ const HomePage = () => {
         <InfoSection
           title="EVC Campus Tutoring Drop-In Schedule & NetTutor Online Tutoring"
           intro={
-            <>
-              <strong>Fall 2026 Drop-In Tutoring</strong> – Students can
-              access our EVC tutoring team during the below drop-in days and
-              times from <strong>August 31st, 2026</strong> through{" "}
-              <strong>December 10th, 2026</strong>. Tutors are available for drop-in
-              tutoring on a first come, first served basis.
-            </>
+            term ? (
+              <>
+                <strong>{term.name} Drop-In Tutoring</strong> – Students can
+                access our EVC tutoring team during the below drop-in days and
+                times from <strong>{formatTermDate(term.startDate)}</strong>{" "}
+                through <strong>{formatTermDate(term.endDate)}</strong>. Tutors
+                are available for drop-in tutoring on a first come, first
+                served basis.
+              </>
+            ) : (
+              <>
+                <strong>Drop-In Tutoring</strong> – Students can access our EVC
+                tutoring team during the below drop-in days and times. Tutors
+                are available for drop-in tutoring on a first come, first
+                served basis.
+              </>
+            )
           }
         >
           <h3
@@ -245,7 +263,12 @@ const HomePage = () => {
 
         <div id="schedule-section">
           {!loading && !error && (
-            <AvailableNowSection tutors={tutors} now={now} />
+            <AvailableNowSection
+              tutors={tutors}
+              now={now}
+              term={term}
+              status={campusStatus}
+            />
           )}
 
           {lastUpdated && (
@@ -314,7 +337,7 @@ const HomePage = () => {
                         fieldName={field}
                         tutors={filteredTutors}
                         selectedDay={dayFilter || undefined}
-                        now={now}
+                        now={liveNow}
                       />
                     );
                   });

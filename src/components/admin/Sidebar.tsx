@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Mail, ArrowLeft } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Mail,
+  CalendarDays,
+  ArrowLeft,
+} from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -11,6 +17,7 @@ export default function Sidebar() {
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Manage Staff", href: "/admin/tutors", icon: Users },
     { name: "Import Tutors", href: "/admin/import", icon: Mail },
+    { name: "Terms & Holidays", href: "/admin/terms", icon: CalendarDays },
   ];
 
   return (

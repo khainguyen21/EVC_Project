@@ -1,6 +1,12 @@
+"use client";
+
 import InfoSection from "./InfoSection";
+import { useActiveTerm } from "@/hooks/useActiveTerm";
 
 const TutoringRules = () => {
+  // Heading follows the active term so it can't go stale between semesters.
+  const { term } = useActiveTerm();
+
   return (
     <InfoSection
       title="General Information & MSRC (Room MS-112) Rules"
@@ -23,7 +29,7 @@ const TutoringRules = () => {
               fontSize: "1.1rem",
             }}
           >
-            Spring 2026 Hours
+            {term ? `${term.name} Hours` : "Current Hours"}
           </h3>
 
           <ul className="info-section__list">

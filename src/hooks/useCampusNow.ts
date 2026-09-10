@@ -16,7 +16,7 @@ function getSnapshot(): CampusNow | undefined {
   const next = getCampusNow();
   if (
     !cachedSnapshot ||
-    cachedSnapshot.day !== next.day ||
+    cachedSnapshot.date !== next.date ||
     cachedSnapshot.minutes !== next.minutes
   ) {
     cachedSnapshot = next;

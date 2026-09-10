@@ -1335,3 +1335,23 @@ body {
 [data-theme="dark"] .schedule-item--active {
   background: rgba(22, 163, 74, 0.12);
 }
+
+/* Closed-day notice (holiday / outside the term). Reuses the Open Now shell in
+   amber so it reads as a heads-up rather than an invitation to come in. */
+.subject--closed {
+  border-color: var(--warning-accent);
+}
+
+.subject__title--closed {
+  background: linear-gradient(
+    90deg,
+    var(--warning-accent) 0%,
+    var(--accent-gold) 100%
+  );
+}
+
+.open-now__dot--closed {
+  animation: none;
+  box-shadow: none;
+  opacity: 0.85;
+}
