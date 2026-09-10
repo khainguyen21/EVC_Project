@@ -44,6 +44,19 @@ function closedNotice(status: CampusStatus, term: Term | null) {
   }
 }
 
+// Weekends have no drop-in shifts, so say so instead of rendering nothing.
+const WEEKEND_DAYS = new Set(["Saturday", "Sunday"]);
+
+const ClosedNotice = ({ title, message }: { title: string; message: string }) => (
+  <section className="subject subject--open-now subject--closed">
+    <div className="subject__title subject__title--open-now subject__title--closed">
+      <span className="open-now__dot open-now__dot--closed" aria-hidden="true" />
+      {title}
+      <span className="open-now__count">{message}</span>
+    </div>
+  </section>
+);
+
 const AvailableNowSection = ({ tutors, now, term, status }: Props) => {
   // `now` and `status` are undefined until the client resolves campus time and
   // the active term, which keeps the first paint identical to the server render.
@@ -51,16 +64,7 @@ const AvailableNowSection = ({ tutors, now, term, status }: Props) => {
 
   if (!status.open) {
     const notice = closedNotice(status, term);
-    if (!notice) return null;
-    return (
-      <section className="subject subject--open-now subject--closed">
-        <div className="subject__title subject__title--open-now subject__title--closed">
-          <span className="open-now__dot open-now__dot--closed" aria-hidden="true" />
-          {notice.title}
-          <span className="open-now__count">{notice.message}</span>
-        </div>
-      </section>
-    );
+    return notice ? <ClosedNotice {...notice} /> : null;
   }
 
   const available: AvailableTutor[] = [];
@@ -69,7 +73,23 @@ const AvailableNowSection = ({ tutors, now, term, status }: Props) => {
     if (availability) available.push({ ...availability, tutor });
   }
 
-  if (available.length === 0) return null;
+  if (available.length === 0) {
+    // A weekend inside the term: show a closed notice rather than silence, but
+    // only when the data really has no shift today, so a future Saturday
+    // schedule would automatically take precedence over this message.
+    const hasShiftToday = tutors.some((tutor) =>
+      tutor.schedule.some((slot) => slot.day === now.day),
+    );
+    if (WEEKEND_DAYS.has(now.day) && !hasShiftToday) {
+      return (
+        <ClosedNotice
+          title="Closed Today"
+          message="Drop-in tutoring runs Monday through Friday."
+        />
+      );
+    }
+    return null;
+  }
 
   // On-shift tutors first, then upcoming ones by how soon they start.
   available.sort((a, b) => {
