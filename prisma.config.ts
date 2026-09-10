@@ -10,6 +10,12 @@ export default defineConfig({
     seed: "ts-node --project prisma/tsconfig.json prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // The Prisma CLI (migrate, studio) needs a session-mode connection: Migrate
+    // takes a session-level advisory lock, which Supabase's transaction pooler
+    // (port 6543) can't hold, so `migrate deploy` hangs forever. DIRECT_URL is
+    // the same database via the session pooler (port 5432). The app itself
+    // keeps using DATABASE_URL through src/lib/client.ts, which is the right
+    // choice for many short-lived web requests.
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });
