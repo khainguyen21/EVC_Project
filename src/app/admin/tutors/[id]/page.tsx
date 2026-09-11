@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/admin/ToastProvider";
 import ConfirmModal from "@/components/admin/ConfirmModal";
+import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import {
   ArrowLeft,
   User,
@@ -89,6 +90,12 @@ export default function EditTutorPage() {
           setType(data.tutor.type);
         }
         setLoading(false);
+      })
+      .catch((error) => {
+        // Without this the spinner runs forever on a dropped request.
+        console.error("Error fetching tutor profile:", error);
+        setLoading(false);
+        showToast("Could not load this staff member.", "error");
       });
   };
 
@@ -101,16 +108,14 @@ export default function EditTutorPage() {
     setIsSavingBasics(true);
 
     try {
-      const res = await fetch(`/api/tutors/${id}`, {
+      await adminFetch(`/api/tutors/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, type }),
       });
-      if (res.ok) {
-        showToast("Basic info saved successfully!", "success");
-      }
-    } catch {
-      showToast("Failed to save. Please try again.", "error");
+      showToast("Basic info saved successfully!", "success");
+    } catch (error) {
+      showToast(errorMessage(error, "Failed to save. Please try again."), "error");
     } finally {
       setIsSavingBasics(false);
     }
@@ -119,20 +124,18 @@ export default function EditTutorPage() {
   const handleAddSubject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/tutors/${id}/subjects`, {
+      await adminFetch(`/api/tutors/${id}/subjects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newSubjectName, field: newSubjectField }),
       });
-      if (res.ok) {
-        setIsAddingSubject(false);
-        setNewSubjectName("");
-        setNewSubjectField("");
-        fetchTutorProfile();
-        showToast("Subject added!", "success");
-      }
-    } catch {
-      showToast("Failed to add subject.", "error");
+      setIsAddingSubject(false);
+      setNewSubjectName("");
+      setNewSubjectField("");
+      fetchTutorProfile();
+      showToast("Subject added!", "success");
+    } catch (error) {
+      showToast(errorMessage(error, "Failed to add subject."), "error");
     }
   };
 
@@ -142,15 +145,13 @@ export default function EditTutorPage() {
       onConfirm: async () => {
         setConfirmModal(null);
         try {
-          const res = await fetch(`/api/tutors/${id}/subjects/${subjectId}`, {
+          await adminFetch(`/api/tutors/${id}/subjects/${subjectId}`, {
             method: "DELETE",
           });
-          if (res.ok) {
-            fetchTutorProfile();
-            showToast("Subject removed.", "success");
-          }
-        } catch {
-          showToast("Failed to remove subject.", "error");
+          fetchTutorProfile();
+          showToast("Subject removed.", "success");
+        } catch (error) {
+          showToast(errorMessage(error, "Failed to remove subject."), "error");
         }
       },
     });
@@ -159,7 +160,7 @@ export default function EditTutorPage() {
   const handleAddShift = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/tutors/${id}/schedules`, {
+      await adminFetch(`/api/tutors/${id}/schedules`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -169,18 +170,13 @@ export default function EditTutorPage() {
           location: shiftLocation,
         }),
       });
-      if (res.ok) {
-        setIsAddingShift(false);
-        setShiftStart("");
-        setShiftEnd("");
-        fetchTutorProfile();
-        showToast("Shift added!", "success");
-      } else {
-        const data = await res.json().catch(() => null);
-        showToast(data?.error ?? "Failed to add shift.", "error");
-      }
-    } catch {
-      showToast("Failed to add shift.", "error");
+      setIsAddingShift(false);
+      setShiftStart("");
+      setShiftEnd("");
+      fetchTutorProfile();
+      showToast("Shift added!", "success");
+    } catch (error) {
+      showToast(errorMessage(error, "Failed to add shift."), "error");
     }
   };
 
@@ -257,15 +253,13 @@ export default function EditTutorPage() {
       onConfirm: async () => {
         setConfirmModal(null);
         try {
-          const res = await fetch(`/api/tutors/${id}/schedules/${scheduleId}`, {
+          await adminFetch(`/api/tutors/${id}/schedules/${scheduleId}`, {
             method: "DELETE",
           });
-          if (res.ok) {
-            fetchTutorProfile();
-            showToast("Shift removed.", "success");
-          }
-        } catch {
-          showToast("Failed to remove shift.", "error");
+          fetchTutorProfile();
+          showToast("Shift removed.", "success");
+        } catch (error) {
+          showToast(errorMessage(error, "Failed to remove shift."), "error");
         }
       },
     });

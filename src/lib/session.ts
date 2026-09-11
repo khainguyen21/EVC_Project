@@ -1,7 +1,7 @@
 import 'server-only'
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { NextResponse } from 'next/server'
 
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000 // 8 hours
 
@@ -59,24 +59,27 @@ export async function deleteSession() {
   cookieStore.delete('session')
 }
 
-// LESSON: For JSON API routes we can't use verifySession() — its redirect() throws,
-// which a route's try/catch would swallow into a misleading 500. This variant just
-// returns the session payload (or null) so the route can respond with a clean 401.
+// Reads the session cookie and returns its payload, or null when it is absent,
+// tampered with, or expired. Most routes want requireAdmin() below instead.
 export async function getSession() {
   const cookieStore = await cookies()
   const cookie = cookieStore.get('session')?.value
   return decrypt(cookie)
 }
 
-// Called by middleware/pages to check if user is logged in
-export async function verifySession() {
-  const cookieStore = await cookies()
-  const cookie = cookieStore.get('session')?.value
-  const payload = await decrypt(cookie)
-
-  if (!payload) {
-    redirect('/admin/login')
+// LESSON: The guard every admin API route should use. It returns a response to
+// send back (401) or null to continue.
+//
+// The earlier version of this called redirect('/admin/login'), which works on a
+// page but not in a route handler: redirect() throws a special NEXT_REDIRECT
+// error, and a route's `catch (error)` swallowed it into a 500 with a message
+// like "Failed to update tutor". The browser saw a server error instead of
+// "your session expired", so the admin panel showed nothing at all and the
+// edit was lost. Returning a real 401 lets the client react properly.
+export async function requireAdmin(): Promise<NextResponse | null> {
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  return { isAdmin: true }
+  return null
 }

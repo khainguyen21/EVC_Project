@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
 import { touchScheduleTimestamp } from '@/lib/touchSettings'
-import { verifySession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string, scheduleId: string }> }
 ) {
   try {
-    await verifySession()
+    const unauthorized = await requireAdmin()
+    if (unauthorized) return unauthorized
     const { scheduleId: scheduleIdStr } = await params;
     const scheduleId = parseInt(scheduleIdStr);
     

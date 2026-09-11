@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/client";
 import { z } from "zod";
 import { touchScheduleTimestamp } from "@/lib/touchSettings";
-import { verifySession } from "@/lib/session";
+import { requireAdmin } from "@/lib/session";
 import { formatTime } from "@/utils/formatTime";
 import { sortSchedules } from "@/utils/sortSchedules";
 
@@ -53,7 +53,8 @@ export async function GET(request: Request) {
 
 export async function DELETE() {
   try {
-    await verifySession();
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
     // Subjects and schedules cascade-delete via the Prisma schema onDelete: Cascade
     const { count } = await prisma.tutor.deleteMany({});
     await touchScheduleTimestamp();
@@ -69,7 +70,8 @@ export async function DELETE() {
 
 export async function POST(request: Request) {
   try {
-    await verifySession();
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
     const body = await request.json();
     const validation = createTutorSchema.safeParse(body);
 

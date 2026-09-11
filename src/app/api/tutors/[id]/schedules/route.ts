@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
 import { touchScheduleTimestamp } from '@/lib/touchSettings'
-import { verifySession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 import { toMinutes } from '@/utils/availability'
 
 export async function POST(
@@ -9,7 +9,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await verifySession()
+    const unauthorized = await requireAdmin()
+    if (unauthorized) return unauthorized
     const { id: idStr } = await params;
     const tutorId = parseInt(idStr);
     
