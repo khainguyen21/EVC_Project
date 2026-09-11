@@ -3,6 +3,18 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+// Falling back to DATABASE_URL keeps `prisma generate` working during a build
+// that has no DIRECT_URL, but if that URL is the transaction pooler then
+// `prisma migrate` will hang rather than fail — so say so out loud.
+if (!process.env["DIRECT_URL"]) {
+  console.warn(
+    "[prisma.config] DIRECT_URL is not set; falling back to DATABASE_URL. " +
+      "If that points at Supabase's transaction pooler (port 6543), " +
+      "`prisma migrate` will hang instead of failing. Set DIRECT_URL to the " +
+      "same database on port 5432 — see .env.example.",
+  );
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {

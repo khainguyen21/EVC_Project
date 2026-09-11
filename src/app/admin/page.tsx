@@ -1,7 +1,28 @@
 import { logout } from '@/app/actions/auth'
-import { LogOut, ArrowRight, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
+import { LogOut, ArrowRight, ShieldCheck, AlertTriangle, CalendarDays } from 'lucide-react'
+import { getActiveTermSafe } from '@/lib/activeTerm'
+import { getCampusNow } from '@/utils/availability'
+import { formatTermDate, getTermLifecycle } from '@/utils/term'
 
-export default function AdminDashboardPage() {
+// The admin must always see the real current state — never a build-time
+// snapshot of which term is active.
+export const dynamic = 'force-dynamic'
+
+export default async function AdminDashboardPage() {
+  // Surfaced here because this is the first page after login: if the active
+  // term has lapsed, students are seeing "Semester Over" right now.
+  const term = await getActiveTermSafe()
+  const lifecycle = term ? getTermLifecycle(term, getCampusNow().date) : null
+  const termAlert =
+    !term
+      ? 'No term is active, so the homepage banner has no dates and closed days are not applied.'
+      : lifecycle === 'ended'
+        ? `${term.name} ended on ${formatTermDate(term.endDate)}. Students see “Semester Over” and live availability is switched off.`
+        : lifecycle === 'upcoming'
+          ? `${term.name} starts ${formatTermDate(term.startDate)}. Until then students see “Not Yet In Session”.`
+          : null
+
   return (
     <div style={{ animation: 'fadeIn 0.5s ease' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' }}>
@@ -39,6 +60,30 @@ export default function AdminDashboardPage() {
         </form>
       </div>
 
+      {termAlert && (
+        <Link
+          href="/admin/terms"
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            padding: '16px 20px',
+            marginBottom: '24px',
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '14px',
+            color: '#991b1b',
+            textDecoration: 'none',
+            lineHeight: 1.6,
+          }}
+        >
+          <AlertTriangle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <span>
+            {termAlert} <strong style={{ textDecoration: 'underline' }}>Manage terms →</strong>
+          </span>
+        </Link>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
         {/* Welcome Card */}
         <div style={{ padding: "32px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "24px", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.05)", position: 'relative', overflow: 'hidden' }}>
@@ -51,8 +96,14 @@ export default function AdminDashboardPage() {
               System Status
             </h3>
           </div>
-          <p style={{ color: "#475569", lineHeight: "1.6", marginBottom: "24px" }}>
+          <p style={{ color: "#475569", lineHeight: "1.6", marginBottom: "16px" }}>
             The scheduling system is running normally. You have full access to manage staff, assign subjects, and update the weekly schedule.
+          </p>
+          <p style={{ display: 'flex', alignItems: 'center', gap: '8px', color: "#475569", marginBottom: "24px" }}>
+            <CalendarDays size={16} />
+            {term && lifecycle === 'current'
+              ? `Current term: ${term.name} (through ${formatTermDate(term.endDate)})`
+              : 'No term is currently running.'}
           </p>
         </div>
 
@@ -66,10 +117,10 @@ export default function AdminDashboardPage() {
               Ready to add a new tutor or update an existing schedule? Head over to the Staff Management section.
             </p>
           </div>
-          <a href="/admin/tutors" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: 'white', color: '#059669', borderRadius: '12px', fontWeight: '600', textDecoration: 'none', width: 'fit-content', transition: 'all 0.2s' }}>
+          <Link href="/admin/tutors" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: 'white', color: '#059669', borderRadius: '12px', fontWeight: '600', textDecoration: 'none', width: 'fit-content', transition: 'all 0.2s' }}>
             Manage Staff
             <ArrowRight size={18} />
-          </a>
+          </Link>
         </div>
       </div>
     </div>

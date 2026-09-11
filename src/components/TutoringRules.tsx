@@ -1,12 +1,12 @@
-"use client";
-
+import type { Term } from "@/types";
 import InfoSection from "./InfoSection";
-import { useActiveTerm } from "@/hooks/useActiveTerm";
 
-const TutoringRules = () => {
-  // Heading follows the active term so it can't go stale between semesters.
-  const { term } = useActiveTerm();
+interface Props {
+  /** Active term, read on the server; null when none is configured. */
+  term: Term | null;
+}
 
+const TutoringRules = ({ term }: Props) => {
   return (
     <InfoSection
       title="General Information & MSRC (Room MS-112) Rules"

@@ -28,10 +28,14 @@ export function toIsoDate(date: Date): string {
 export const isoDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
-  .refine(
-    (s) => toIsoDate(new Date(`${s}T00:00:00Z`)) === s,
-    "Invalid calendar date",
-  );
+  .refine((s) => {
+    // An out-of-range month or day (e.g. "2026-13-01") parses to an Invalid
+    // Date, and toISOString() throws on it. Zod propagates that out of
+    // safeParse, which would turn a bad request into a 500 — so check the
+    // time value before formatting.
+    const parsed = new Date(`${s}T00:00:00Z`);
+    return !Number.isNaN(parsed.getTime()) && toIsoDate(parsed) === s;
+  }, "Invalid calendar date");
 
 export function serializeHoliday(holiday: DbHoliday): Holiday {
   return { id: holiday.id, name: holiday.name, date: toIsoDate(holiday.date) };

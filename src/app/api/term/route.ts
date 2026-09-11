@@ -1,17 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/client";
-import { serializeTerm } from "@/lib/terms";
+import { getActiveTerm } from "@/lib/activeTerm";
 
-// Public: the active academic term. Drives the homepage banner and decides
-// whether "Available Now" runs today (holidays, semester breaks).
+// Public: the active academic term. Pages read the term server-side via
+// getActiveTerm(); this endpoint exposes the same data over HTTP.
 export async function GET() {
   try {
-    const term = await prisma.term.findFirst({
-      where: { isActive: true },
-      include: { holidays: true },
-    });
-
-    return NextResponse.json({ term: term ? serializeTerm(term) : null });
+    return NextResponse.json({ term: await getActiveTerm() });
   } catch (error) {
     console.error("[GET /api/term]", error);
     return NextResponse.json(

@@ -4,12 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import { type Term } from "@/types";
 import { useToast } from "@/components/admin/ToastProvider";
 import ConfirmModal from "@/components/admin/ConfirmModal";
-import { formatTermDate } from "@/utils/term";
+import { formatTermDate, getTermLifecycle } from "@/utils/term";
+import { useCampusNow } from "@/hooks/useCampusNow";
 import {
+  AlertTriangle,
   CalendarDays,
   CalendarOff,
   CheckCircle2,
   Plus,
+  RefreshCw,
   Trash2,
   X,
 } from "lucide-react";
@@ -36,10 +39,52 @@ const focusInput = (e: React.FocusEvent<HTMLInputElement>) =>
 const blurInput = (e: React.FocusEvent<HTMLInputElement>) =>
   (e.target.style.borderColor = "#e2e8f0");
 
+const NOTICE_TONES = {
+  danger: { bg: "#fef2f2", border: "#fca5a5", color: "#991b1b" },
+  info: { bg: "#eff6ff", border: "#bfdbfe", color: "#1e40af" },
+} as const;
+
+function Notice({
+  tone,
+  icon,
+  children,
+}: {
+  tone: keyof typeof NOTICE_TONES;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const t = NOTICE_TONES[tone];
+  return (
+    <div
+      role="status"
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "12px",
+        padding: "16px 20px",
+        marginBottom: "24px",
+        background: t.bg,
+        border: `1px solid ${t.border}`,
+        borderRadius: "14px",
+        color: t.color,
+        lineHeight: 1.6,
+      }}
+    >
+      <span style={{ flexShrink: 0, marginTop: "2px" }}>{icon}</span>
+      <span>{children}</span>
+    </div>
+  );
+}
+
 export default function ManageTermsPage() {
   const { showToast } = useToast();
   const [terms, setTerms] = useState<Term[]>([]);
   const [loading, setLoading] = useState(true);
+  // Tracked separately from `terms`: a failed load must never be mistaken for
+  // "there are no terms yet", which would arm the auto-activate rule below.
+  const [loadError, setLoadError] = useState(false);
+  // Campus today, for warning when the active term has already ended.
+  const now = useCampusNow();
 
   // Confirm modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -61,14 +106,20 @@ export default function ManageTermsPage() {
   >({});
 
   const fetchTerms = useCallback(() => {
+    setLoadError(false);
     fetch("/api/terms")
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`GET /api/terms returned ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
-        setTerms(data.terms || []);
+        setTerms(data.terms ?? []);
         setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching terms:", error);
+        // Deliberately leaves `terms` untouched — see loadError above.
+        setLoadError(true);
         setLoading(false);
       });
   }, []);
@@ -76,6 +127,15 @@ export default function ManageTermsPage() {
   useEffect(() => {
     fetchTerms();
   }, [fetchTerms]);
+
+  // "This is the first term ever" is only safe to infer from a list that
+  // actually loaded; on a failed request the array is empty for the wrong
+  // reason, and auto-activating would deactivate the real term.
+  const isFirstTerm = !loading && !loadError && terms.length === 0;
+
+  const activeTerm = terms.find((t) => t.isActive) ?? null;
+  const activeLifecycle =
+    now && activeTerm ? getTermLifecycle(activeTerm, now.date) : null;
 
   const handleAddTerm = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +150,7 @@ export default function ManageTermsPage() {
           startDate: newStart,
           endDate: newEnd,
           // The very first term becomes active automatically.
-          isActive: newActive || terms.length === 0,
+          isActive: newActive || isFirstTerm,
         }),
       });
 
@@ -284,6 +344,60 @@ export default function ManageTermsPage() {
         </button>
       </div>
 
+      {/* A term nobody rolled forward reads as "Semester Over" to students,
+          and the only place that is visible is here — so say it loudly. */}
+      {activeLifecycle === "ended" && activeTerm && (
+        <Notice tone="danger" icon={<AlertTriangle size={20} />}>
+          <strong>{activeTerm.name} ended on {formatTermDate(activeTerm.endDate)}.</strong>{" "}
+          Students currently see &ldquo;Semester Over&rdquo; and live
+          availability is switched off. Add the next term and set it active to
+          turn the schedule back on.
+        </Notice>
+      )}
+
+      {activeLifecycle === "upcoming" && activeTerm && (
+        <Notice tone="info" icon={<CalendarDays size={20} />}>
+          <strong>{activeTerm.name} has not started yet.</strong> Until{" "}
+          {formatTermDate(activeTerm.startDate)}, students see &ldquo;Not Yet In
+          Session&rdquo; and live availability is switched off.
+        </Notice>
+      )}
+
+      {!loading && !loadError && terms.length > 0 && !activeTerm && (
+        <Notice tone="danger" icon={<AlertTriangle size={20} />}>
+          <strong>No term is active.</strong> The homepage banner has no dates
+          and closed days are not applied. Pick a term below and choose
+          &ldquo;Set Active&rdquo;.
+        </Notice>
+      )}
+
+      {loadError && (
+        <Notice tone="danger" icon={<AlertTriangle size={20} />}>
+          <strong>Could not load terms.</strong> This list may be incomplete, so
+          adding a term right now could change which one is active. Retry before
+          making changes.
+          <button
+            onClick={fetchTerms}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              marginLeft: "12px",
+              padding: "6px 14px",
+              background: "white",
+              color: "#b91c1c",
+              border: "1px solid #fca5a5",
+              borderRadius: "8px",
+              fontWeight: 600,
+              fontSize: "0.85rem",
+              cursor: "pointer",
+            }}
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </Notice>
+      )}
+
       {isAdding && (
         <div
           style={{
@@ -399,8 +513,8 @@ export default function ManageTermsPage() {
             >
               <input
                 type="checkbox"
-                checked={newActive || terms.length === 0}
-                disabled={terms.length === 0}
+                checked={newActive || isFirstTerm}
+                disabled={isFirstTerm}
                 onChange={(e) => setNewActive(e.target.checked)}
               />
               Make this the active term
@@ -429,7 +543,7 @@ export default function ManageTermsPage() {
 
       {loading ? (
         <p style={{ color: "#64748b" }}>Loading terms…</p>
-      ) : terms.length === 0 ? (
+      ) : loadError && terms.length === 0 ? null : terms.length === 0 ? (
         <div
           style={{
             padding: "48px 32px",
@@ -511,6 +625,24 @@ export default function ManageTermsPage() {
                           }}
                         >
                           <CheckCircle2 size={14} /> Active
+                        </span>
+                      )}
+                      {now && getTermLifecycle(term, now.date) !== "current" && (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "4px 12px",
+                            borderRadius: "999px",
+                            background: "#f1f5f9",
+                            color: "#475569",
+                            fontSize: "0.8rem",
+                            fontWeight: "700",
+                          }}
+                        >
+                          {getTermLifecycle(term, now.date) === "ended"
+                            ? "Ended"
+                            : "Not started"}
                         </span>
                       )}
                     </div>

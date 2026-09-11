@@ -33,6 +33,21 @@ export function getCampusStatus(
   return { open: true };
 }
 
+export type TermLifecycle = "upcoming" | "current" | "ended";
+
+/**
+ * Where `todayIso` ("YYYY-MM-DD", campus time) falls relative to a term.
+ *
+ * The admin panel uses this to warn when the active term has ended: the
+ * public site hides live availability outside the term, so a term nobody
+ * rolled forward silently reads as "Semester Over" to students.
+ */
+export function getTermLifecycle(term: Term, todayIso: string): TermLifecycle {
+  if (todayIso < term.startDate) return "upcoming";
+  if (todayIso > term.endDate) return "ended";
+  return "current";
+}
+
 /** 31 → "31st", 2 → "2nd", 11 → "11th" */
 function ordinal(n: number): string {
   const suffixes = ["th", "st", "nd", "rd"];
