@@ -60,16 +60,57 @@ const SUBJECTS = [
 
 /** Searches a student might realistically type, and what should match. */
 const QUERIES = [
+  // Same course, spelled every way a student might type it
   "chem 30a",
   "CHEM 030A",
-  "Chem30A",
+  "Chem 030A",
+  "chem30a",
+  "CHEM-30A",
+  "chem 30A",
+  // Leading zeros, with and without
   "math 71",
+  "MATH 071",
+  "math71",
+  "math 20",
   "MATH 020",
+  // Abbreviation vs full department name
   "comsc 75",
-  "stat c1000",
+  "cs 75",
+  "computer science 75",
+  "bio 21",
+  "biol 21",
+  "biology 21",
   "phys 7b",
-  "biology",
+  "physics 7b",
+  "psych 18",
+  "psychology 18",
+  "acct 1b",
   "accounting 1b",
+  "span 211",
+  "spanish 211",
+  "engr 18",
+  "engineering 18",
+  // Letter-led CSU codes
+  "stat c1000",
+  "STAT C1000",
+  "english c1000",
+  "engl c1000",
+  "psych c1000",
+  // Department only
+  "chemistry",
+  "chem",
+  "math",
+  "mathematics",
+  "biology",
+  "physics",
+  "esl",
+  "vietnamese",
+  "music",
+  "astronomy",
+  // Should find nothing by token, substring fallback must cover these
+  "open computer lab",
+  "calculus",
+  "statistics help",
   "underwater basket weaving",
 ];
 
@@ -104,16 +145,19 @@ function main() {
   console.log("\n" + "=".repeat(78));
   console.log("QUERY -> HOW MANY OF THE 45 SUBJECTS MATCH");
   console.log("=".repeat(78));
+  console.log(`  ${"WHAT A STUDENT TYPES".padEnd(26)}${"TOKEN".padEnd(14)}MATCHES`);
+  console.log("  " + "-".repeat(60));
   for (const query of QUERIES) {
     const parsed = parseQuery(query);
     if (!parsed) {
-      console.log(`\n  "${query}"  ->  unparsed (substring fallback handles it)`);
+      console.log(`  ${query.padEnd(26)}${"-".padEnd(14)}needs substring fallback`);
       continue;
     }
     const hits = SUBJECTS.filter((s) => matchesQuery(parseCourseCodes(s), parsed));
-    console.log(`\n  "${query}"  ->  ${parsed}  (${hits.length} subject strings)`);
-    for (const h of hits.slice(0, 4)) console.log(`       ${h}`);
-    if (hits.length > 4) console.log(`       … and ${hits.length - 4} more`);
+    const note = hits.length === 0 ? "  <-- token parsed but nothing matched" : "";
+    console.log(
+      `  ${query.padEnd(26)}${parsed.padEnd(14)}${hits.length} subject string(s)${note}`,
+    );
   }
 
   console.log("\n" + "=".repeat(78));
