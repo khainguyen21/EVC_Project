@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { type Term, type Tutor, type Day } from "@/types";
 import FilterBar from "@/components/FilterBar";
 import SubjectSection from "@/components/SubjectSection";
@@ -14,7 +14,9 @@ import InfoSection from "@/components/InfoSection";
 import ScrollToTop from "@/components/ScrollToTop";
 import AvailableNowSection from "@/components/AvailableNowSection";
 import { useCampusNow } from "@/hooks/useCampusNow";
+import { useHideOnScroll } from "@/hooks/useHideOnScroll";
 import { formatTermDate, getCampusStatus } from "@/utils/term";
+import { matchesQuery, parseCourseCodes, parseQuery } from "@/utils/courseCodes";
 
 interface Props {
   /** Read on the server so the banner dates are in the first paint. */
@@ -23,6 +25,7 @@ interface Props {
 
 const HomePage = ({ term }: Props) => {
   const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [courseFilter, setCourseFilter] = useState("");
   const [dayFilter, setDayFilter] = useState<Day>("");
   const [loading, setLoading] = useState(true);
@@ -36,6 +39,11 @@ const HomePage = ({ term }: Props) => {
   const campusStatus = now ? getCampusStatus(now, term) : undefined;
   // Live "Now" badges only when drop-in tutoring is actually running today.
   const liveNow = campusStatus?.open ? now : undefined;
+  // On phones the pinned bar covers too much of the list, so it tucks away
+  // while scrolling down and returns on the first scroll up.
+  const filterBarRef = useRef<HTMLDivElement>(null);
+  const filterAnchorRef = useRef<HTMLDivElement>(null);
+  const filterBarHidden = useHideOnScroll(filterBarRef, filterAnchorRef);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -96,6 +104,81 @@ const HomePage = ({ term }: Props) => {
   // Sort fields alphabetically
   const sortedFieldsToShow = sortSubjectAlphabetically(fieldsToShow);
 
+  // One entry per distinct subject string, rebuilt only when tutors change.
+  const codesBySubject = useMemo(() => {
+    const codes = new Map<string, string[]>();
+    for (const tutor of tutors) {
+      for (const subject of tutor.subjects) {
+        if (!codes.has(subject.name)) {
+          codes.set(subject.name, parseCourseCodes(subject.name));
+        }
+      }
+    }
+    return codes;
+  }, [tutors]);
+
+  const trimmedQuery = searchQuery.trim();
+  const parsedQuery = trimmedQuery ? parseQuery(trimmedQuery) : null;
+  const needle = trimmedQuery.toLowerCase();
+
+  /**
+   * Matching is per section, not per tutor. Many tutors cover several
+   * departments, so a tutor-level match would put someone found by "chem 30a"
+   * under Physics and Mathematics as well, and a student would have no idea
+   * why those headings appeared.
+   *
+   * Two layers within the section: course tokens catch "chem 30a" however it
+   * is spelled, and the raw substring pass catches what the parser cannot
+   * tokenise, such as "Open Computer Lab".
+   */
+  const tutorMatchesInField = (tutor: Tutor, field: string) => {
+    if (!trimmedQuery) return true;
+
+    // Searching a person shows every subject they cover, which is the point.
+    if (tutor.name.toLowerCase().includes(needle)) return true;
+
+    const fieldSubjects = tutor.subjects.filter(
+      (subject) => subject.field === field,
+    );
+
+    if (parsedQuery) {
+      const codes = fieldSubjects.flatMap(
+        (subject) => codesBySubject.get(subject.name) ?? [],
+      );
+      if (matchesQuery(codes, parsedQuery)) return true;
+    }
+
+    return (
+      field.toLowerCase().includes(needle) ||
+      fieldSubjects.some((subject) =>
+        subject.name.toLowerCase().includes(needle),
+      )
+    );
+  };
+
+  // Sections left after every active filter; empty ones are dropped entirely.
+  const visibleSections = sortedFieldsToShow
+    .map((field) => {
+      let list = groupedByField[field];
+      if (dayFilter) {
+        list = list.filter((tutor) =>
+          tutor.schedule.some((slot) => slot.day === dayFilter),
+        );
+      }
+      if (trimmedQuery) {
+        list = list.filter((tutor) => tutorMatchesInField(tutor, field));
+      }
+      return { field, tutors: list };
+    })
+    .filter((section) => section.tutors.length > 0);
+
+  // Counted per person, not per card: one tutor can appear in several fields.
+  const resultCount = new Set(
+    visibleSections.flatMap((section) =>
+      section.tutors.map((tutor) => tutor.id ?? tutor.name),
+    ),
+  ).size;
+
   // Functions to handle state updates
   const scrollToSchedule = () => {
     setTimeout(() => {
@@ -113,8 +196,17 @@ const HomePage = ({ term }: Props) => {
     }, 50);
   };
 
+  // Search and the subject dropdown are two ways to express one filter, so
+  // using either clears the other. Combining them would produce empty results
+  // ("Chemistry" plus "math 71") that a student has no way to explain.
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    if (query) setCourseFilter("");
+  };
+
   const handleCourseChange = (course: string) => {
     setCourseFilter(course);
+    if (course) setSearchQuery("");
     setFiltering(true);
     setTimeout(() => setFiltering(false), 300);
     scrollToSchedule();
@@ -289,11 +381,19 @@ const HomePage = ({ term }: Props) => {
             </p>
           )}
 
-          <div id="filter-section">
+          <div ref={filterAnchorRef} aria-hidden="true" />
+          <div
+            id="filter-section"
+            ref={filterBarRef}
+            className={filterBarHidden ? "filter-section--hidden" : undefined}
+          >
             <FilterBar
+              searchQuery={searchQuery}
               selectedCourse={courseFilter}
               selectedDay={dayFilter}
               subjects={sortSubjectAlphabetically(Object.keys(groupedByField))}
+              resultCount={resultCount}
+              onSearchChange={handleSearchChange}
               onCourseChange={handleCourseChange}
               onDayChange={handleDayChange}
             />
@@ -319,70 +419,16 @@ const HomePage = ({ term }: Props) => {
             </div>
           ) : (
             <section className={filtering ? "schedule filtering" : "schedule"}>
-              {sortedFieldsToShow.length > 0 ? (
-                (() => {
-                  const sections = sortedFieldsToShow.map((field) => {
-                    const tutorsInField = groupedByField[field];
-                    const filteredTutors = dayFilter
-                      ? tutorsInField.filter((tutor) =>
-                          tutor.schedule.some((slot) => slot.day === dayFilter),
-                        )
-                      : tutorsInField;
-
-                    if (filteredTutors.length === 0) {
-                      return null;
-                    }
-
-                    return (
-                      <SubjectSection
-                        key={field}
-                        fieldName={field}
-                        tutors={filteredTutors}
-                        selectedDay={dayFilter || undefined}
-                        now={liveNow}
-                      />
-                    );
-                  });
-
-                  const hasTutors = sections.some(
-                    (section) => section !== null,
-                  );
-
-                  return hasTutors ? (
-                    sections
-                  ) : (
-                    <div className="no-results empty-state">
-                      <svg
-                        className="empty-state-icon"
-                        width="64"
-                        height="64"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-                        />
-                      </svg>
-                      <p>
-                        It looks like no tutors are here for{" "}
-                        <strong style={{ color: "var(--primary-color)" }}>
-                          {courseFilter || "these filters"}
-                        </strong>
-                        {dayFilter && ` on `}
-                        {dayFilter && (
-                          <strong style={{ color: "var(--primary-color)" }}>
-                            {dayFilter}
-                          </strong>
-                        )}
-                        . Try {dayFilter ? "another day" : "clearing filters"}!
-                      </p>
-                    </div>
-                  );
-                })()
+              {visibleSections.length > 0 ? (
+                visibleSections.map(({ field, tutors: sectionTutors }) => (
+                  <SubjectSection
+                    key={field}
+                    fieldName={field}
+                    tutors={sectionTutors}
+                    selectedDay={dayFilter || undefined}
+                    now={liveNow}
+                  />
+                ))
               ) : (
                 <div className="no-results empty-state">
                   <svg
@@ -399,16 +445,44 @@ const HomePage = ({ term }: Props) => {
                       strokeLinejoin="round"
                       d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
                     />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 13h6"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6" />
                   </svg>
                   <p>
-                    Sorry, no tutors found for these filters. Try &apos;Clear
-                    Filters&apos; above!
+                    No tutors found for{" "}
+                    <strong style={{ color: "var(--primary-color)" }}>
+                      {trimmedQuery || courseFilter || "these filters"}
+                    </strong>
+                    {dayFilter && (
+                      <>
+                        {" on "}
+                        <strong style={{ color: "var(--primary-color)" }}>
+                          {dayFilter}
+                        </strong>
+                      </>
+                    )}
+                    .
                   </p>
+                  {trimmedQuery ? (
+                    <p
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "var(--text-secondary)",
+                      }}
+                    >
+                      Try a course code like{" "}
+                      <strong>CHEM 30A</strong> or <strong>Math 71</strong>, or
+                      browse by subject above.
+                    </p>
+                  ) : (
+                    <p
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "var(--text-secondary)",
+                      }}
+                    >
+                      Try {dayFilter ? "another day" : "clearing the filters"}.
+                    </p>
+                  )}
                 </div>
               )}
             </section>

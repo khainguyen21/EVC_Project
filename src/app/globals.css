@@ -240,6 +240,22 @@ body {
   position: sticky;
   top: 4px;
   z-index: 999;
+  transition: transform 0.25s ease;
+}
+
+/* Phones only: useHideOnScroll tucks the pinned bar away while the student
+   scrolls down through tutors and brings it back on the first scroll up. The
+   extra 24px clears the bar's shadow and bottom margin so nothing peeks out. */
+@media (max-width: 640px) {
+  #filter-section.filter-section--hidden {
+    transform: translateY(calc(-100% - 24px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #filter-section {
+    transition: none;
+  }
 }
 
 .filter {
@@ -280,6 +296,110 @@ body {
   margin-top: 8px;
 }
 
+/* Search and browse sit side by side on wide screens and stack on narrow ones.
+   Search gets the larger share: it is the primary path, the dropdown is the
+   fallback for students who do not know their course code. */
+.filter__row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+/* Scoped to .filter so these survive the desktop media query further down,
+   which resets every .filter__group to `flex: 1`. */
+.filter .filter__group--search {
+  flex: 2 1 240px;
+}
+
+.filter .filter__group--browse {
+  flex: 1 1 170px;
+}
+
+.filter__search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.filter__search {
+  width: 100%;
+  /* Left pad clears the magnifier, right pad clears the clear button. */
+  padding: 10px 36px 10px 38px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  background: var(--card-background);
+  color: var(--text-primary);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.filter__search::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.filter__search:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18);
+}
+
+/* The native control duplicates the custom clear button below. */
+.filter__search::-webkit-search-cancel-button {
+  display: none;
+}
+
+.filter__search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-secondary);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.filter__search-clear {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: var(--background-secondary);
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filter__search-clear:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.filter__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-color);
+}
+
+.filter__count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
 .day-pills {
   display: flex;
   flex-wrap: wrap;
@@ -297,6 +417,10 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.day-pill__short {
+  display: none;
 }
 
 .day-pill:hover {
@@ -338,6 +462,67 @@ body {
   .filter__note {
     margin-top: 2px;
   }
+
+  .filter__row {
+    gap: 8px;
+  }
+
+  .filter__search {
+    padding: 6px 32px 6px 32px;
+    /* Stay at 16px: iOS Safari zooms the page on focus below that. */
+    font-size: 16px;
+  }
+
+  .filter__search-icon {
+    left: 9px;
+    width: 15px;
+    height: 15px;
+  }
+
+  .filter__search-clear {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* The bar is sticky, so every row costs screen for the whole scroll. Below
+   this width search and browse stack, which is the only extra row added. */
+@media (max-width: 640px) {
+  .filter__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Once the row is a column, flex-basis sizes HEIGHT, so the 240px and 170px
+     above would become row heights. Size to content instead. */
+  .filter .filter__group--search,
+  .filter .filter__group--browse {
+    flex: 0 0 auto;
+  }
+
+  /* Adding the search box made the sticky bar taller, so buy the space back:
+     three-letter days fit on one row instead of two. */
+  .day-pill__full {
+    display: none;
+  }
+
+  .day-pill__short {
+    display: inline;
+  }
+
+  .day-pill {
+    padding: 7px 11px;
+    font-size: 0.85rem;
+  }
+
+  .day-pills {
+    gap: 6px;
+  }
+}
+
+[data-theme="dark"] .filter__search:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.22);
 }
 
 /* ==========================================
@@ -1354,4 +1539,100 @@ body {
   animation: none;
   box-shadow: none;
   opacity: 0.85;
+}
+
+/* ==========================================
+   Filter bar - Desktop single row (min-width: 1157px)
+   The bar stays pinned for the whole scroll, so every pixel of height is
+   taken from the tutor list. On wide screens everything fits on one line:
+   search, subject, days, then the result count and Clear at the end.
+   Kept last in the file so it wins over the stacked desktop rules above.
+   ========================================== */
+@media (min-width: 1157px) {
+  .filter {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  /* The placeholder, "All Courses" and the day names say what each control
+     is, so the labels are hidden visually but still read by screen readers. */
+  .filter__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .filter__row {
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .filter .filter__group--search {
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+
+  .filter .filter__group--browse {
+    flex: 0 1 200px;
+    min-width: 150px;
+  }
+
+  .filter .filter__group--days {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: auto;
+  }
+
+  .filter__search {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .filter__select {
+    padding: 8px 12px;
+  }
+
+  .day-pills {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .day-pill__full {
+    display: none;
+  }
+
+  .day-pill__short {
+    display: inline;
+  }
+
+  .day-pill {
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .filter__footer {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 0 0 0 12px;
+    border-top: none;
+    border-left: 1px solid var(--border-color);
+  }
+
+  .filter__count {
+    white-space: nowrap;
+  }
+
+  .filter__count-query {
+    display: none;
+  }
 }

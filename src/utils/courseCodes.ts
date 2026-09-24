@@ -185,6 +185,8 @@ export function parseQuery(query: string): string | null {
   // leading word is a known department, so letter-led codes such as "C1000"
   // survive intact ("stat c1000" must not become "stat c 1000").
   const spaced = trimmed
+    // Rejoin a detached section letter first: "chem 30-a" -> "chem 30a".
+    .replace(/(\d)[\s_-]+([A-Za-z])$/, "$1$2")
     .replace(/[-_]+/g, " ")
     .replace(/^([A-Za-z]+)(\d)/, (match, word: string, digit: string) =>
       PREFIX_ALIASES[word.toUpperCase()] ? `${word} ${digit}` : match,
