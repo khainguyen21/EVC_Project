@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Users,
-  Mail,
   CalendarDays,
   ArrowLeft,
   Inbox,
@@ -40,7 +39,6 @@ export default function Sidebar() {
       icon: Inbox,
       badge: pending,
     },
-    { name: "Import Tutors", href: "/admin/import", icon: Mail },
     { name: "Terms & Holidays", href: "/admin/terms", icon: CalendarDays },
   ];
 
