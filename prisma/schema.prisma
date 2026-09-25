@@ -54,13 +54,17 @@ model SiteSettings {
 // An academic term. The active one drives the homepage banner and decides
 // whether "Available Now" should run at all (no shifts outside the term).
 model Term {
-  id        Int       @id @default(autoincrement())
-  name      String    // e.g. "Fall 2026"
-  startDate DateTime  @db.Date
-  endDate   DateTime  @db.Date
-  isActive  Boolean   @default(false)
-  holidays  Holiday[]
-  createdAt DateTime  @default(now())
+  id               Int                      @id @default(autoincrement())
+  name             String // e.g. "Fall 2026"
+  startDate        DateTime                 @db.Date
+  endDate          DateTime                 @db.Date
+  isActive         Boolean                  @default(false)
+  // Set while the tutor availability form is open for this term; the code is
+  // the key in the link William emails. Null means the form is closed.
+  availabilityCode String?                  @unique
+  holidays         Holiday[]
+  submissions      AvailabilitySubmission[]
+  createdAt        DateTime                 @default(now())
 }
 
 // A day inside a term when campus tutoring is closed (Labor Day, Thanksgiving, ...).
@@ -72,4 +76,38 @@ model Holiday {
   termId Int
 
   @@unique([termId, date])
+}
+
+// A tutor's availability for a term, sent through the public form (or entered
+// by an admin). It is what the tutor can do, not their schedule: approving one
+// only records William's decision.
+model AvailabilitySubmission {
+  id            Int       @id @default(autoincrement())
+  term          Term      @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId        Int
+  name          String
+  studentId     String // 7 digits, kept as text for leading zeros
+  email         String
+  units         Float
+  trainingDone  Boolean // finished the II 90 online tutor training
+  subjectsRaw   String // exactly as the tutor typed it
+  subjectCodes  String[] // parsed by utils/courseCodes, e.g. "COMSC-75"
+  availability  Json // [{ day, start, end, allDay }]
+  notes         String?
+  status        String    @default("pending") // "pending" | "approved" | "declined"
+  resubmittedAt DateTime? // last time the tutor replaced an earlier submission
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([termId, studentId])
+}
+
+// One row per public form submission attempt, for per-IP rate limiting. An
+// in-memory counter would reset with every serverless instance on Vercel.
+model SubmissionAttempt {
+  id        Int      @id @default(autoincrement())
+  ipHash    String
+  createdAt DateTime @default(now())
+
+  @@index([ipHash, createdAt])
 }

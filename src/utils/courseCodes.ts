@@ -184,6 +184,11 @@ export function parseCourseCodes(raw: string): string[] {
   return [...codes];
 }
 
+/** "CHEM-*" (any CHEM course) reads better as "CHEM (any)" on a chip. */
+export function formatCourseCode(code: string): string {
+  return code.endsWith("-*") ? `${code.slice(0, -2)} (any)` : code;
+}
+
 /**
  * Normalizes what a student typed into the same token shape.
  * "chem 30a" -> "CHEM-30A", "math71" -> "MATH-71", "MATH" -> "MATH".

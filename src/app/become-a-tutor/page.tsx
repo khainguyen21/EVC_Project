@@ -118,6 +118,17 @@ const BecomeATutorPage = () => {
               color: "var(--text-secondary)",
             }}
           >
+            <strong>Already a tutor?</strong> Use the availability link William
+            emails before each term to send your subjects and hours.
+          </p>
+
+          <p
+            style={{
+              marginTop: "12px",
+              fontSize: "0.95rem",
+              color: "var(--text-secondary)",
+            }}
+          >
             <strong>Interested?</strong> Email the Tutoring Coordinator at{" "}
             <a
               href="mailto:Sarai.Minjares@evc.edu"
