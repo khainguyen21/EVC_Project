@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import type { Submission } from "@/types";
 import { formatCourseCode, parseCourseCodes } from "@/utils/courseCodes";
@@ -30,7 +30,10 @@ export interface AvailabilityFormProps {
   initial?: Submission;
   /** The student ID is how resubmissions find a row, so edits cannot change it. */
   lockStudentId?: boolean;
-  /** Public mode adds the honeypot field bots fill in and people never see. */
+  /**
+   * Public mode adds the honeypot field bots fill in and people never see, and
+   * asks the tutor to check their student ID before sending.
+   */
   publicForm?: boolean;
   submitLabel: string;
   /** Throw an Error to show its message above the button. */
@@ -78,6 +81,14 @@ export default function AvailabilityForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // A resubmission is matched by student ID, so a typo files the form under
+  // the wrong person. Tutors see their ID and email once more before sending.
+  const [toConfirm, setToConfirm] = useState<SubmissionInput | null>(null);
+  const confirmDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (toConfirm) confirmDialog.current?.showModal();
+  }, [toConfirm]);
 
   // Messages describe the last submit attempt, so editing a field clears its
   // own. Row messages are keyed by position, which shifts when a row is
@@ -127,6 +138,19 @@ export default function AvailabilityForm({
     });
   };
 
+  const send = async (input: SubmissionInput) => {
+    setSubmitting(true);
+    try {
+      await onSubmit(input, honeypot);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Something went wrong.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
@@ -169,16 +193,11 @@ export default function AvailabilityForm({
       return;
     }
 
-    setSubmitting(true);
-    try {
-      await onSubmit(result.data, honeypot);
-    } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : "Something went wrong.",
-      );
-    } finally {
-      setSubmitting(false);
+    if (publicForm) {
+      setToConfirm(result.data);
+      return;
     }
+    await send(result.data);
   };
 
   const fieldError = (key: string) =>
@@ -476,6 +495,48 @@ export default function AvailabilityForm({
       <button type="submit" className="avail-form__submit" disabled={submitting}>
         {submitting ? "Saving…" : submitLabel}
       </button>
+
+      {toConfirm && (
+        <dialog
+          ref={confirmDialog}
+          className="avail-confirm"
+          aria-labelledby="avail-confirm-title"
+          onClose={() => setToConfirm(null)}
+        >
+          <h3 id="avail-confirm-title" className="avail-confirm__title">
+            Is your student ID right?
+          </h3>
+          <p className="avail-confirm__text">
+            William matches this form to you by your student ID, so a typo can
+            file it under the wrong person.
+          </p>
+          <dl className="avail-confirm__details">
+            <dt>Student ID</dt>
+            <dd className="avail-confirm__id">{toConfirm.studentId}</dd>
+            <dt>Email</dt>
+            <dd>{toConfirm.email}</dd>
+          </dl>
+          <div className="avail-confirm__actions">
+            <button
+              type="button"
+              className="avail-confirm__back"
+              onClick={() => confirmDialog.current?.close()}
+            >
+              No, go back
+            </button>
+            <button
+              type="button"
+              className="avail-form__submit"
+              onClick={() => {
+                confirmDialog.current?.close();
+                send(toConfirm);
+              }}
+            >
+              Yes, send it
+            </button>
+          </div>
+        </dialog>
+      )}
     </form>
   );
 }

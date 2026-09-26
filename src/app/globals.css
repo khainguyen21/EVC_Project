@@ -1861,6 +1861,82 @@ body {
   overflow: hidden;
 }
 
+/* Last look at the student ID before the public form sends */
+.avail-confirm {
+  width: min(420px, calc(100vw - 32px));
+  margin: auto;
+  padding: 28px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--card-background);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-xl);
+}
+
+.avail-confirm::backdrop {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.avail-confirm__title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+}
+
+.avail-confirm__text {
+  margin: 0 0 18px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.avail-confirm__details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  align-items: baseline;
+  margin: 0 0 24px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--background);
+}
+
+.avail-confirm__details dt {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.avail-confirm__details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.avail-confirm__id {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.avail-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.avail-confirm__back {
+  padding: 11px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--card-background);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* Weekly availability grid (admin inbox) */
 .week-grid {
   display: grid;
