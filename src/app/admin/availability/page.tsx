@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -96,7 +96,9 @@ export default function AvailabilityInboxPage() {
   const [termId, setTermId] = useState<number | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const [loadError, setLoadError] = useState<"terms" | "submissions" | null>(null);
+  const [termsAttempt, setTermsAttempt] = useState(0);
+  const [submissionsVersion, setSubmissionsVersion] = useState(0);
 
   const [statusFilter, setStatusFilter] = useState<SubmissionStatus | "all">("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -108,36 +110,61 @@ export default function AvailabilityInboxPage() {
   } | null>(null);
 
   useEffect(() => {
+    let stale = false;
     adminFetch<{ terms: AdminTerm[] }>("/api/terms")
       .then(({ terms }) => {
+        if (stale) return;
         setTerms(terms);
         setTermId(pickDefaultTerm(terms)?.id ?? null);
+        setLoadError(null);
         if (terms.length === 0) setLoading(false);
       })
       .catch((error) => {
+        if (stale) return;
         showToast(errorMessage(error, "Could not load terms."), "error");
-        setLoadError(true);
+        setLoadError("terms");
         setLoading(false);
       });
-  }, [showToast]);
+    return () => {
+      stale = true;
+    };
+  }, [showToast, termsAttempt]);
 
-  const fetchSubmissions = useCallback(() => {
+  // A response for a term that is no longer selected, or from before a later
+  // reload, is dropped: otherwise one term's rows could show under another's
+  // name, and Approve or Delete would act on them.
+  useEffect(() => {
     if (termId === null) return;
+    let stale = false;
     adminFetch<{ submissions: Submission[] }>(`/api/submissions?termId=${termId}`)
       .then(({ submissions }) => {
+        if (stale) return;
         setSubmissions(submissions);
-        setLoadError(false);
+        setLoadError(null);
       })
       .catch((error) => {
+        if (stale) return;
         showToast(errorMessage(error, "Could not load submissions."), "error");
-        setLoadError(true);
+        setLoadError("submissions");
       })
-      .finally(() => setLoading(false));
-  }, [termId, showToast]);
+      .finally(() => {
+        if (!stale) setLoading(false);
+      });
+    return () => {
+      stale = true;
+    };
+  }, [termId, submissionsVersion, showToast]);
 
-  useEffect(() => {
-    fetchSubmissions();
-  }, [fetchSubmissions]);
+  const reloadSubmissions = () => setSubmissionsVersion((v) => v + 1);
+
+  const retryLoad = () => {
+    setLoading(true);
+    if (loadError === "terms") {
+      setTermsAttempt((n) => n + 1);
+    } else {
+      reloadSubmissions();
+    }
+  };
 
   const term = terms.find((t) => t.id === termId) ?? null;
 
@@ -153,7 +180,7 @@ export default function AvailabilityInboxPage() {
       : submissions.filter((s) => s.status === statusFilter);
 
   const afterChange = (message: string) => {
-    fetchSubmissions();
+    reloadSubmissions();
     announceSubmissionsChanged();
     showToast(message, "success");
   };
@@ -301,6 +328,9 @@ export default function AvailabilityInboxPage() {
             value={termId ?? ""}
             onChange={(e) => {
               setTermId(Number(e.target.value));
+              setSubmissions([]);
+              setLoading(true);
+              setLoadError(null);
               setExpandedId(null);
               setEditingId(null);
               setIsAdding(false);
@@ -382,8 +412,12 @@ export default function AvailabilityInboxPage() {
           }}
         >
           <AlertTriangle size={20} />
-          <strong>Could not load submissions.</strong>
-          <button onClick={fetchSubmissions} style={buttonStyle("#b91c1c", "#fca5a5")}>
+          <strong>
+            {loadError === "terms"
+              ? "Could not load terms."
+              : "Could not load submissions."}
+          </strong>
+          <button onClick={retryLoad} style={buttonStyle("#b91c1c", "#fca5a5")}>
             <RefreshCw size={14} /> Retry
           </button>
         </div>
