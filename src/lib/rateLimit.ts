@@ -3,11 +3,12 @@ import { createHash } from "node:crypto";
 import { prisma } from "@/lib/client";
 
 const WINDOW_MS = 60 * 60 * 1000;
-const MAX_PER_WINDOW = 10;
+const MAX_PER_WINDOW = 50;
 
 /**
  * Records one public submission attempt and says whether it is allowed:
- * at most 10 per IP per hour.
+ * at most 50 per IP per hour. Tutors on campus Wi-Fi share a few public
+ * addresses, so the limit has to cover a whole room of them.
  *
  * Counted in the database because Vercel runs many short-lived instances and
  * an in-memory counter would reset between them. IPs are hashed with the
