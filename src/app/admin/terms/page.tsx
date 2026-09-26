@@ -276,7 +276,7 @@ export default function ManageTermsPage() {
 
   const handleCloseForm = (term: AdminTerm) =>
     setConfirmModal({
-      message: `Close the availability form for ${term.name}? The link stops working. The ${term.submissionCount} submission${term.submissionCount === 1 ? "" : "s"} already received are kept.`,
+      message: `Close the availability form for ${term.name}? The link stops working. The ${term.submissionCount} submission${term.submissionCount === 1 ? " already received is" : "s already received are"} kept.`,
       confirmLabel: "Yes, close it",
       icon: "🔒",
       onConfirm: async () => {
