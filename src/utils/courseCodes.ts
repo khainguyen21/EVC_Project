@@ -119,12 +119,23 @@ function expandNumbers(chunk: string): string[] {
   return single ? [single] : [];
 }
 
-/** Splits on commas and whitespace but keeps "020-025" and "066/67" intact. */
+/**
+ * Splits on commas and whitespace but keeps "020-025" and "066/67" intact.
+ * A department joined to its number by a hyphen ("COMSC-075", as many stored
+ * subject names are written) is split in two; only a known department is, so
+ * a range's hyphen is never touched.
+ */
 function tokenize(raw: string): string[] {
   return raw
     .split(/[,;]|\s+/)
     .map((t) => t.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .flatMap((t) => {
+      const joined = /^([A-Za-z]+)-(\S+)$/.exec(t);
+      return joined && PREFIX_ALIASES[joined[1].toUpperCase()]
+        ? [joined[1], joined[2]]
+        : [t];
+    });
 }
 
 export function parseCourseCodes(raw: string): string[] {
@@ -171,6 +182,11 @@ export function parseCourseCodes(raw: string): string[] {
   for (const prefix of barePrefixes) codes.add(`${prefix}-*`);
 
   return [...codes];
+}
+
+/** "CHEM-*" (any CHEM course) reads better as "CHEM (any)" on a chip. */
+export function formatCourseCode(code: string): string {
+  return code.endsWith("-*") ? `${code.slice(0, -2)} (any)` : code;
 }
 
 /**

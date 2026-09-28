@@ -2,21 +2,43 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Users,
-  Mail,
   CalendarDays,
   ArrowLeft,
+  Inbox,
 } from "lucide-react";
+import { SUBMISSIONS_CHANGED } from "@/lib/submissionEvents";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [pending, setPending] = useState(0);
+
+  // Pending availability submissions, refreshed on navigation and whenever
+  // the inbox changes one. A failure just hides the badge.
+  useEffect(() => {
+    if (pathname === "/admin/login") return;
+    const load = () =>
+      fetch("/api/submissions/pending")
+        .then((res) => (res.ok ? res.json() : { pending: 0 }))
+        .then((data) => setPending(data.pending ?? 0))
+        .catch(() => setPending(0));
+    load();
+    window.addEventListener(SUBMISSIONS_CHANGED, load);
+    return () => window.removeEventListener(SUBMISSIONS_CHANGED, load);
+  }, [pathname]);
 
   const navItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Manage Staff", href: "/admin/tutors", icon: Users },
-    { name: "Import Tutors", href: "/admin/import", icon: Mail },
+    {
+      name: "Tutor Availability",
+      href: "/admin/availability",
+      icon: Inbox,
+      badge: pending,
+    },
     { name: "Terms & Holidays", href: "/admin/terms", icon: CalendarDays },
   ];
 
@@ -101,6 +123,24 @@ export default function Sidebar() {
             >
               <Icon size={20} />
               {item.name}
+              {"badge" in item && item.badge ? (
+                <span
+                  title={`${item.badge} pending`}
+                  style={{
+                    marginLeft: "auto",
+                    minWidth: "22px",
+                    padding: "2px 7px",
+                    borderRadius: "999px",
+                    background: "#f59e0b",
+                    color: "white",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    textAlign: "center",
+                  }}
+                >
+                  {item.badge}
+                </span>
+              ) : null}
             </Link>
           );
         })}

@@ -6,9 +6,18 @@ interface Props {
   message: string
   onConfirm: () => void
   onCancel: () => void
+  // Defaults suit a delete; other confirmations (closing a form) name their own action.
+  confirmLabel?: string
+  icon?: string
 }
 
-export default function ConfirmModal({ message, onConfirm, onCancel }: Props) {
+export default function ConfirmModal({
+  message,
+  onConfirm,
+  onCancel,
+  confirmLabel = 'Yes, delete it',
+  icon = '🗑️',
+}: Props) {
   const cancelRef = useRef<HTMLButtonElement>(null)
 
   // Focus the Cancel button by default so accidental Enter key doesn't confirm
@@ -71,7 +80,7 @@ export default function ConfirmModal({ message, onConfirm, onCancel }: Props) {
           fontSize: '1.4rem',
           marginBottom: '16px',
         }}>
-          🗑️
+          {icon}
         </div>
 
         <h3 style={{
@@ -122,7 +131,7 @@ export default function ConfirmModal({ message, onConfirm, onCancel }: Props) {
               cursor: 'pointer',
             }}
           >
-            Yes, delete it
+            {confirmLabel}
           </button>
         </div>
       </div>

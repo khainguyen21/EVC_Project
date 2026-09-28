@@ -1,5 +1,6 @@
 import type { Term } from "@/types";
 import InfoSection from "./InfoSection";
+import { groupedCenterHours } from "@/utils/centerHours";
 
 interface Props {
   /** Active term, read on the server; null when none is configured. */
@@ -33,15 +34,11 @@ const TutoringRules = ({ term }: Props) => {
           </h3>
 
           <ul className="info-section__list">
-            <li className="info-section__list-item">
-              <strong>Monday:</strong> 9:00 am – 6:00 pm
-            </li>
-            <li className="info-section__list-item">
-              <strong>Tuesday - Thursday:</strong> 9:00 am – 8:00 pm
-            </li>
-            <li className="info-section__list-item">
-              <strong>Friday:</strong> 9:00 am – 5:00 pm
-            </li>
+            {groupedCenterHours().map(({ label, hours }) => (
+              <li key={label} className="info-section__list-item">
+                <strong>{label}:</strong> {hours}
+              </li>
+            ))}
             <li className="info-section__list-item">
               <strong>Saturday, Sunday:</strong> CLOSED
             </li>

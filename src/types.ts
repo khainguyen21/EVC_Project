@@ -42,3 +42,28 @@ export interface Term {
     isActive: boolean,
     holidays: Holiday[]
 }
+// What the admin Terms page sees: a Term plus the private availability-form
+// state. Kept out of Term so the public /api/term never carries the code.
+export interface AdminTerm extends Term {
+    availabilityCode: string | null,
+    submissionCount: number
+}
+
+export interface Submission {
+    id: number,
+    termId: number,
+    name: string,
+    studentId: string,
+    email: string,
+    units: number,
+    trainingDone: boolean,
+    subjectsRaw: string,
+    subjectCodes: string[],
+    availability: { day: Day, allDay: boolean, start: string, end: string }[],
+    notes: string | null,
+    status: 'pending' | 'approved' | 'declined',
+    resubmittedAt: string | null,
+    createdAt: string,
+    updatedAt: string,
+    flags: ('under-units' | 'subjects-need-review')[]
+}

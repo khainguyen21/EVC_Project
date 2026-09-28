@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/client";
 import { getSession } from "@/lib/session";
 import { isoDateSchema, serializeTerm } from "@/lib/terms";
+import type { AdminTerm } from "@/types";
 
 const createTermSchema = z
   .object({
@@ -25,11 +26,18 @@ export async function GET() {
     }
 
     const terms = await prisma.term.findMany({
-      include: { holidays: true },
+      include: { holidays: true, _count: { select: { submissions: true } } },
       orderBy: { startDate: "desc" },
     });
 
-    return NextResponse.json({ terms: terms.map(serializeTerm) });
+    // Admin-only fields ride alongside the public shape (see AdminTerm).
+    const adminTerms: AdminTerm[] = terms.map((term) => ({
+      ...serializeTerm(term),
+      availabilityCode: term.availabilityCode,
+      submissionCount: term._count.submissions,
+    }));
+
+    return NextResponse.json({ terms: adminTerms });
   } catch (error) {
     console.error("[GET /api/terms]", error);
     return NextResponse.json(

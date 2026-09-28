@@ -1,16 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { type Term } from "@/types";
+import { type AdminTerm } from "@/types";
 import { useToast } from "@/components/admin/ToastProvider";
 import ConfirmModal from "@/components/admin/ConfirmModal";
 import { formatTermDate, getTermLifecycle } from "@/utils/term";
 import { useCampusNow } from "@/hooks/useCampusNow";
+import { adminFetch, errorMessage } from "@/lib/adminFetch";
+import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import {
   AlertTriangle,
   CalendarDays,
   CalendarOff,
   CheckCircle2,
+  Copy,
+  Link2,
   Plus,
   RefreshCw,
   Trash2,
@@ -78,7 +82,7 @@ function Notice({
 
 export default function ManageTermsPage() {
   const { showToast } = useToast();
-  const [terms, setTerms] = useState<Term[]>([]);
+  const [terms, setTerms] = useState<AdminTerm[]>([]);
   const [loading, setLoading] = useState(true);
   // Tracked separately from `terms`: a failed load must never be mistaken for
   // "there are no terms yet", which would arm the auto-activate rule below.
@@ -90,6 +94,8 @@ export default function ManageTermsPage() {
   const [confirmModal, setConfirmModal] = useState<{
     message: string;
     onConfirm: () => void;
+    confirmLabel?: string;
+    icon?: string;
   } | null>(null);
 
   // Add-term form state
@@ -173,7 +179,7 @@ export default function ManageTermsPage() {
     }
   };
 
-  const handleSetActive = async (term: Term) => {
+  const handleSetActive = async (term: AdminTerm) => {
     try {
       const res = await fetch(`/api/terms/${term.id}`, {
         method: "PUT",
@@ -192,9 +198,9 @@ export default function ManageTermsPage() {
     }
   };
 
-  const handleDeleteTerm = (term: Term) => {
+  const handleDeleteTerm = (term: AdminTerm) => {
     setConfirmModal({
-      message: `This will permanently remove ${term.name} and its ${term.holidays.length} closed day${term.holidays.length === 1 ? "" : "s"}.${term.isActive ? " It is the active term, so the homepage banner will lose its dates until another term is activated." : ""}`,
+      message: `This will permanently remove ${term.name}, its ${term.holidays.length} closed day${term.holidays.length === 1 ? "" : "s"} and its ${term.submissionCount} tutor availability submission${term.submissionCount === 1 ? "" : "s"}.${term.isActive ? " It is the active term, so the homepage banner will lose its dates until another term is activated." : ""}`,
       onConfirm: async () => {
         setConfirmModal(null);
         try {
@@ -203,6 +209,8 @@ export default function ManageTermsPage() {
           });
           if (res.ok) {
             fetchTerms();
+            // Its submissions went with it; the sidebar's pending count may drop.
+            announceSubmissionsChanged();
             showToast("Term deleted.", "success");
           } else {
             const errorData = await res.json();
@@ -215,6 +223,84 @@ export default function ManageTermsPage() {
     });
   };
 
+  const formLink = (code: string) =>
+    `${window.location.origin}/availability?code=${encodeURIComponent(code)}`;
+
+  // The Clipboard API can reject, or wait forever on a permission prompt, so
+  // give it a moment and then report honestly whether the copy happened.
+  const copyToClipboard = (text: string): Promise<boolean> =>
+    Promise.race([
+      navigator.clipboard
+        ? navigator.clipboard.writeText(text).then(
+            () => true,
+            () => false,
+          )
+        : Promise.resolve(false),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1500)),
+    ]);
+
+  // Opening the form and replacing its link are the same request: a new code.
+  const issueFormLink = async (term: AdminTerm) => {
+    const replacing = term.availabilityCode !== null;
+    try {
+      const { availabilityCode } = await adminFetch<{ availabilityCode: string }>(
+        `/api/terms/${term.id}/availability-link`,
+        { method: "POST" },
+      );
+      fetchTerms();
+      const copied = await copyToClipboard(formLink(availabilityCode));
+      const copyNote = copied
+        ? "Link copied; paste it into your email."
+        : "Copy the link below into your email.";
+      showToast(
+        replacing
+          ? `New link made; the old one no longer works. ${copyNote}`
+          : `Form open for ${term.name}. ${copyNote}`,
+        "success",
+      );
+    } catch (error) {
+      showToast(errorMessage(error, "Failed to create the link."), "error");
+    }
+  };
+
+  const handleNewLink = (term: AdminTerm) =>
+    setConfirmModal({
+      message: `Make a new link for ${term.name}? The current link stops working, so anyone who hasn't submitted yet will need the new one.`,
+      confirmLabel: "Yes, make a new link",
+      icon: "🔗",
+      onConfirm: () => {
+        setConfirmModal(null);
+        issueFormLink(term);
+      },
+    });
+
+  const handleCloseForm = (term: AdminTerm) =>
+    setConfirmModal({
+      message: `Close the availability form for ${term.name}? The link stops working. The ${term.submissionCount} submission${term.submissionCount === 1 ? " already received is" : "s already received are"} kept.`,
+      confirmLabel: "Yes, close it",
+      icon: "🔒",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await adminFetch(`/api/terms/${term.id}/availability-link`, {
+            method: "DELETE",
+          });
+          fetchTerms();
+          showToast(`Form closed for ${term.name}.`, "success");
+        } catch (error) {
+          showToast(errorMessage(error, "Failed to close the form."), "error");
+        }
+      },
+    });
+
+  const copyLink = async (code: string) => {
+    if (await copyToClipboard(formLink(code))) {
+      showToast("Link copied.", "success");
+    } else {
+      showToast("Couldn't copy. Select the link and copy it by hand.", "error");
+    }
+  };
+
   const updateDraft = (
     termId: number,
     patch: Partial<{ name: string; date: string }>,
@@ -224,7 +310,7 @@ export default function ManageTermsPage() {
       return { ...prev, [termId]: { ...current, ...patch } };
     });
 
-  const handleAddHoliday = async (term: Term, e: React.FormEvent) => {
+  const handleAddHoliday = async (term: AdminTerm, e: React.FormEvent) => {
     e.preventDefault();
     const draft = holidayDrafts[term.id];
     if (!draft?.name || !draft?.date) return;
@@ -251,7 +337,7 @@ export default function ManageTermsPage() {
     }
   };
 
-  const handleDeleteHoliday = (term: Term, holidayId: number, name: string) => {
+  const handleDeleteHoliday = (term: AdminTerm, holidayId: number, name: string) => {
     setConfirmModal({
       message: `Remove "${name}" from ${term.name}? Tutoring will show as open that day.`,
       onConfirm: async () => {
@@ -281,6 +367,8 @@ export default function ManageTermsPage() {
         <ConfirmModal
           message={confirmModal.message}
           onConfirm={confirmModal.onConfirm}
+          confirmLabel={confirmModal.confirmLabel}
+          icon={confirmModal.icon}
           onCancel={() => setConfirmModal(null)}
         />
       )}
@@ -698,6 +786,133 @@ export default function ManageTermsPage() {
                       <Trash2 size={16} /> Delete
                     </button>
                   </div>
+                </div>
+
+                {/* Tutor availability form */}
+                <div
+                  style={{
+                    borderTop: "1px solid #f1f5f9",
+                    padding: "20px 0",
+                  }}
+                >
+                  <h4
+                    style={{
+                      fontSize: "0.8rem",
+                      fontWeight: "700",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: "#64748b",
+                      margin: "0 0 12px 0",
+                    }}
+                  >
+                    Tutor Availability Form ({term.submissionCount} received)
+                  </h4>
+
+                  {term.availabilityCode ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "10px",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <code
+                        style={{
+                          flex: "1 1 320px",
+                          padding: "10px 14px",
+                          background: "#ecfdf5",
+                          border: "1px solid #a7f3d0",
+                          borderRadius: "12px",
+                          color: "#065f46",
+                          fontSize: "0.9rem",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {formLink(term.availabilityCode)}
+                      </code>
+                      <button
+                        onClick={() => copyLink(term.availabilityCode!)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "10px 18px",
+                          background: "#0f172a",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          fontWeight: "600",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        <Copy size={16} /> Copy Link
+                      </button>
+                      <button
+                        onClick={() => handleNewLink(term)}
+                        style={{
+                          padding: "10px 16px",
+                          background: "white",
+                          color: "#475569",
+                          border: "1px solid #cbd5e1",
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          fontWeight: "600",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        New Link
+                      </button>
+                      <button
+                        onClick={() => handleCloseForm(term)}
+                        style={{
+                          padding: "10px 16px",
+                          background: "white",
+                          color: "#ef4444",
+                          border: "1px solid #fca5a5",
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          fontWeight: "600",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        Close Form
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "16px",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <p style={{ color: "#94a3b8", fontSize: "0.9rem", margin: 0 }}>
+                        Closed. Open it to get a link for your email asking
+                        tutors for their {term.name} availability.
+                      </p>
+                      <button
+                        onClick={() => issueFormLink(term)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "10px 18px",
+                          background: "white",
+                          color: "#059669",
+                          border: "1px solid #a7f3d0",
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          fontWeight: "600",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        <Link2 size={16} /> Open Form
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Closed days */}
