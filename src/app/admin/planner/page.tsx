@@ -17,6 +17,12 @@ import {
   type PlannerTutor,
   type Shift,
 } from "@/utils/planner";
+import {
+  forgetFailedChange,
+  recordChange,
+  restoreChange,
+  type Change,
+} from "@/utils/plannerHistory";
 import type { AvailabilityRow } from "@/utils/submission";
 import { pickDefaultTerm } from "@/utils/term";
 
@@ -34,15 +40,6 @@ const COVERAGE_LEGEND = [
   { label: "At goal", color: "#86efac" },
 ];
 
-/** Changes kept for undo while the page is open. */
-const UNDO_LIMIT = 20;
-
-/** One shift added (before null), changed, or removed (after null). */
-interface Change {
-  before: Shift | null;
-  after: Shift | null;
-}
-
 interface PlannerData {
   tutors: Submission[];
   shifts: Shift[];
@@ -59,11 +56,16 @@ export default function ShiftPlannerPage() {
   const [attempt, setAttempt] = useState(0);
   const [plannerVersion, setPlannerVersion] = useState(0);
   const [history, setHistory] = useState<Change[]>([]);
+  // Every tutor seen since the page opened, so the undo list can still name a
+  // pending tutor who left the board when their last shift was removed.
+  const [names, setNames] = useState(new Map<number, string>());
   const [day, setDay] = useState<Weekday>("Monday");
   const [dragging, setDragging] = useState<number | null>(null);
   // Saves go out one at a time, in order, so a quick move-then-resize can't
   // reach the server backwards.
   const saving = useRef(Promise.resolve());
+  const queuedSaves = useRef(0);
+  const reloadWhenSaved = useRef(false);
 
   // Lights up the dragged tutor's buildings a tick after the drag starts:
   // Chrome cancels a drag whose source changes as it starts. A drop that
@@ -109,6 +111,7 @@ export default function ShiftPlannerPage() {
       .then((planner) => {
         if (stale) return;
         setData(planner);
+        setNames((m) => new Map([...m, ...planner.tutors.map((s) => [s.id, s.name] as const)]));
         setLoadFailed(false);
       })
       .catch((error) => {
@@ -127,12 +130,12 @@ export default function ShiftPlannerPage() {
   const refuse = useCallback((message: string) => showToast(message, "error"), [showToast]);
 
   /**
-   * Shows a change at once, then saves it. If the save fails the board reloads
-   * from the server, so it never shows a shift that isn't really there, and
-   * undo starts over from what the server has.
+   * Shows a change at once, then saves it. If the save fails, `onFail` fixes
+   * the undo list, and once the saves still queued have gone out the board
+   * reloads from the server, so it never shows a shift that isn't really there.
    */
   const saveShift = useCallback(
-    ({ before, after }: Change) => {
+    ({ before, after }: Change, onFail: () => void) => {
       setData((d) =>
         d && {
           ...d,
@@ -142,6 +145,7 @@ export default function ShiftPlannerPage() {
           ],
         },
       );
+      queuedSaves.current++;
       saving.current = saving.current.then(async () => {
         try {
           if (after) {
@@ -156,8 +160,14 @@ export default function ShiftPlannerPage() {
           }
         } catch (error) {
           showToast(errorMessage(error, "That change didn't save."), "error");
-          setHistory([]);
-          setPlannerVersion((v) => v + 1);
+          onFail();
+          reloadWhenSaved.current = true;
+        } finally {
+          queuedSaves.current--;
+          if (queuedSaves.current === 0 && reloadWhenSaved.current) {
+            reloadWhenSaved.current = false;
+            setPlannerVersion((v) => v + 1);
+          }
         }
       });
     },
@@ -166,8 +176,9 @@ export default function ShiftPlannerPage() {
 
   const changeShift = useCallback(
     (before: Shift | null, after: Shift | null) => {
-      saveShift({ before, after });
-      setHistory((h) => [...h, { before, after }].slice(-UNDO_LIMIT));
+      const change = { before, after };
+      saveShift(change, () => setHistory((h) => forgetFailedChange(h, change)));
+      setHistory((h) => recordChange(h, change));
     },
     [saveShift],
   );
@@ -177,9 +188,15 @@ export default function ShiftPlannerPage() {
     const last = history[history.length - 1];
     if (!last) return;
     setHistory(history.slice(0, -1));
-    saveShift({ before: last.after, after: last.before });
+    // Bringing back a tutor who left the board: reload once it saves, so
+    // their card and coverage come back with them.
+    const tutorId = (last.before ?? last.after)!.tutorId;
+    if (!data?.tutors.some((s) => s.id === tutorId)) reloadWhenSaved.current = true;
+    saveShift({ before: last.after, after: last.before }, () =>
+      setHistory((h) => restoreChange(h, last)),
+    );
     setDay((last.before ?? last.after)!.day);
-  }, [history, saveShift]);
+  }, [history, data, saveShift]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -202,10 +219,6 @@ export default function ShiftPlannerPage() {
         // Always weekdays: the form only lets tutors pick Monday to Friday.
         availability: s.availability as AvailabilityRow[],
       })),
-    [data],
-  );
-  const names = useMemo(
-    () => new Map((data?.tutors ?? []).map((s) => [s.id, s.name])),
     [data],
   );
 
