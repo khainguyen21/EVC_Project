@@ -32,7 +32,8 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - Tutors free that day are listed on the left as cards. William drags a card into a building at the time the shift should start.
 - Shifts start, end, and move in 15-minute steps (9:00, 9:15, 9:30, 9:45). The tutor form keeps on-the-hour and half-hour times.
 - A dropped shift is 2 hours by default, shortened to fit the tutor's free time but never below 1 hour. Drag its bottom edge to change the length, with a 1-hour minimum.
-- A tutor can have more than one shift in a day (split shifts), but can't be in two places at the same time.
+- There is no daily limit. The 2 hours is only where a new shift starts; a tutor's week is kept in check by the usual hours and the 20-hour limit (see Hours).
+- A tutor can have more than one shift in a day (split shifts), but can't be in two places at the same time. Shifts in different buildings can touch; no walking time is needed between them.
 - Each card shows the tutor's notes from the form.
 - Each card lists the tutor's courses shortened the way William types them: `MATH 20-25, 62, 66-67, 71-72, 79` instead of every course spelled out.
 - Computer only. On a phone, the planner page says to open it on a computer.
@@ -61,6 +62,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - SQ: the goal is 1 tutor.
 - VPA: William runs it too. 1 tutor for now, until he says how many.
 - Coverage counts the fewest tutors who between them cover every course offered there at that time. Calc with Stat counts as 2. Two tutors who both only do MATH-071 count as 1.
+- The second tutor is there to cover more subjects, not to shorten the wait. Two tutors with the same courses count as 1.
 - A tutor gets a "same subjects" warning when everything they cover, someone else there already covers. A tutor for "any Chemistry" covers every numbered Chemistry course.
 - A tutor counts only for their courses that belong to that building. A Chemistry and English tutor placed in MS counts for Chemistry only. A tutor with no courses for that building gets the warning and doesn't count toward it.
 - Every building uses the center hours (Monday 9 am–6 pm, Tuesday to Thursday 9 am–8 pm, Friday 9 am–5 pm) until William says otherwise.
@@ -91,6 +93,8 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - Approving tutors from inside the planner. William keeps using the inbox.
 - A separate login for the SQ coordinator (waiting on William).
 - Showing staff and professor hours.
+- Online or Zoom shifts. MS, LE, SQ and VPA are the only places for now.
+- Courses that must always have a tutor ("nobody for Physics on Friday afternoon"). Add this if William asks for it.
 
 **How it's built**
 - One branch with small commits, and one pull request after William has tried it.
@@ -101,9 +105,9 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 
 Asked, waiting for his reply:
 - **SQ:** does the SQ coordinator schedule the Biology tutors and do the final step, or does William recruit Biology tutors too? If the coordinator schedules them, do they need their own login?
-- **Coverage:** confirm 2 tutors per hour in MS and LE (1 is okay if the budget is tight) and 1 per hour in SQ, with 2 tutors at the same time covering different classes.
+- **Coverage:** confirm 2 tutors per hour in MS and LE (1 is okay if the budget is tight) and 1 per hour in SQ.
 - **Tutors with subjects in more than one building** (for example Biology, Chemistry, and English): can they work in each, or must they pick one? If they pick, should the form ask?
-- **Shift length:** confirm 2 hours usual and 1 hour minimum.
+- **Shift length:** confirm the 1-hour minimum.
 
 Still to ask:
 - **VPA (Music):** how many tutors per hour?
