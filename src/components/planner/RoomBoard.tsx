@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, X } from "lucide-react";
 import { CENTER_HOURS, hhmmToMinutes, type Weekday } from "@/utils/centerHours";
 import { formatCourseCode } from "@/utils/courseCodes";
 import {
@@ -10,7 +11,12 @@ import {
   STEP_MINUTES,
   addsNothingNew,
   buildingWeeklyMinutes,
+  buildingsFor,
   coverageAt,
+  freeTimes,
+  moveShift,
+  resizeShift,
+  shiftForDrop,
   shiftWarnings,
   type Building,
   type Coverage,
@@ -76,25 +82,100 @@ function lanes(list: Shift[]) {
   return placed;
 }
 
+type Resizing = { id: string; top: number; end: number };
+
+/** What a drag carries: a tutor card, or a shift and where on it it was grabbed. */
+type DragData = { kind: "tutor"; tutorId: number } | { kind: "shift"; id: string; grabY: number };
+
+const DRAG_TYPE = "application/x-planner";
+
+export function startCardDrag(e: React.DragEvent, tutorId: number) {
+  e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ kind: "tutor", tutorId } satisfies DragData));
+  e.dataTransfer.effectAllowed = "copyMove";
+}
+
 interface Props {
   tutors: PlannerTutor[];
   names: Map<number, string>;
   shifts: Shift[];
   day: Weekday;
+  /** The tutor being dragged, to light up their buildings and free time. */
+  dragging: number | null;
+  beginDrag: (tutorId: number) => void;
+  endDrag: () => void;
+  /** One shift added (before null), changed, or removed (after null). */
+  onChange: (before: Shift | null, after: Shift | null) => void;
+  /** Why a drop didn't make a shift. */
+  onRefuse: (message: string) => void;
 }
 
 /** Buildings as columns and time running down, for one day. */
-export default function RoomBoard({ tutors, names, shifts, day }: Props) {
+export default function RoomBoard({
+  tutors,
+  names,
+  shifts,
+  day,
+  dragging,
+  beginDrag,
+  endDrag,
+  onChange,
+  onRefuse,
+}: Props) {
   const open = hhmmToMinutes(CENTER_HOURS[day].open);
   const close = hhmmToMinutes(CENTER_HOURS[day].close);
   const steps: number[] = [];
   for (let m = open; m < close; m += STEP_MINUTES) steps.push(m);
   const height = steps.length * STEP_H;
   const y = (minute: number) => ((minute - open) / STEP_MINUTES) * STEP_H;
+  const minuteAt = (px: number) => open + (px / STEP_H) * STEP_MINUTES;
 
   const today = shifts.filter((s) => s.day === day);
   const weekTotals = buildingWeeklyMinutes(shifts);
   const tutorById = new Map(tutors.map((t) => [t.id, t]));
+  const draggingTutor = dragging === null ? undefined : tutorById.get(dragging);
+  const lit = draggingTutor ? buildingsFor(draggingTutor.courses) : [];
+  const nameOf = (tutorId: number) => names.get(tutorId) ?? "Unknown tutor";
+
+  const drop = (building: Building, e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    endDrag();
+    let data: DragData;
+    try {
+      data = JSON.parse(e.dataTransfer.getData(DRAG_TYPE));
+    } catch {
+      return;
+    }
+    const top = e.currentTarget.getBoundingClientRect().top;
+
+    if (data.kind === "tutor") {
+      const tutor = tutorById.get(data.tutorId);
+      if (!tutor) return;
+      const minute = minuteAt(e.clientY - top);
+      const fit = shiftForDrop(tutor, shifts, day, minute);
+      if (!fit) {
+        const start = Math.floor(minute / STEP_MINUTES) * STEP_MINUTES;
+        const busy = shifts.some(
+          (s) => s.tutorId === tutor.id && s.day === day && s.start <= start && start < s.end,
+        );
+        onRefuse(
+          busy
+            ? `${nameOf(tutor.id)} already has a shift at ${clock(start)}.`
+            : `Less than an hour is left after ${clock(start)} before closing or ${nameOf(tutor.id)}'s next shift.`,
+        );
+        return;
+      }
+      onChange(null, { id: crypto.randomUUID(), tutorId: tutor.id, day, building, ...fit });
+    } else {
+      const shift = shifts.find((s) => s.id === data.id);
+      if (!shift) return;
+      const moved = moveShift(shift, shifts, day, building, minuteAt(e.clientY - top - data.grabY));
+      if (!moved) {
+        onRefuse(`${nameOf(shift.tutorId)} already has a shift at that time.`);
+        return;
+      }
+      if (moved.start !== shift.start || moved.building !== shift.building) onChange(shift, moved);
+    }
+  };
 
   return (
     <div
@@ -148,11 +229,18 @@ export default function RoomBoard({ tutors, names, shifts, day }: Props) {
           steps={steps}
           height={height}
           y={y}
+          minuteAt={minuteAt}
           tutors={tutors}
           tutorById={tutorById}
-          names={names}
+          nameOf={nameOf}
           shifts={shifts}
           today={today.filter((s) => s.building === b)}
+          draggingTutor={draggingTutor}
+          lit={lit.includes(b)}
+          beginDrag={beginDrag}
+          endDrag={endDrag}
+          onDrop={(e) => drop(b, e)}
+          onChange={onChange}
         />
       ))}
     </div>
@@ -165,24 +253,79 @@ function BuildingColumn({
   steps,
   height,
   y,
+  minuteAt,
   tutors,
   tutorById,
-  names,
+  nameOf,
   shifts,
   today,
+  draggingTutor,
+  lit,
+  beginDrag,
+  endDrag,
+  onDrop,
+  onChange,
 }: {
   building: Building;
   day: Weekday;
   steps: number[];
   height: number;
   y: (minute: number) => number;
+  minuteAt: (px: number) => number;
   tutors: PlannerTutor[];
   tutorById: Map<number, PlannerTutor>;
-  names: Map<number, string>;
+  nameOf: (tutorId: number) => string;
   shifts: Shift[];
   today: Shift[];
+  draggingTutor: PlannerTutor | undefined;
+  lit: boolean;
+  beginDrag: (tutorId: number) => void;
+  endDrag: () => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  onChange: (before: Shift | null, after: Shift | null) => void;
 }) {
-  const placed = lanes(today);
+  // The end a shift's bottom edge is being dragged to, shown before it saves.
+  // Followed with window listeners, so the mouse can leave the thin handle.
+  const [resizing, setResizing] = useState<Resizing | null>(null);
+  const resizeRef = useRef<Resizing | null>(null);
+  const latest = useRef({ today, shifts, minuteAt, onChange });
+  useEffect(() => {
+    latest.current = { today, shifts, minuteAt, onChange };
+  });
+  const resizingId = resizing?.id ?? null;
+  useEffect(() => {
+    if (resizingId === null) return;
+    const originalOf = (r: Resizing) => latest.current.today.find((t) => t.id === r.id);
+    const move = (e: PointerEvent) => {
+      const r = resizeRef.current;
+      const original = r && originalOf(r);
+      if (!r || !original) return;
+      const { shifts, minuteAt } = latest.current;
+      const end = resizeShift(original, shifts, minuteAt(e.clientY - r.top)).end;
+      if (end === r.end) return;
+      resizeRef.current = { ...r, end };
+      setResizing(resizeRef.current);
+    };
+    const up = () => {
+      const r = resizeRef.current;
+      const original = r && originalOf(r);
+      if (r && original && r.end !== original.end) {
+        latest.current.onChange(original, { ...original, end: r.end });
+      }
+      resizeRef.current = null;
+      setResizing(null);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [resizingId]);
+  const shown = today.map((s) => (resizing?.id === s.id ? { ...s, end: resizing.end } : s));
+  const placed = lanes(shown);
   const color = BUILDING_INFO[building].color;
 
   return (
@@ -206,17 +349,43 @@ function BuildingColumn({
       </div>
 
       <div
+        data-building-column
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+        }}
+        onDrop={onDrop}
         style={{
           position: "relative",
           flex: 1,
           borderRadius: 10,
-          border: "1px solid #e2e8f0",
+          border: lit ? `2px solid ${color}` : "1px solid #e2e8f0",
+          boxShadow: lit ? `0 0 0 3px ${color}33` : undefined,
           background: `repeating-linear-gradient(to bottom, #f8fafc 0 ${STEP_H * 4 - 1}px, #e2e8f0 ${
             STEP_H * 4 - 1
           }px ${STEP_H * 4}px)`,
         }}
       >
-        {today.map((s) => {
+        {draggingTutor &&
+          freeTimes(draggingTutor, day).map((f) => (
+            <div
+              key={f.start}
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: y(f.start),
+                height: y(f.end) - y(f.start),
+                background: "rgba(16,185,129,0.12)",
+                borderTop: "2px dashed #10b981",
+                borderBottom: "2px dashed #10b981",
+                boxSizing: "border-box",
+                pointerEvents: "none",
+              }}
+            />
+          ))}
+
+        {shown.map((s) => {
           const tutor = tutorById.get(s.tutorId);
           const warnings = [
             ...(tutor ? shiftWarnings(s, tutor) : []),
@@ -224,35 +393,102 @@ function BuildingColumn({
           ];
           const outside = warnings.includes("outside-availability");
           const { lane: i, of: count } = placed.get(s.id) ?? { lane: 0, of: 1 };
-          const name = names.get(s.tutorId) ?? "Unknown tutor";
+          const name = nameOf(s.tutorId);
+          const original = today.find((t) => t.id === s.id)!;
           return (
             <div
               key={s.id}
-              title={[`${name}, ${timeRange(s.start, s.end)}`, ...warnings.map((w) => WARNING_TEXT[w])].join(
-                "\n",
-              )}
               style={{
                 position: "absolute",
                 top: y(s.start) + 1,
                 height: y(s.end) - y(s.start) - 2,
                 left: `calc(${(i / count) * 100}% + 3px)`,
                 width: `calc(${100 / count}% - 6px)`,
-                boxSizing: "border-box",
-                background: outside ? "#dc2626" : color,
-                outline: outside ? "2px solid #7f1d1d" : undefined,
-                color: "white",
-                borderRadius: 8,
-                padding: "3px 8px",
-                fontSize: "0.74rem",
-                overflow: "hidden",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                // Let drops land on the column underneath while dragging.
+                pointerEvents: draggingTutor ? "none" : undefined,
               }}
             >
-              <div style={{ fontWeight: 700, whiteSpace: "nowrap", display: "flex", gap: 4 }}>
-                {warnings.length > 0 && <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} />}
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+              <div
+                draggable
+                onDragStart={(e) => {
+                  const grabY = e.clientY - e.currentTarget.getBoundingClientRect().top;
+                  e.dataTransfer.setData(
+                    DRAG_TYPE,
+                    JSON.stringify({ kind: "shift", id: s.id, grabY } satisfies DragData),
+                  );
+                  e.dataTransfer.effectAllowed = "move";
+                  beginDrag(s.tutorId);
+                }}
+                onDragEnd={endDrag}
+                title={[`${name}, ${timeRange(s.start, s.end)}`, ...warnings.map((w) => WARNING_TEXT[w])].join(
+                  "\n",
+                )}
+                style={{
+                  height: "100%",
+                  boxSizing: "border-box",
+                  background: outside ? "#dc2626" : color,
+                  outline: outside ? "2px solid #7f1d1d" : undefined,
+                  color: "white",
+                  borderRadius: 8,
+                  padding: "3px 18px 3px 8px",
+                  fontSize: "0.74rem",
+                  overflow: "hidden",
+                  cursor: "grab",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                }}
+              >
+                <div style={{ fontWeight: 700, whiteSpace: "nowrap", display: "flex", gap: 4 }}>
+                  {warnings.length > 0 && (
+                    <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} />
+                  )}
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+                </div>
+                <div style={{ opacity: 0.9, whiteSpace: "nowrap" }}>{timeRange(s.start, s.end)}</div>
               </div>
-              <div style={{ opacity: 0.9, whiteSpace: "nowrap" }}>{timeRange(s.start, s.end)}</div>
+
+              <button
+                onClick={() => onChange(original, null)}
+                aria-label={`Remove ${name}'s shift`}
+                title="Remove this shift"
+                style={{
+                  position: "absolute",
+                  top: 3,
+                  right: 3,
+                  border: "none",
+                  background: "rgba(255,255,255,0.25)",
+                  color: "white",
+                  borderRadius: 4,
+                  padding: 1,
+                  display: "flex",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={12} />
+              </button>
+
+              <div
+                title="Drag to change the length"
+                onPointerDown={(e) => {
+                  const column = e.currentTarget.closest<HTMLElement>("[data-building-column]");
+                  if (!column) return;
+                  e.preventDefault();
+                  resizeRef.current = {
+                    id: s.id,
+                    top: column.getBoundingClientRect().top,
+                    end: s.end,
+                  };
+                  setResizing(resizeRef.current);
+                }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: -3,
+                  height: 9,
+                  cursor: "ns-resize",
+                  touchAction: "none",
+                }}
+              />
             </div>
           );
         })}

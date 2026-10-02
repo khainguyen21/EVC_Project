@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { RefreshCw } from "lucide-react";
 import type { AdminTerm, Submission } from "@/types";
 import { useToast } from "@/components/admin/ToastProvider";
-import RoomBoard from "@/components/planner/RoomBoard";
+import RoomBoard, { startCardDrag } from "@/components/planner/RoomBoard";
 import TutorCard from "@/components/planner/TutorCard";
 import { hoursText } from "@/components/planner/format";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
@@ -48,7 +48,27 @@ export default function ShiftPlannerPage() {
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [plannerVersion, setPlannerVersion] = useState(0);
   const [day, setDay] = useState<Weekday>("Monday");
+  const [dragging, setDragging] = useState<number | null>(null);
+  // Saves go out one at a time, in order, so a quick move-then-resize can't
+  // reach the server backwards.
+  const saving = useRef(Promise.resolve());
+
+  // Lights up the dragged tutor's buildings a tick after the drag starts:
+  // Chrome cancels a drag whose source changes as it starts. A drop that
+  // lands before that tick must not leave the board lit.
+  const dragActive = useRef(false);
+  const beginDrag = useCallback((tutorId: number) => {
+    dragActive.current = true;
+    setTimeout(() => {
+      if (dragActive.current) setDragging(tutorId);
+    });
+  }, []);
+  const endDrag = useCallback(() => {
+    dragActive.current = false;
+    setDragging(null);
+  }, []);
 
   useEffect(() => {
     let stale = false;
@@ -92,7 +112,45 @@ export default function ShiftPlannerPage() {
     return () => {
       stale = true;
     };
-  }, [termId, showToast, attempt]);
+  }, [termId, showToast, attempt, plannerVersion]);
+
+  const refuse = useCallback((message: string) => showToast(message, "error"), [showToast]);
+
+  /**
+   * Shows a change at once, then saves it. If the save fails the board reloads
+   * from the server, so it never shows a shift that isn't really there.
+   */
+  const changeShift = useCallback(
+    (before: Shift | null, after: Shift | null) => {
+      setData((d) =>
+        d && {
+          ...d,
+          shifts: [
+            ...d.shifts.filter((s) => s.id !== (before ?? after)!.id),
+            ...(after ? [after] : []),
+          ],
+        },
+      );
+      saving.current = saving.current.then(async () => {
+        try {
+          if (after) {
+            const { id, ...body } = after;
+            await adminFetch(`/api/planner/shifts/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+          } else {
+            await adminFetch(`/api/planner/shifts/${before!.id}`, { method: "DELETE" });
+          }
+        } catch (error) {
+          showToast(errorMessage(error, "That change didn't save."), "error");
+          setPlannerVersion((v) => v + 1);
+        }
+      });
+    },
+    [showToast],
+  );
 
   const plannerTutors = useMemo<PlannerTutor[]>(
     () =>
@@ -229,7 +287,9 @@ export default function ShiftPlannerPage() {
                 return (
                   <button
                     key={d}
-                    onClick={() => setDay(d)}
+                    onClick={() => {
+                      setDay(d);
+                    }}
                     style={{
                       padding: "8px 14px",
                       borderRadius: 10,
@@ -282,15 +342,28 @@ export default function ShiftPlannerPage() {
               <h3 style={{ margin: "0 0 10px", fontSize: "1rem", fontWeight: 800 }}>
                 Free {day}
               </h3>
+              <p style={{ margin: "0 0 10px", fontSize: "0.75rem", color: "#64748b" }}>
+                Drag a tutor onto a building at the time their shift should start.
+              </p>
               {listed.map((s) => (
-                <TutorCard
+                <div
                   key={s.id}
-                  submission={s}
-                  tutor={plannerTutors[data.tutors.indexOf(s)]}
-                  shifts={shifts}
-                  day={day}
-                  usualHours={data.usualWeeklyHours}
-                />
+                  draggable
+                  onDragStart={(e) => {
+                    startCardDrag(e, s.id);
+                    beginDrag(s.id);
+                  }}
+                  onDragEnd={endDrag}
+                  style={{ cursor: "grab" }}
+                >
+                  <TutorCard
+                    submission={s}
+                    tutor={plannerTutors[data.tutors.indexOf(s)]}
+                    shifts={shifts}
+                    day={day}
+                    usualHours={data.usualWeeklyHours}
+                  />
+                </div>
               ))}
               {listed.length === 0 && (
                 <p style={{ fontSize: "0.8rem", color: "#64748b" }}>Nobody is free {day}.</p>
@@ -303,7 +376,17 @@ export default function ShiftPlannerPage() {
             </div>
 
             <div style={{ ...cardStyle, flex: 1, minWidth: 0, overflowX: "auto" }}>
-              <RoomBoard tutors={plannerTutors} names={names} shifts={shifts} day={day} />
+              <RoomBoard
+                tutors={plannerTutors}
+                names={names}
+                shifts={shifts}
+                day={day}
+                dragging={dragging}
+                beginDrag={beginDrag}
+                endDrag={endDrag}
+                onChange={changeShift}
+                onRefuse={refuse}
+              />
             </div>
           </div>
         </>
