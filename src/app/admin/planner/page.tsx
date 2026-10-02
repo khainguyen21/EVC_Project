@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Undo2 } from "lucide-react";
 import type { AdminTerm, Submission } from "@/types";
 import { useToast } from "@/components/admin/ToastProvider";
 import RoomBoard, { startCardDrag } from "@/components/planner/RoomBoard";
@@ -34,6 +34,15 @@ const COVERAGE_LEGEND = [
   { label: "At goal", color: "#86efac" },
 ];
 
+/** Changes kept for undo while the page is open. */
+const UNDO_LIMIT = 20;
+
+/** One shift added (before null), changed, or removed (after null). */
+interface Change {
+  before: Shift | null;
+  after: Shift | null;
+}
+
 interface PlannerData {
   tutors: Submission[];
   shifts: Shift[];
@@ -49,6 +58,7 @@ export default function ShiftPlannerPage() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [plannerVersion, setPlannerVersion] = useState(0);
+  const [history, setHistory] = useState<Change[]>([]);
   const [day, setDay] = useState<Weekday>("Monday");
   const [dragging, setDragging] = useState<number | null>(null);
   // Saves go out one at a time, in order, so a quick move-then-resize can't
@@ -118,10 +128,11 @@ export default function ShiftPlannerPage() {
 
   /**
    * Shows a change at once, then saves it. If the save fails the board reloads
-   * from the server, so it never shows a shift that isn't really there.
+   * from the server, so it never shows a shift that isn't really there, and
+   * undo starts over from what the server has.
    */
-  const changeShift = useCallback(
-    (before: Shift | null, after: Shift | null) => {
+  const saveShift = useCallback(
+    ({ before, after }: Change) => {
       setData((d) =>
         d && {
           ...d,
@@ -145,12 +156,43 @@ export default function ShiftPlannerPage() {
           }
         } catch (error) {
           showToast(errorMessage(error, "That change didn't save."), "error");
+          setHistory([]);
           setPlannerVersion((v) => v + 1);
         }
       });
     },
     [showToast],
   );
+
+  const changeShift = useCallback(
+    (before: Shift | null, after: Shift | null) => {
+      saveShift({ before, after });
+      setHistory((h) => [...h, { before, after }].slice(-UNDO_LIMIT));
+    },
+    [saveShift],
+  );
+
+  // Puts the last change back, on the day it happened so William sees it.
+  const undo = useCallback(() => {
+    const last = history[history.length - 1];
+    if (!last) return;
+    setHistory(history.slice(0, -1));
+    saveShift({ before: last.after, after: last.before });
+    setDay((last.before ?? last.after)!.day);
+  }, [history, saveShift]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
+      // Typing in a box (the usual hours) keeps its own undo.
+      const target = e.target as HTMLElement;
+      if (target.closest("input, textarea, select")) return;
+      e.preventDefault();
+      undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo]);
 
   const plannerTutors = useMemo<PlannerTutor[]>(
     () =>
@@ -181,7 +223,24 @@ export default function ShiftPlannerPage() {
   const notFree = (data?.tutors ?? []).filter((s, i) => !onToday(s, i));
 
   return (
-    <div style={{ animation: "fadeIn 0.5s ease" }}>
+    <>
+    {/* Dragging needs a mouse and a wide screen. */}
+    <style>{`
+      .planner-phone { display: none; }
+      @media (max-width: 768px) {
+        .planner-phone { display: block; }
+        .planner-desktop { display: none; }
+      }
+    `}</style>
+    <div className="planner-phone" style={{ ...cardStyle, color: "#475569" }}>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>
+        Shift Planner
+      </h1>
+      The planner needs a computer: you drag tutors onto buildings with a mouse. Open this page on
+      a laptop or desktop.
+    </div>
+
+    <div className="planner-desktop" style={{ animation: "fadeIn 0.5s ease" }}>
       <div
         style={{
           display: "flex",
@@ -214,6 +273,7 @@ export default function ShiftPlannerPage() {
             onChange={(e) => {
               setLoading(true);
               setData(null);
+              setHistory([]);
               setTermId(Number(e.target.value));
             }}
             aria-label="Term"
@@ -311,6 +371,30 @@ export default function ShiftPlannerPage() {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button
+                onClick={undo}
+                disabled={history.length === 0}
+                title={
+                  history.length === 0
+                    ? "Nothing to undo"
+                    : `Undo: ${describe(history[history.length - 1], names)} (Ctrl+Z or ⌘Z)`
+                }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "7px 12px",
+                  borderRadius: 10,
+                  border: "1px solid #e2e8f0",
+                  background: "white",
+                  color: history.length === 0 ? "#cbd5e1" : "#334155",
+                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  cursor: history.length === 0 ? "default" : "pointer",
+                }}
+              >
+                <Undo2 size={15} /> Undo
+              </button>
               <UsualHours
                 value={data.usualWeeklyHours}
                 onSaved={(usualWeeklyHours) => setData({ ...data, usualWeeklyHours })}
@@ -392,7 +476,15 @@ export default function ShiftPlannerPage() {
         </>
       ) : null}
     </div>
+    </>
   );
+}
+
+/** "change Alex Rivera's Monday shift", for the Undo button's tooltip. */
+function describe({ before, after }: Change, names: Map<number, string>): string {
+  const shift = (after ?? before)!;
+  const what = before === null ? "add" : after === null ? "remove" : "change";
+  return `${what} ${names.get(shift.tutorId) ?? "a tutor"}'s ${shift.day} shift`;
 }
 
 /** William's usual weekly hours per tutor. Saved in the database, not the code. */
