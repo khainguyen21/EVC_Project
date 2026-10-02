@@ -195,6 +195,8 @@ export default function RoomBoard({
         minWidth: 52 + BUILDINGS.length * 162,
       }}
     >
+      {/* The shift under the mouse comes to the front, so a covered one can be read. */}
+      <style>{`.planner-shift:hover { z-index: 1000 !important; }`}</style>
       <div />
       {BUILDINGS.map((b) => (
         <div key={b} style={{ paddingBottom: 10 }}>
@@ -407,6 +409,7 @@ function BuildingColumn({
           return (
             <div
               key={s.id}
+              className="planner-shift"
               style={{
                 position: "absolute",
                 top: y(s.start) + 1,
