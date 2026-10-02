@@ -190,6 +190,47 @@ export function formatCourseCode(code: string): string {
 }
 
 /**
+ * The reverse of parseCourseCodes: "MATH-20" ... "MATH-25", "MATH-62" become
+ * "MATH 20-25, 62", one line per department.
+ */
+export function shortenCourseCodes(codes: string[]): string[] {
+  const byDepartment = new Map<string, string[]>();
+  for (const code of codes) {
+    const [department, number] = code.split("-");
+    byDepartment.set(department, [...(byDepartment.get(department) ?? []), number]);
+  }
+
+  return [...byDepartment.keys()].sort().map((department) => {
+    const all = byDepartment.get(department)!;
+    // "Any CHEM course" already includes the numbered ones.
+    if (all.includes("*")) return formatCourseCode(`${department}-*`);
+
+    const numbers = all
+      .map((text) => {
+        // Letter-led codes like C1000 sort after every numbered course.
+        const digits = /^\d+/.exec(text)?.[0];
+        return { text, value: digits ? parseInt(digits, 10) : Infinity, plain: /^\d+$/.test(text) };
+      })
+      .sort((a, b) => a.value - b.value || a.text.localeCompare(b.text));
+
+    const parts: string[] = [];
+    for (let i = 0; i < numbers.length; i++) {
+      let end = i;
+      while (
+        numbers[i].plain &&
+        numbers[end + 1]?.plain &&
+        numbers[end + 1].value === numbers[end].value + 1
+      ) {
+        end++;
+      }
+      parts.push(end > i ? `${numbers[i].text}-${numbers[end].text}` : numbers[i].text);
+      i = end;
+    }
+    return `${department} ${parts.join(", ")}`;
+  });
+}
+
+/**
  * Normalizes what a student typed into the same token shape.
  * "chem 30a" -> "CHEM-30A", "math71" -> "MATH-71", "MATH" -> "MATH".
  */

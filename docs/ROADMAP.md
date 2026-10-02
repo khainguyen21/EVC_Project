@@ -30,7 +30,8 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - William plans one repeating Monday-to-Friday week per term, like the public schedule. Holidays stay on the Terms page.
 - One column per building, time running down the page, one day at a time.
 - Tutors free that day are listed on the left as cards. William drags a card into a building at the time the shift should start.
-- A dropped shift is 2 hours by default. Drag its bottom edge to change the length, in half-hour steps, with a 1-hour minimum.
+- Shifts start, end, and move in 15-minute steps (9:00, 9:15, 9:30, 9:45). The tutor form keeps on-the-hour and half-hour times.
+- A dropped shift is 2 hours by default, shortened to fit the tutor's free time but never below 1 hour. Drag its bottom edge to change the length, with a 1-hour minimum.
 - A tutor can have more than one shift in a day (split shifts), but can't be in two places at the same time.
 - Each card shows the tutor's notes from the form.
 - Each card lists the tutor's courses shortened the way William types them: `MATH 20-25, 62, 66-67, 71-72, 79` instead of every course spelled out.
@@ -55,11 +56,12 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - While William drags a tutor, the buildings that match their subjects light up.
 - Dropping a tutor into another building is allowed, with a warning. William has the final say.
 
-**Coverage, per building, every half hour**
+**Coverage, per building, every 15 minutes**
 - MS and LE: the goal is 2 tutors; 1 is acceptable.
 - SQ: the goal is 1 tutor.
 - VPA: William runs it too. 1 tutor for now, until he says how many.
-- A tutor adds coverage only if they cover at least one course the others there at that time don't. Two tutors who both only do MATH-071 show a "same subjects" warning. Calc with Stat counts as 2.
+- Coverage counts the fewest tutors who between them cover every course offered there at that time. Calc with Stat counts as 2. Two tutors who both only do MATH-071 count as 1.
+- A tutor gets a "same subjects" warning when everything they cover, someone else there already covers. A tutor for "any Chemistry" covers every numbered Chemistry course.
 - A tutor counts only for their courses that belong to that building. A Chemistry and English tutor placed in MS counts for Chemistry only. A tutor with no courses for that building gets the warning and doesn't count toward it.
 - Every building uses the center hours (Monday 9 am–6 pm, Tuesday to Thursday 9 am–8 pm, Friday 9 am–5 pm) until William says otherwise.
 - Hovering the coverage strip lists the courses covered at that time.
@@ -71,7 +73,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - William aims to give each tutor about the same weekly hours, his "usual hours". It is a planner setting, stored in the database rather than the code.
 - The usual hours have no starting value in the code. William types his number once on the planner page.
 - Cards show progress toward the usual hours: gray below it, green at it, amber above it. Until William sets the number, cards only change color at 20 hours.
-- Only student tutors fill out the availability form, so everyone in the planner is a student tutor. They turn red at 20 hours a week.
+- Only student tutors fill out the availability form, so everyone in the planner is a student tutor. They turn red at 20 hours a week; exactly 20 is already red.
 - The tutor list sorts the fewest hours to the top, so nobody gets forgotten.
 - The top of each building's column shows its total planned hours for the week. This is for now and may change once we know about the budget.
 
