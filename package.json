@@ -7,7 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:sample": "ts-node --project prisma/tsconfig.json prisma/sample-data.ts"
   },
   "dependencies": {
     "@google/genai": "^1.51.0",

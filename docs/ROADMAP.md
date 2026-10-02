@@ -33,6 +33,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - A dropped shift is 2 hours by default. Drag its bottom edge to change the length, in half-hour steps, with a 1-hour minimum.
 - A tutor can have more than one shift in a day (split shifts), but can't be in two places at the same time.
 - Each card shows the tutor's notes from the form.
+- Each card lists the tutor's courses shortened the way William types them: `MATH 20-25, 62, 66-67, 71-72, 79` instead of every course spelled out.
 - Computer only. On a phone, the planner page says to open it on a computer.
 
 **Who shows up**
@@ -50,18 +51,19 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 | VPA-109/111 | Music |
 | LE-237 | Everything else: Accounting, Business, English, ESL, Open Computer Lab, Psychology, Spanish, Vietnamese, … |
 
+- "Open Computer Lab" is not a course code, so the planner recognizes it by name and puts it in LE.
 - While William drags a tutor, the buildings that match their subjects light up.
 - Dropping a tutor into another building is allowed, with a warning. William has the final say.
 
 **Coverage, per building, every half hour**
 - MS and LE: the goal is 2 tutors; 1 is acceptable.
 - SQ: the goal is 1 tutor.
-- VPA: 1 tutor for now, until William says otherwise.
+- VPA: William runs it too. 1 tutor for now, until he says how many.
 - A tutor adds coverage only if they cover at least one course the others there at that time don't. Two tutors who both only do MATH-071 show a "same subjects" warning. Calc with Stat counts as 2.
 - A tutor counts only for their courses that belong to that building. A Chemistry and English tutor placed in MS counts for Chemistry only. A tutor with no courses for that building gets the warning and doesn't count toward it.
 - Every building uses the center hours (Monday 9 am–6 pm, Tuesday to Thursday 9 am–8 pm, Friday 9 am–5 pm) until William says otherwise.
 - Hovering the coverage strip lists the courses covered at that time.
-- Only the student tutors William places count. Staff and professor hours from the public schedule are not shown in the first version.
+- Only the student tutors William places count. Staff and professor hours don't count toward coverage (William confirmed), and they are not shown in the first version.
 - These are warnings. The planner never blocks William.
 
 **Hours**
@@ -90,7 +92,8 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 
 **How it's built**
 - One branch with small commits, and one pull request after William has tried it.
-- Tests for the rules (coverage, "adds a new course", hour totals, fitting a shift into free time) are written before the code. Dragging is checked in the browser.
+- Tests for the rules (coverage, "adds a new course", hour totals, fitting a shift into free time, shortening course lists) are written before the code. Dragging is checked in the browser.
+- Sample tutors for the test database: `npm run db:sample`. It only runs when `.env` has `ALLOW_SAMPLE_DATA=true`, which only the test database's `.env` should have.
 
 ### Waiting on William
 
@@ -101,8 +104,7 @@ Asked, waiting for his reply:
 - **Shift length:** confirm 2 hours usual and 1 hour minimum.
 
 Still to ask:
-- **VPA (Music):** who is in charge, and how many tutors per hour?
-- **Professors and staff:** do their hours in a building count toward the 2 tutors per hour? Until then, a building a professor covers can still show a gap.
+- **VPA (Music):** how many tutors per hour?
 - **Building hours:** are all four buildings open the center hours, or are some open less?
 - **Budget:** is there a weekly hours budget per building or for the whole center, and roughly how much?
 - **Deadline:** when does William usually build the Spring schedule?
@@ -160,9 +162,8 @@ William prints the schedule to put on the wall and sends a PDF to the EVC websit
 
 ### Waiting on William
 
-Not asked yet:
-- A copy of the last PDF he sent the website team.
-- Does the website team want the schedule listed by subject, or as a weekly grid by building?
+- Khai is asking him to resend the last PDF he sent the website team.
+- Not asked yet: does the website team want the schedule listed by subject, or as a weekly grid by building?
 
 ---
 
