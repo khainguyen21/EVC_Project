@@ -224,8 +224,9 @@ export default function ShiftPlannerPage() {
 
   return (
     <>
-    {/* Dragging needs a mouse and a wide screen. */}
+    {/* Dragging needs a mouse and a wide screen, and the board uses all of it. */}
     <style>{`
+      .admin-content:has(.planner-desktop) { max-width: 1800px !important; }
       .planner-phone { display: none; }
       @media (max-width: 768px) {
         .planner-phone { display: block; }

@@ -51,34 +51,43 @@ function coverageTitle(c: Coverage, minute: number): string {
   }`;
 }
 
+/** How far each stacked shift is indented past the one it covers. */
+const INDENT_PX = 14;
+
 /**
- * Side-by-side lanes for shifts that overlap in the same building. Each group
- * of overlapping shifts splits the width on its own, so a shift alone later in
- * the day gets the full column.
+ * Where each shift sits in its column, like a calendar app: a shift that
+ * starts while another is on is drawn on top of it, indented, so the earlier
+ * one's name still shows above it. Shifts starting at the same time share the
+ * width instead, since neither would show above the other.
  */
-function lanes(list: Shift[]) {
-  const sorted = [...list].sort((a, b) => a.start - b.start || a.end - b.end);
-  const placed = new Map<string, { lane: number; of: number }>();
-  let group: Shift[] = [];
-  let laneEnds: number[] = [];
-  const closeGroup = () => {
-    for (const s of group) placed.get(s.id)!.of = laneEnds.length;
-    group = [];
-    laneEnds = [];
-  };
+function stackShifts(list: Shift[]) {
+  const sorted = [...list].sort((a, b) => a.start - b.start || b.end - a.end);
+  const rows: { start: number; end: number; depth: number; members: Shift[] }[] = [];
   for (const s of sorted) {
-    if (group.length > 0 && laneEnds.every((end) => end <= s.start)) closeGroup();
-    let i = laneEnds.findIndex((end) => end <= s.start);
-    if (i === -1) {
-      i = laneEnds.length;
-      laneEnds.push(s.end);
-    } else {
-      laneEnds[i] = s.end;
+    const last = rows[rows.length - 1];
+    if (last && s.start === last.start) {
+      last.members.push(s);
+      last.end = Math.max(last.end, s.end);
+      continue;
     }
-    placed.set(s.id, { lane: i, of: 0 });
-    group.push(s);
+    const covered = rows.filter((r) => r.end > s.start);
+    const depth = covered.length > 0 ? Math.max(...covered.map((r) => r.depth)) + 1 : 0;
+    rows.push({ start: s.start, end: s.end, depth, members: [s] });
   }
-  closeGroup();
+
+  const placed = new Map<string, { left: string; width: string; z: number }>();
+  rows.forEach((row, z) => {
+    // Never indent past 60% of the column, however deep the stack gets.
+    const indent = `min(${row.depth * INDENT_PX}px, 60%)`;
+    const n = row.members.length;
+    row.members.forEach((s, i) => {
+      placed.set(s.id, {
+        left: `calc(${indent} + (100% - ${indent}) * ${i / n} + 3px)`,
+        width: `calc((100% - ${indent}) / ${n} - 6px)`,
+        z: z + 1,
+      });
+    });
+  });
   return placed;
 }
 
@@ -325,7 +334,7 @@ function BuildingColumn({
     };
   }, [resizingId]);
   const shown = today.map((s) => (resizing?.id === s.id ? { ...s, end: resizing.end } : s));
-  const placed = lanes(shown);
+  const placed = stackShifts(shown);
   const color = BUILDING_INFO[building].color;
 
   return (
@@ -392,7 +401,7 @@ function BuildingColumn({
             ...(tutor && addsNothingNew(s, tutors, shifts) ? (["same-subjects"] as const) : []),
           ];
           const outside = warnings.includes("outside-availability");
-          const { lane: i, of: count } = placed.get(s.id) ?? { lane: 0, of: 1 };
+          const { left, width, z } = placed.get(s.id)!;
           const name = nameOf(s.tutorId);
           const original = today.find((t) => t.id === s.id)!;
           return (
@@ -402,8 +411,9 @@ function BuildingColumn({
                 position: "absolute",
                 top: y(s.start) + 1,
                 height: y(s.end) - y(s.start) - 2,
-                left: `calc(${(i / count) * 100}% + 3px)`,
-                width: `calc(${100 / count}% - 6px)`,
+                left,
+                width,
+                zIndex: z,
                 // Let drops land on the column underneath while dragging.
                 pointerEvents: draggingTutor ? "none" : undefined,
               }}
@@ -434,7 +444,8 @@ function BuildingColumn({
                   fontSize: "0.74rem",
                   overflow: "hidden",
                   cursor: "grab",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                  // A white edge keeps stacked shifts apart.
+                  boxShadow: "0 0 0 1px white, 0 2px 4px rgba(0,0,0,0.2)",
                 }}
               >
                 <div style={{ fontWeight: 700, whiteSpace: "nowrap", display: "flex", gap: 4 }}>
