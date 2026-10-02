@@ -22,6 +22,7 @@ export async function GET(request: Request) {
 
     const submissions = await prisma.availabilitySubmission.findMany({
       where: { termId },
+      include: { _count: { select: { shifts: true } } },
       orderBy: [{ name: "asc" }, { id: "asc" }],
     });
 
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
 
     const submission = await prisma.availabilitySubmission.create({
       data: { termId, studentId, ...toSubmissionData(fields) },
+      include: { _count: { select: { shifts: true } } },
     });
 
     return NextResponse.json(

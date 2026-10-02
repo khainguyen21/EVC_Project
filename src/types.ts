@@ -65,5 +65,6 @@ export interface Submission {
     resubmittedAt: string | null,
     createdAt: string,
     updatedAt: string,
-    flags: ('under-units' | 'subjects-need-review')[]
+    flags: ('under-units' | 'subjects-need-review')[],
+    shiftCount: number // shifts placed on the shift planner
 }

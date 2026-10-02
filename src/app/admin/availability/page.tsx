@@ -72,6 +72,11 @@ const cardStyle: React.CSSProperties = {
 };
 
 /** Default to the term whose form is open, else the active one, else the newest. */
+/** "1 planned shift", "3 planned shifts". */
+function plannedShifts(count: number): string {
+  return `${count} planned shift${count === 1 ? "" : "s"}`;
+}
+
 function pickDefaultTerm(terms: AdminTerm[]): AdminTerm | undefined {
   return (
     terms.find((t) => t.availabilityCode) ??
@@ -106,6 +111,7 @@ export default function AvailabilityInboxPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     message: string;
+    confirmLabel?: string;
     onConfirm: () => void;
   } | null>(null);
 
@@ -198,9 +204,22 @@ export default function AvailabilityInboxPage() {
     }
   };
 
+  // Declining removes their planner shifts, so ask first if they have any.
+  const handleDecline = (s: Submission) => {
+    if (s.shiftCount === 0) return setStatus(s, "declined");
+    setConfirmModal({
+      message: `${s.name} has ${plannedShifts(s.shiftCount)}. Declining removes them.`,
+      confirmLabel: "Yes, decline",
+      onConfirm: () => {
+        setConfirmModal(null);
+        setStatus(s, "declined");
+      },
+    });
+  };
+
   const handleDelete = (s: Submission) =>
     setConfirmModal({
-      message: `Delete ${s.name}'s availability for ${term?.name ?? "this term"}? This can't be undone. To keep a record that they won't tutor, decline it instead.`,
+      message: `Delete ${s.name}'s availability${s.shiftCount > 0 ? ` and ${plannedShifts(s.shiftCount)}` : ""} for ${term?.name ?? "this term"}? This can't be undone. To keep a record that they won't tutor, decline it instead.`,
       onConfirm: async () => {
         setConfirmModal(null);
         try {
@@ -249,6 +268,7 @@ export default function AvailabilityInboxPage() {
       {confirmModal && (
         <ConfirmModal
           message={confirmModal.message}
+          confirmLabel={confirmModal.confirmLabel}
           onConfirm={confirmModal.onConfirm}
           onCancel={() => setConfirmModal(null)}
         />
@@ -538,7 +558,7 @@ export default function AvailabilityInboxPage() {
                               <SubmissionDetails
                                 s={s}
                                 onApprove={() => setStatus(s, "approved")}
-                                onDecline={() => setStatus(s, "declined")}
+                                onDecline={() => handleDecline(s)}
                                 onPending={() => setStatus(s, "pending")}
                                 onEdit={() => setEditingId(s.id)}
                                 onDelete={() => handleDelete(s)}

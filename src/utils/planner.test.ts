@@ -9,6 +9,7 @@ import {
   moveShift,
   resizeShift,
   shiftForDrop,
+  shiftProblem,
   shiftWarnings,
   sortByFewestHours,
   tutorCourses,
@@ -353,5 +354,46 @@ describe("buildingWeeklyMinutes", () => {
       "SQ-231": 0,
       "VPA-109/111": 0,
     });
+  });
+});
+
+describe("shiftProblem", () => {
+  const ok = shift(1, "MS-112", "Monday", "10:00", "12:00");
+
+  it("accepts a shift William could have made on the board", () => {
+    expect(shiftProblem(ok, [])).toBeNull();
+  });
+
+  it("refuses times off the quarter hour", () => {
+    expect(shiftProblem({ ...ok, start: at("10:10") }, [])).toMatch(/15-minute/);
+  });
+
+  it("refuses a shift outside center hours", () => {
+    expect(shiftProblem({ ...ok, start: at("08:00"), end: at("10:00") }, [])).toMatch(
+      /center hours/,
+    );
+    expect(
+      shiftProblem({ ...ok, day: "Friday", start: at("16:00"), end: at("18:00") }, []),
+    ).toMatch(/center hours/);
+  });
+
+  it("refuses a shift under an hour", () => {
+    expect(shiftProblem({ ...ok, end: at("10:45") }, [])).toMatch(/at least 1 hour/);
+  });
+
+  it("refuses to put a tutor in two places at once", () => {
+    const other = shift(1, "LE-237", "Monday", "11:00", "13:00");
+    expect(shiftProblem(ok, [other])).toMatch(/already has a shift/);
+  });
+
+  it("allows back-to-back shifts, other tutors at the same time, and the shift itself", () => {
+    expect(
+      shiftProblem(ok, [
+        shift(1, "LE-237", "Monday", "12:00", "14:00"),
+        shift(2, "MS-112", "Monday", "10:00", "12:00"),
+        shift(1, "MS-112", "Tuesday", "10:00", "12:00"),
+        { ...ok, start: at("09:00") },
+      ]),
+    ).toBeNull();
   });
 });

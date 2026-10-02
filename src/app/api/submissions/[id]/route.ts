@@ -55,13 +55,25 @@ export async function PUT(
       );
     }
 
-    const submission = await prisma.availabilitySubmission.update({
+    const update = prisma.availabilitySubmission.update({
       where: { id },
       data: {
         ...(fields ? toSubmissionData(fields) : {}),
         ...(status ? { status } : {}),
       },
+      include: { _count: { select: { shifts: true } } },
     });
+    // A declined tutor can't keep shifts on the planner. The inbox warns
+    // William before he declines someone who has any.
+    const submission =
+      status === "declined"
+        ? (
+            await prisma.$transaction([
+              prisma.plannedShift.deleteMany({ where: { submissionId: id } }),
+              update,
+            ])
+          )[1]
+        : await update;
 
     return NextResponse.json({ submission: serializeSubmission(submission) });
   } catch (error) {
@@ -74,6 +86,7 @@ export async function PUT(
 }
 
 // Admin: remove a submission (spam, a test entry, someone who backed out).
+// Its planned shifts go with it.
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },

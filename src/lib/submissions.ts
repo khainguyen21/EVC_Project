@@ -1,6 +1,8 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import type { Submission } from "@/types";
+import type { Weekday } from "@/utils/centerHours";
+import type { Building, Shift } from "@/utils/planner";
 import {
   submissionFlags,
   type AvailabilityRow,
@@ -24,6 +26,7 @@ interface DbSubmission {
   resubmittedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  _count: { shifts: number };
 }
 
 export function serializeSubmission(s: DbSubmission): Submission {
@@ -45,6 +48,28 @@ export function serializeSubmission(s: DbSubmission): Submission {
     createdAt: s.createdAt.toISOString(),
     updatedAt: s.updatedAt.toISOString(),
     flags: submissionFlags(s),
+    shiftCount: s._count.shifts,
+  };
+}
+
+interface DbPlannedShift {
+  id: string;
+  submissionId: number;
+  day: string;
+  building: string;
+  start: number;
+  end: number;
+}
+
+export function serializeShift(s: DbPlannedShift): Shift {
+  return {
+    id: s.id,
+    tutorId: s.submissionId,
+    // Only ever written through the planner's validated route.
+    day: s.day as Weekday,
+    building: s.building as Building,
+    start: s.start,
+    end: s.end,
   };
 }
 

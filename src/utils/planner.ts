@@ -194,16 +194,42 @@ export function moveShift(
   if (length > close - open) return null;
   const snapped = Math.round(minute / STEP_MINUTES) * STEP_MINUTES;
   const start = Math.max(open, Math.min(snapped, close - length));
-  const end = start + length;
-  const clash = shifts.some(
+  const moved = { ...shift, day, building, start, end: start + length };
+  return clashes(moved, shifts) ? null : moved;
+}
+
+/** Whether a tutor would be in two places at once. */
+function clashes(shift: Shift, shifts: Shift[]): boolean {
+  return shifts.some(
     (s) =>
       s.id !== shift.id &&
       s.tutorId === shift.tutorId &&
-      s.day === day &&
-      s.start < end &&
-      start < s.end,
+      s.day === shift.day &&
+      s.start < shift.end &&
+      shift.start < s.end,
   );
-  return clash ? null : { ...shift, day, building, start, end };
+}
+
+/**
+ * Why the server should refuse a shift, or null if it is fine. The board never
+ * makes these, so one means a stale page or a hand-made request.
+ */
+export function shiftProblem(shift: Shift, shifts: Shift[]): string | null {
+  const open = hhmmToMinutes(CENTER_HOURS[shift.day].open);
+  const close = hhmmToMinutes(CENTER_HOURS[shift.day].close);
+  if (shift.start % STEP_MINUTES !== 0 || shift.end % STEP_MINUTES !== 0) {
+    return "Shifts start and end in 15-minute steps";
+  }
+  if (shift.start < open || shift.end > close) {
+    return `${shift.day} shifts must be within center hours`;
+  }
+  if (shift.end - shift.start < MIN_SHIFT_MINUTES) {
+    return "A shift must be at least 1 hour";
+  }
+  if (clashes(shift, shifts)) {
+    return "This tutor already has a shift at that time";
+  }
+  return null;
 }
 
 /** A shift whose bottom edge was dragged to a new end time. */
