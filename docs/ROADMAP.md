@@ -107,7 +107,7 @@ Asked, waiting for his reply:
 
 Still to ask:
 - **VPA (Music):** how many tutors per hour?
-- **Building hours:** are all four buildings open the center hours, or are some open less?
+- **Building hours:** are all four buildings open the center hours, or are some open less? If some are open less, William would set each building's hours per day in the planner settings (starting from the center hours), and coverage would only count while a building is open. Do the center hours themselves ever change from term to term?
 - **Budget:** is there a weekly hours budget per building or for the whole center, and roughly how much?
 - **Deadline:** when does William usually build the Spring schedule?
 
