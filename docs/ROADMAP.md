@@ -91,7 +91,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - Copying one day to another ("Wednesday same as Monday"). This is the first thing to add afterward.
 - A whole-week overview screen. The print view (feature 3) covers this.
 - Approving tutors from inside the planner. William keeps using the inbox.
-- A separate login for the SQ coordinator (waiting on William).
+- A separate login for the SQ coordinator. For now we assume William schedules the Biology tutors too, so he is the only one using the planner.
 - Showing staff and professor hours.
 - Online or Zoom shifts. MS, LE, SQ and VPA are the only places for now.
 - Courses that must always have a tutor ("nobody for Physics on Friday afternoon"). Add this if William asks for it.
@@ -104,7 +104,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 ### Waiting on William
 
 Asked, waiting for his reply:
-- **SQ:** does the SQ coordinator schedule the Biology tutors and do the final step, or does William recruit Biology tutors too? If the coordinator schedules them, do they need their own login?
+- **SQ:** does the SQ coordinator schedule the Biology tutors and do the final step, or does William recruit Biology tutors too? We're building as if William schedules them; if the coordinator does, ask whether they need their own login.
 - **Coverage:** confirm 2 tutors per hour in MS and LE (1 is okay if the budget is tight) and 1 per hour in SQ.
 - **Tutors with subjects in more than one building** (for example Biology, Chemistry, and English): can they work in each, or must they pick one? If they pick, should the form ask?
 - **Shift length:** confirm the 1-hour minimum.
