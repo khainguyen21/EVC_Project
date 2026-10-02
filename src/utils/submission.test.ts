@@ -180,10 +180,16 @@ describe("toSubmissionData / toResubmissionData", () => {
 
   it("puts a resubmission back to pending and stamps it", () => {
     const now = new Date("2026-08-21T21:09:00Z");
-    const data = toResubmissionData(input, now);
+    const data = toResubmissionData(input, now, false);
     expect(data.status).toBe("pending");
     expect(data.resubmittedAt).toBe(now);
     // Everything the tutor sent replaces what was there, William's edits included.
     expect(data.name).toBe("Hong Khai Nguyen");
+  });
+
+  it("marks the availability changed only for a tutor already on the planner", () => {
+    const now = new Date("2026-08-21T21:09:00Z");
+    expect(toResubmissionData(input, now, true).availabilityChanged).toBe(true);
+    expect(toResubmissionData(input, now, false).availabilityChanged).toBe(false);
   });
 });

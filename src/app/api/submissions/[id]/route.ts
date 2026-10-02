@@ -60,6 +60,11 @@ export async function PUT(
       data: {
         ...(fields ? toSubmissionData(fields) : {}),
         ...(status ? { status } : {}),
+        // Approving means William has checked their new hours; declining
+        // removes their shifts. Either way the planner badge is done.
+        ...(status === "approved" || status === "declined"
+          ? { availabilityChanged: false }
+          : {}),
       },
       include: { _count: { select: { shifts: true } } },
     });

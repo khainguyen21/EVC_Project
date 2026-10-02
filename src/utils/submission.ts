@@ -185,12 +185,14 @@ export function toSubmissionData(input: SubmissionFields) {
 /**
  * What a tutor's second submission for the same term writes over the first.
  * It replaces everything, including any edits William made, and goes back to
- * pending so he knows to look again.
+ * pending so he knows to look again. If he had already placed them on the
+ * planner, they get its "Availability changed" badge.
  */
-export function toResubmissionData(input: SubmissionFields, now: Date) {
+export function toResubmissionData(input: SubmissionFields, now: Date, hasShifts: boolean) {
   return {
     ...toSubmissionData(input),
     status: "pending" as const,
     resubmittedAt: now,
+    availabilityChanged: hasShifts,
   };
 }

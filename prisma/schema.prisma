@@ -86,23 +86,26 @@ model Holiday {
 // by an admin). It is what the tutor can do, not their schedule: approving one
 // only records William's decision.
 model AvailabilitySubmission {
-  id            Int            @id @default(autoincrement())
-  term          Term           @relation(fields: [termId], references: [id], onDelete: Cascade)
-  termId        Int
-  name          String
-  studentId     String // 7 digits, kept as text for leading zeros
-  email         String
-  units         Float
-  trainingDone  Boolean // finished the II 90 online tutor training
-  subjectsRaw   String // exactly as the tutor typed it
-  subjectCodes  String[] // parsed by utils/courseCodes, e.g. "COMSC-75"
-  availability  Json // [{ day, start, end, allDay }]
-  notes         String?
-  status        String         @default("pending") // "pending" | "approved" | "declined"
-  resubmittedAt DateTime? // last time the tutor replaced an earlier submission
-  shifts        PlannedShift[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                  Int            @id @default(autoincrement())
+  term                Term           @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId              Int
+  name                String
+  studentId           String // 7 digits, kept as text for leading zeros
+  email               String
+  units               Float
+  trainingDone        Boolean // finished the II 90 online tutor training
+  subjectsRaw         String // exactly as the tutor typed it
+  subjectCodes        String[] // parsed by utils/courseCodes, e.g. "COMSC-75"
+  availability        Json // [{ day, start, end, allDay }]
+  notes               String?
+  status              String         @default("pending") // "pending" | "approved" | "declined"
+  resubmittedAt       DateTime? // last time the tutor replaced an earlier submission
+  // The tutor resubmitted while they had planner shifts. Badges them on the
+  // planner until William approves (or declines) them again.
+  availabilityChanged Boolean        @default(false)
+  shifts              PlannedShift[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
   @@unique([termId, studentId])
 }

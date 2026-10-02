@@ -55,7 +55,7 @@ export default function TutorCard({ submission, tutor, shifts, day, usualHours }
         </span>
       </div>
 
-      {submission.status === "pending" && (
+      {submission.availabilityChanged ? (
         <div style={{ marginTop: 4 }}>
           <span
             title="They resubmitted after you placed them. Approve them again in the inbox once you've checked their shifts."
@@ -64,6 +64,18 @@ export default function TutorCard({ submission, tutor, shifts, day, usualHours }
             <RefreshCw size={11} /> Availability changed
           </span>
         </div>
+      ) : (
+        // Put back to pending from the inbox. Their shifts still count.
+        submission.status === "pending" && (
+          <div style={{ marginTop: 4 }}>
+            <span
+              title="You set them back to pending in the inbox. Approve them again when you're ready."
+              style={badge("#f1f5f9", "#475569")}
+            >
+              Pending
+            </span>
+          </div>
+        )
       )}
 
       {lines.length > 0 ? (

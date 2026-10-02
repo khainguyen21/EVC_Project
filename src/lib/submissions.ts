@@ -24,6 +24,7 @@ interface DbSubmission {
   notes: string | null;
   status: string;
   resubmittedAt: Date | null;
+  availabilityChanged: boolean;
   createdAt: Date;
   updatedAt: Date;
   _count: { shifts: number };
@@ -45,6 +46,7 @@ export function serializeSubmission(s: DbSubmission): Submission {
     notes: s.notes,
     status: s.status as SubmissionStatus,
     resubmittedAt: s.resubmittedAt?.toISOString() ?? null,
+    availabilityChanged: s.availabilityChanged,
     createdAt: s.createdAt.toISOString(),
     updatedAt: s.updatedAt.toISOString(),
     flags: submissionFlags(s),

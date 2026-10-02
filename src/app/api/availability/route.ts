@@ -57,14 +57,14 @@ export async function POST(request: Request) {
 
     const existing = await prisma.availabilitySubmission.findUnique({
       where: { termId_studentId: key },
-      select: { id: true },
+      select: { _count: { select: { shifts: true } } },
     });
 
     // Same student, same term: the new submission replaces the old one.
     await prisma.availabilitySubmission.upsert({
       where: { termId_studentId: key },
       create: { ...key, ...toSubmissionData(input) },
-      update: toResubmissionData(input, new Date()),
+      update: toResubmissionData(input, new Date(), (existing?._count.shifts ?? 0) > 0),
     });
 
     return NextResponse.json({ ok: true, resubmitted: existing !== null });

@@ -63,6 +63,7 @@ export interface Submission {
     notes: string | null,
     status: 'pending' | 'approved' | 'declined',
     resubmittedAt: string | null,
+    availabilityChanged: boolean, // resubmitted while on the shift planner
     createdAt: string,
     updatedAt: string,
     flags: ('under-units' | 'subjects-need-review')[],
