@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ArrowLeft,
   Inbox,
+  LayoutGrid,
 } from "lucide-react";
 import { SUBMISSIONS_CHANGED } from "@/lib/submissionEvents";
 
@@ -39,6 +40,7 @@ export default function Sidebar() {
       icon: Inbox,
       badge: pending,
     },
+    { name: "Shift Planner", href: "/admin/planner", icon: LayoutGrid },
     { name: "Terms & Holidays", href: "/admin/terms", icon: CalendarDays },
   ];
 

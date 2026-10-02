@@ -120,6 +120,9 @@ export function resolveAvailability(rows: AvailabilityRow[]): AvailabilityRow[] 
     );
 }
 
+/** "Open Computer Lab" is a subject tutors list, but it has no course code. */
+export const OPEN_LAB_PATTERN = /open\s+(computer\s+)?lab/i;
+
 /**
  * The comma-separated parts of a subject list that name no course.
  *
@@ -142,7 +145,8 @@ export function findUnrecognizedSubjects(raw: string): string[] {
     const onlyNumbers = parts[i].split(/\s+/).every((w) => /^\d/.test(w));
     // A repeat ("Math 63, Math 63") adds nothing new but still names a course.
     const standsAlone = parseCourseCodes(parts[i]).length > 0;
-    if (!standsAlone && !(onlyNumbers && addedSomething)) {
+    const openLab = OPEN_LAB_PATTERN.test(parts[i]);
+    if (!standsAlone && !(onlyNumbers && addedSomething) && !openLab) {
       unrecognized.push(parts[i]);
     }
     seen = soFar;

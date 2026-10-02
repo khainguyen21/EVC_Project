@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { hhmmToMinutes, type Weekday } from "./centerHours";
 import type { AvailabilityRow } from "./submission";
 import {
+  addsNothingNew,
   buildingWeeklyMinutes,
   buildingsFor,
   coverageAt,
@@ -66,6 +67,11 @@ describe("tutorCourses", () => {
   it("gives a tutor whose subjects name no course no building", () => {
     const courses = tutorCourses({ subjectCodes: [], subjectsRaw: "Calculus and anatomy" });
     expect(buildingsFor(courses)).toEqual([]);
+  });
+
+  it("counts nothing until William fixes subjects that need review", () => {
+    const courses = tutorCourses({ subjectCodes: ["MATH-71"], subjectsRaw: "Math 71, Calculus" });
+    expect(courses).toEqual([]);
   });
 });
 
@@ -395,5 +401,25 @@ describe("shiftProblem", () => {
         { ...ok, start: at("09:00") },
       ]),
     ).toBeNull();
+  });
+});
+
+describe("addsNothingNew", () => {
+  const tutors = [tutor(1, ["MATH-71"]), tutor(2, ["MATH-71"]), tutor(3, ["STAT-C1000"])];
+
+  it("flags a shift whose courses someone else there covers the whole time", () => {
+    const mine = shift(1, "MS-112", "Monday", "10:00", "12:00");
+    const other = shift(2, "MS-112", "Monday", "09:00", "13:00");
+    expect(addsNothingNew(mine, tutors, [mine, other])).toBe(true);
+  });
+
+  it("doesn't flag a handover overlap, or a tutor who brings a new course", () => {
+    const mine = shift(1, "MS-112", "Monday", "10:00", "12:00");
+    const handover = shift(2, "MS-112", "Monday", "11:00", "13:00");
+    expect(addsNothingNew(mine, tutors, [mine, handover])).toBe(false);
+
+    const stat = shift(3, "MS-112", "Monday", "10:00", "12:00");
+    const calc = shift(2, "MS-112", "Monday", "10:00", "12:00");
+    expect(addsNothingNew(stat, tutors, [stat, calc])).toBe(false);
   });
 });

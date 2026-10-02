@@ -5,7 +5,7 @@
  * Times are minutes after midnight, so 9:15 am is 555.
  */
 import { CENTER_HOURS, hhmmToMinutes, type Weekday } from "./centerHours";
-import type { AvailabilityRow } from "./submission";
+import { OPEN_LAB_PATTERN, findUnrecognizedSubjects, type AvailabilityRow } from "./submission";
 
 /** Shifts start, end and move in 15-minute steps. */
 export const STEP_MINUTES = 15;
@@ -66,12 +66,16 @@ function buildingOf(code: string): Building {
 /** Stands in for "Open Computer Lab", which the course parser can't read. */
 export const OPEN_LAB = "OPEN-LAB";
 
-/** A submission's courses, as the planner counts them. */
+/**
+ * A submission's courses, as the planner counts them. None while any of its
+ * subjects need review: a half-read list would light up the wrong buildings.
+ */
 export function tutorCourses(submission: {
   subjectCodes: string[];
   subjectsRaw: string;
 }): string[] {
-  return /open\s+(computer\s+)?lab/i.test(submission.subjectsRaw)
+  if (findUnrecognizedSubjects(submission.subjectsRaw).length > 0) return [];
+  return OPEN_LAB_PATTERN.test(submission.subjectsRaw)
     ? [...submission.subjectCodes, OPEN_LAB]
     : submission.subjectCodes;
 }
@@ -129,8 +133,20 @@ export function coverageAt(
   return { count, goal: COVERAGE_GOAL[building], courses, sameSubjects };
 }
 
+/**
+ * Whether everything a shift's tutor covers, someone else in that building
+ * already covers for the whole shift. A short overlap at a handover is fine.
+ */
+export function addsNothingNew(shift: Shift, tutors: PlannerTutor[], shifts: Shift[]): boolean {
+  for (let minute = shift.start; minute < shift.end; minute += STEP_MINUTES) {
+    const here = coverageAt(tutors, shifts, shift.building, shift.day, minute);
+    if (!here.sameSubjects.includes(shift.tutorId)) return false;
+  }
+  return true;
+}
+
 /** A tutor's free time on one day, with touching or overlapping rows joined. */
-function freeTimes(tutor: PlannerTutor, day: Weekday): { start: number; end: number }[] {
+export function freeTimes(tutor: PlannerTutor, day: Weekday): { start: number; end: number }[] {
   const rows = tutor.availability
     .filter((row) => row.day === day)
     .map((row) => ({ start: hhmmToMinutes(row.start), end: hhmmToMinutes(row.end) }))

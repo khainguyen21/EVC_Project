@@ -23,6 +23,7 @@ import WeeklyGrid from "@/components/availability/WeeklyGrid";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import { formatCourseCode } from "@/utils/courseCodes";
+import { pickDefaultTerm } from "@/utils/term";
 import type { SubmissionInput, SubmissionStatus } from "@/utils/submission";
 
 const STATUS_STYLES: Record<SubmissionStatus, { bg: string; color: string; label: string }> = {
@@ -71,18 +72,9 @@ const cardStyle: React.CSSProperties = {
   boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)",
 };
 
-/** Default to the term whose form is open, else the active one, else the newest. */
 /** "1 planned shift", "3 planned shifts". */
 function plannedShifts(count: number): string {
   return `${count} planned shift${count === 1 ? "" : "s"}`;
-}
-
-function pickDefaultTerm(terms: AdminTerm[]): AdminTerm | undefined {
-  return (
-    terms.find((t) => t.availabilityCode) ??
-    terms.find((t) => t.isActive) ??
-    terms[0]
-  );
 }
 
 const formatDateTime = (iso: string) =>
@@ -208,7 +200,7 @@ export default function AvailabilityInboxPage() {
   const handleDecline = (s: Submission) => {
     if (s.shiftCount === 0) return setStatus(s, "declined");
     setConfirmModal({
-      message: `${s.name} has ${plannedShifts(s.shiftCount)}. Declining removes them.`,
+      message: `${s.name} has ${plannedShifts(s.shiftCount)}. Declining removes ${s.shiftCount === 1 ? "it" : "them"}.`,
       confirmLabel: "Yes, decline",
       onConfirm: () => {
         setConfirmModal(null);

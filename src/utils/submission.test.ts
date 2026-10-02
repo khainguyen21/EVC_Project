@@ -142,6 +142,11 @@ describe("findUnrecognizedSubjects", () => {
       findUnrecognizedSubjects("COMSC 75, Intro to Python, COMS 76"),
     ).toEqual(["Intro to Python", "COMS 76"]);
   });
+
+  it("knows Open Computer Lab, which has no course code", () => {
+    expect(findUnrecognizedSubjects("Open Computer Lab, English 1A")).toEqual([]);
+    expect(findUnrecognizedSubjects("open lab")).toEqual([]);
+  });
 });
 
 describe("submissionFlags", () => {
