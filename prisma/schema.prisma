@@ -49,6 +49,10 @@ model Schedule {
 model SiteSettings {
   id                  Int      @id @default(1)
   scheduleLastUpdated DateTime @default(now())
+  // William's usual weekly hours per tutor, for the planner's card colors.
+  // Admin only: never return it from the public /api/settings. Null until he
+  // sets it.
+  usualWeeklyHours    Float?
 }
 
 // An academic term. The active one drives the homepage banner and decides
@@ -82,8 +86,8 @@ model Holiday {
 // by an admin). It is what the tutor can do, not their schedule: approving one
 // only records William's decision.
 model AvailabilitySubmission {
-  id            Int       @id @default(autoincrement())
-  term          Term      @relation(fields: [termId], references: [id], onDelete: Cascade)
+  id            Int            @id @default(autoincrement())
+  term          Term           @relation(fields: [termId], references: [id], onDelete: Cascade)
   termId        Int
   name          String
   studentId     String // 7 digits, kept as text for leading zeros
@@ -94,12 +98,29 @@ model AvailabilitySubmission {
   subjectCodes  String[] // parsed by utils/courseCodes, e.g. "COMSC-75"
   availability  Json // [{ day, start, end, allDay }]
   notes         String?
-  status        String    @default("pending") // "pending" | "approved" | "declined"
+  status        String         @default("pending") // "pending" | "approved" | "declined"
   resubmittedAt DateTime? // last time the tutor replaced an earlier submission
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  shifts        PlannedShift[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@unique([termId, studentId])
+}
+
+// A shift William placed on the shift planner for a tutor's submission, in
+// one repeating Monday-Friday week of that term. Separate from Schedule, the
+// public schedule: nothing here shows publicly until it is published.
+model PlannedShift {
+  // Made by the browser, so undo can put back a deleted shift with its old id.
+  id           String                 @id @default(uuid())
+  submission   AvailabilitySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId Int
+  day          String // e.g. "Monday"
+  building     String // e.g. "MS-112"
+  start        Int // minutes after midnight, so 9:15 am is 555
+  end          Int
+
+  @@index([submissionId])
 }
 
 // One row per public form submission attempt, for per-IP rate limiting. An
