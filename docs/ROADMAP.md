@@ -177,7 +177,9 @@ Branch: `feature/confirmation-email`
 
 ### Setup (Khai)
 
-Create the Gmail account, turn on 2-step verification, create an app password, and add it to the Vercel settings. Set the account to forward all mail to William's evc.edu address. There will be a step-by-step guide when we get there.
+Done (October 2026): the Gmail account `evc.tutor.schedule@gmail.com` exists, with the name "EVC Tutoring".
+
+Still to do: turn on 2-step verification, create an app password, and add it to the Vercel settings. Set the account to forward all mail to William's evc.edu address. There will be a step-by-step guide when we get there.
 
 ### Later
 
