@@ -10,9 +10,9 @@ import {
 } from "./submission";
 
 const validInput = {
-  name: "Hong Khai Nguyen",
-  studentId: "1068957",
-  email: "khai@example.com",
+  name: "Sam Tutor",
+  studentId: "1234567",
+  email: "sam@example.com",
   units: 17,
   trainingDone: true,
   subjects: "COMSC-020, COMSC-075",
@@ -39,8 +39,8 @@ describe("submissionSchema", () => {
   });
 
   it("keeps the leading zero in a student ID", () => {
-    const result = parse({ studentId: "0202849" });
-    expect(result.success && result.data.studentId).toBe("0202849");
+    const result = parse({ studentId: "0123456" });
+    expect(result.success && result.data.studentId).toBe("0123456");
   });
 
   it.each(["123456", "12345678", "12a4567", ""])(
@@ -184,7 +184,7 @@ describe("toSubmissionData / toResubmissionData", () => {
     expect(data.status).toBe("pending");
     expect(data.resubmittedAt).toBe(now);
     // Everything the tutor sent replaces what was there, William's edits included.
-    expect(data.name).toBe("Hong Khai Nguyen");
+    expect(data.name).toBe("Sam Tutor");
   });
 
   it("marks the availability changed only for a tutor already on the planner", () => {
