@@ -9,7 +9,7 @@ There are four features. Each one gets its own branch and pull request, built in
 3. [Print / Save as PDF](#3-print--save-as-pdf)
 4. [Publish to the public schedule](#4-publish-to-the-public-schedule)
 
-The planner comes first because the Spring form link is not going out soon. The email has to be live before that link goes out. Print can move up if the EVC website team needs a PDF sooner.
+The planner comes first because the Spring form link doesn't go out until around December. The email has to be live before that link goes out, so by the start of December. Print can move up if the EVC website team needs a PDF sooner.
 
 Each section lists what is **decided**, what is **waiting on William**, and anything **later**.
 
@@ -30,9 +30,10 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - William plans one repeating Monday-to-Friday week per term, like the public schedule. Holidays stay on the Terms page.
 - One column per building, time running down the page, one day at a time.
 - Tutors free that day are listed on the left as cards. William drags a card into a building at the time the shift should start.
-- Shifts start, end, and move in 15-minute steps (9:00, 9:15, 9:30, 9:45). The tutor form keeps on-the-hour and half-hour times.
-- A dropped shift is 2 hours by default, shortened to fit the tutor's free time but never below 1 hour. Drag its bottom edge to change the length, with a 1-hour minimum.
-- There is no daily limit. The 2 hours is only where a new shift starts; a tutor's week is kept in check by the usual hours and the 20-hour limit (see Hours).
+- Shifts start, end, and move in 15-minute steps (9:00, 9:15, 9:30, 9:45). The tutor form uses the same 15-minute steps, since real shifts start at times like 9:15 and 1:45.
+- A few shifts end at times like 12:10 or 1:40, between classes. Those tutors round inward on the form (until 12:00) and write the exact time in Notes, which William sees on their card. William can still type the exact time on Manage Staff. (Khai's call while William was unavailable. Mention it to him; 5-minute steps are a small change if he wants them.)
+- A dropped shift is 3 hours by default (William's usual shifts are 9–12 or 1–4), shortened to fit the tutor's free time but never below 1 hour. Drag its bottom edge to change the length, with a 1-hour minimum.
+- There is no daily limit. The 3 hours is only where a new shift starts; a tutor's week is kept in check by the usual hours and the 20-hour limit (see Hours).
 - A tutor can have more than one shift in a day (split shifts), but can't be in two places at the same time. Shifts in different buildings can touch; no walking time is needed between them.
 - Each card shows the tutor's notes from the form.
 - Each card lists the tutor's courses shortened the way William types them: `MATH 20-25, 62, 66-67, 71-72, 79` instead of every course spelled out.
@@ -58,14 +59,27 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - Dropping a tutor into another building is allowed, with a warning. William has the final say.
 
 **Coverage, per building, every 15 minutes**
-- MS and LE: the goal is 2 tutors; 1 is acceptable.
-- SQ: the goal is 1 tutor.
-- VPA: William runs it too. 1 tutor for now, until he says how many.
+- MS and LE: the goal is 2 tutors during the day; 1 is acceptable. After 5 pm the goal is 1, because it's slower and MSRC staff are there with the tutor.
+- MS must always have a Calc tutor (MATH 66, 67, 71, 72, 73, 78 or 79) and a Stats tutor (STAT C1000). A missing one is the strongest warning. After 5 pm, one tutor who covers Calc or Stats is enough. "Any Math" and the old MATH 63 don't count as Stats. Chemistry and Physics are nice to have through the day, so a gap there is a lighter warning.
+- SQ: the goal is 1 tutor. Usually one Biology tutor at a time, sometimes two overlapping.
+- VPA: William runs it too. 1 tutor, since Music isn't in high demand.
+- Coverage only counts while a building is open.
 - Coverage counts the fewest tutors who between them cover every course offered there at that time. Calc with Stat counts as 2. Two tutors who both only do MATH-071 count as 1.
 - The second tutor is there to cover more subjects, not to shorten the wait. Two tutors with the same courses count as 1.
 - A tutor gets a "same subjects" warning when everything they cover, someone else there already covers. A tutor for "any Chemistry" covers every numbered Chemistry course.
 - A tutor counts only for their courses that belong to that building. A Chemistry and English tutor placed in MS counts for Chemistry only. A tutor with no courses for that building gets the warning and doesn't count toward it.
-- Every building uses the center hours (Monday 9 am–6 pm, Tuesday to Thursday 9 am–8 pm, Friday 9 am–5 pm) until William says otherwise.
+- Tutors with subjects in more than one building usually work in only one place, and William picks which. The form doesn't ask them to choose. For example, a Stats and English tutor may work only in LE when MS already has enough Stats tutors. Helping a student with Stats there is fine, but it doesn't count toward coverage.
+- Each building has its own hours, and they change from term to term, so they are stored per term in the database, not in the code. A new term starts from the last term's hours. Fall 2026:
+
+  | Building | Mon | Tue | Wed | Thu | Fri |
+  | --- | --- | --- | --- | --- | --- |
+  | MS-112 | 8 am–6 pm | 8 am–8 pm | 8 am–8 pm | 8 am–8 pm | 8 am–5 pm |
+  | LE-237 | 9 am–5 pm | 9 am–5 pm | 9 am–5 pm | 9 am–5 pm | 9 am–1 pm |
+  | SQ-231 | 9 am–4 pm | 9 am–3 pm | 9 am–3 pm | 9 am–3 pm | 9 am–1 pm |
+  | VPA-109/111 | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm |
+
+  William confirmed MS, LE (Tue–Thu from the EVC site) and SQ. VPA is Khai's guess, kept for now.
+- Tutor shifts can start when a building opens, so MS shifts can start at 8 am.
 - Hovering the coverage strip lists the courses covered at that time.
 - Only the student tutors William places count. Staff and professor hours don't count toward coverage (William confirmed), and they are not shown in the first version.
 - These are warnings. The planner never blocks William.
@@ -77,7 +91,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - Cards show progress toward the usual hours: gray below it, green at it, amber above it. Until William sets the number, cards only change color at 20 hours.
 - Only student tutors fill out the availability form, so everyone in the planner is a student tutor. They turn red at 20 hours a week; exactly 20 is already red.
 - The tutor list sorts the fewest hours to the top, so nobody gets forgotten.
-- The top of each building's column shows its total planned hours for the week. This is for now and may change once we know about the budget.
+- The top of each building's column shows its total planned hours for the week. William keeps track of the budget himself; the planner doesn't enforce one.
 
 **Outside availability**
 - William can place a shift outside the hours a tutor sent. It gets a clear "outside their availability" warning.
@@ -91,29 +105,47 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - Copying one day to another ("Wednesday same as Monday"). This is the first thing to add afterward.
 - A whole-week overview screen. The print view (feature 3) covers this.
 - Approving tutors from inside the planner. William keeps using the inbox.
-- A separate login for the SQ coordinator. For now we assume William schedules the Biology tutors too, so he is the only one using the planner.
+- A separate login for the Biology supervisor. William hires every tutor, Biology included. The Biology supervisor schedules the Biology tutors and sends William the schedule, and William enters it on the master schedule. So William is the only one using the planner.
 - Showing staff and professor hours.
-- Online or Zoom shifts. MS, LE, SQ and VPA are the only places for now.
-- Courses that must always have a tutor ("nobody for Physics on Friday afternoon"). Add this if William asks for it.
+- Online or Zoom shifts. Everyone works in a building for now (William, October 2026).
+- Must-have courses outside MS. LE has none (William confirmed).
 
 **How it's built**
 - One branch with small commits, and one pull request after William has tried it.
 - Tests for the rules (coverage, "adds a new course", hour totals, fitting a shift into free time, shortening course lists) are written before the code. Dragging is checked in the browser.
+- The course reader must accept subject lists the way they appear in William's Fall 2026 schedule, including `MATH020` with no space and his spelling `PHYSIC`. Both are flagged "subjects need review" today, which leaves those tutors out of coverage.
 - Sample tutors for the test database: `npm run db:sample`. It only runs when `.env` has `ALLOW_SAMPLE_DATA=true`, which only the test database's `.env` should have.
 
 ### Waiting on William
 
-Asked, waiting for his reply:
-- **SQ:** does the SQ coordinator schedule the Biology tutors and do the final step, or does William recruit Biology tutors too? We're building as if William schedules them; if the coordinator does, ask whether they need their own login.
-- **Coverage:** confirm 2 tutors per hour in MS and LE (1 is okay if the budget is tight) and 1 per hour in SQ.
-- **Tutors with subjects in more than one building** (for example Biology, Chemistry, and English): can they work in each, or must they pick one? If they pick, should the form ask?
-- **Shift length:** confirm the 1-hour minimum.
+Answered (October 2026):
+- **Biology:** William hires all tutors. The Biology supervisor schedules the Biology tutors and sends William the schedule, which he enters on the master schedule.
+- **Coverage:** 1–2 tutors per hour in MS and LE, 1 in the evening, and at least one Calc and one Stats tutor at all times. See Coverage.
+- **Tutors with subjects in more than one building:** usually one place, William's choice. See Coverage.
+- **Shift length:** usually 2–4 hours, for example 9–12, 1–4 or 6–8 pm. Only 1 hour when the tutor says that's all they can do between classes. The 1-hour minimum stays.
+- **VPA:** 1 tutor.
+- **Deadline:** the Spring form link goes out and the schedule is built around December.
+- **Building hours:** each building keeps its own hours, and they change every term. See Coverage.
+- **Calc and Stats:** Calc is MATH 66, 67, 71, 72, 73, 78 and 79. Stats is only STAT C1000. "Any Math" and the old MATH 63 don't count.
+- **Hours:** see the table in Coverage. MS tutor shifts start at 8 am.
+- **Evening:** MS needs 1 tutor after 5 pm, and one who covers Calc or Stats is enough.
+- **LE must-haves:** none.
+- **20-hour limit:** a student tutor must stay under 20 hours, so exactly 20 stays red.
+- **Online shifts:** none for now. Everyone works in a building.
+- **Biology form:** Biology tutors fill out the form like everyone else, and William forwards their availability to the Biology supervisor.
 
 Still to ask:
-- **VPA (Music):** how many tutors per hour?
-- **Building hours:** are all four buildings open the center hours, or are some open less? If some are open less, William would set each building's hours per day in the planner settings (starting from the center hours), and coverage would only count while a building is open. Do the center hours themselves ever change from term to term?
-- **Budget:** is there a weekly hours budget per building or for the whole center, and roughly how much?
-- **Deadline:** when does William usually build the Spring schedule?
+- **Odd times (to mention, not blocking):** the form and planner use 15-minute steps (see Layout). Are times like 12:10 and 1:40 common enough for 5-minute steps?
+- **Website text:** are these still current? Pay ($18/hour), the hiring list on Become a Tutor (it still lists Math 63), the contact names and emails, and the II-210 Reg IDs on the rules page.
+
+### Next up
+
+In this order, each with tests first:
+1. Course reader: accept `MATH020` and `PHYSIC`.
+2. Tutor form: 15-minute times.
+3. Planner: 3-hour default shifts.
+4. Building hours per term (new table, Terms page editor, form, planner, rules page).
+5. MS must-have Calc and Stats, and 1 tutor after 5 pm.
 
 ### Prototype
 
@@ -130,23 +162,22 @@ Branch: `feature/confirmation-email`
 - **When:** sent on every submission. A resubmission says the availability was updated.
 - **What it says:**
   - Thanks, and William has their information.
-  - Sending availability does not guarantee those hours. William is working on the schedule and will follow up.
+  - The schedule will be created based on the availability they sent (William's wording). William will follow up.
   - A copy of what they sent.
   - How to fix a mistake: open the same link and resubmit with the same student ID, which replaces the old entry. The link is included.
   - William's email for anything else.
 - **Never mentions** William's usual hours per tutor.
-- **Sender:** a new Gmail account just for the site, sending through Gmail with an app password. Replies go to William's evc.edu address.
+- **Sender:** a new Gmail account just for the site, sending through Gmail with an app password. Replies go to William's evc.edu address. William approved this and says replies reaching evc.edu are very important. So the Gmail account also forwards everything it receives to his evc.edu address, and a test reply is checked before launch.
 - **If sending fails,** the submission is still saved.
 - **Accepted risk:** someone could type another person's email, who would then get a receipt. The 50-per-hour limit per network keeps this small.
 
 ### Waiting on William
 
-- Asked: is he okay with the email coming from a new Gmail account (for example evc.tutor.schedule@gmail.com) and replies going to his evc.edu inbox? Anything he wants it to say?
-- Approve the final wording before it goes live.
+- Approve the final wording before it goes live. (He approved the Gmail sender and replies going to evc.edu.)
 
 ### Setup (Khai)
 
-Create the Gmail account, turn on 2-step verification, create an app password, and add it to the Vercel settings. There will be a step-by-step guide when we get there.
+Create the Gmail account, turn on 2-step verification, create an app password, and add it to the Vercel settings. Set the account to forward all mail to William's evc.edu address. There will be a step-by-step guide when we get there.
 
 ### Later
 
@@ -164,12 +195,30 @@ William prints the schedule to put on the wall and sends a PDF to the EVC websit
 
 - The button is admin only, on the dashboard.
 - It opens the browser's print dialog, which has "Save as PDF" built in. Nothing extra to install.
-- The default design, unless William's sample says otherwise: one weekly grid per building, days across and times down, each shift showing the tutor's name and subjects, one building per landscape letter page.
+- The design copies William's Fall 2026 document (Khai has the Word file and the PDF; they have tutor names, so they stay out of this public repo):
+  - Title: "<Term> Math and Science (STEM) Faculty/Staff/Tutor Tutoring Schedule".
+  - Listed by subject, not as a grid: Astronomy, Biology, Chemistry, Computer Science, Engineering, Math, Physics. Each heading names the room, for example "Chemistry (Math and Science Resource Center-MSRC, MS-112 of MS3)".
+  - In each subject: professors first ("Professor Lee (Chemistry) – Tuesdays 1:00-3:00pm"), then staff with their role, then student tutors.
+  - A student tutor is their name and courses, then one bullet per time ("Mon/Wed 12:00-6:00pm (in MS-112)"). Days with the same times are joined. A tutor with several subjects appears under each one.
+  - Ends with the MSRC coordinator's contact line.
+- William picks the buildings to print with checkboxes. MS and SQ are ticked when the page opens, which matches his document, but any mix works (LE only, VPA only, SQ only, all four). With nothing ticked, the Print button is disabled. The page remembers his last choice on his computer.
+- The layout is the same for every building. The title follows the selection:
+
+  | Ticked | Title |
+  | --- | --- |
+  | MS + SQ | "<Term> Math and Science (STEM) Faculty/Staff/Tutor Tutoring Schedule" |
+  | SQ only | "<Term> Biology Tutoring Schedule" |
+  | LE only | "<Term> Campus Tutoring Center Schedule" |
+  | VPA only | "<Term> Music Tutoring Schedule" |
+  | Any other mix | "<Term> Tutoring Schedule" |
+
+- A tutor in two buildings shows only their shifts in the ticked buildings.
+- Professors and staff come from Manage Staff, so the print reads the public schedule, not the planner. That means it works today, before the planner or Publish.
 
 ### Waiting on William
 
-- Khai is asking him to resend the last PDF he sent the website team.
-- Not asked yet: does the website team want the schedule listed by subject, or as a weekly grid by building?
+- Do LE and VPA tutors go on a separate schedule for the website team, and does William make it? (Not blocking: the building checkboxes cover either answer.)
+- Are the titles above right?
 
 ---
 
@@ -182,5 +231,5 @@ Copies William's planned shifts onto the public schedule.
 ### Open questions
 
 - **Matching:** each submission has to be linked to the right tutor on the public site. Public tutor records have no student ID or email, so this needs a way to link them.
-- Does publishing replace the whole week, or only the tutors who changed? Either way, it must leave staff and professor hours alone. Those don't come from the form, and William keeps entering them on Manage Staff.
+- Publishing a new term's schedule removes all of last term's student tutors at once (William confirmed). It leaves staff and professor hours alone. Those don't come from the form, and William keeps entering them on Manage Staff.
 - Send the "your shifts are posted" email (see feature 2).
