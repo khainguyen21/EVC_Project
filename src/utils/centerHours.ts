@@ -29,15 +29,6 @@ export interface OpenHours {
 /** A term's hours. A building with no entry for a day is closed that day. */
 export type BuildingHours = Record<Building, Partial<Record<Weekday, OpenHours>>>;
 
-// Kept until the planner and rules page read a term's hours.
-export const CENTER_HOURS: Record<Weekday, { open: string; close: string }> = {
-  Monday: { open: "09:00", close: "18:00" },
-  Tuesday: { open: "09:00", close: "20:00" },
-  Wednesday: { open: "09:00", close: "20:00" },
-  Thursday: { open: "09:00", close: "20:00" },
-  Friday: { open: "09:00", close: "17:00" },
-};
-
 /** Real shifts start at times like 9:15 and 1:45, so tutors pick quarter hours. */
 export const SLOT_MINUTES = 15;
 
@@ -129,16 +120,4 @@ export function groupedHours(
     label: g.days.length === 1 ? g.days[0] : `${g.days[0]} - ${g.days[g.days.length - 1]}`,
     hours: g.hours,
   }));
-}
-
-/** The rules page's old list, until it reads a term's hours. */
-export function groupedCenterHours(): { label: string; hours: string }[] {
-  return groupedHours(
-    Object.fromEntries(
-      WEEKDAYS.map((d) => [
-        d,
-        { open: hhmmToMinutes(CENTER_HOURS[d].open), close: hhmmToMinutes(CENTER_HOURS[d].close) },
-      ]),
-    ),
-  );
 }
