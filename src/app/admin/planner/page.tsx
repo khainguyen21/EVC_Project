@@ -37,8 +37,8 @@ const cardStyle: React.CSSProperties = {
 const COVERAGE_LEGEND = [
   { label: "Nobody, or MS has no Calc or Stats", color: "#fecaca" },
   { label: "Below goal", color: "#fde68a" },
-  { label: "MS has no Chemistry or Physics", color: "#d9f99d" },
-  { label: "At goal", color: "#86efac" },
+  { label: "MS is missing Chemistry or Physics", color: "#d9f99d" },
+  { label: "All covered", color: "#86efac" },
 ];
 
 interface PlannerData {
