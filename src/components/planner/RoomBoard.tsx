@@ -28,11 +28,13 @@ import {
   type PlannerTutor,
   type Shift,
 } from "@/utils/planner";
-import { BUILDING_INFO, clock, hoursText, timeRange } from "./format";
+import { BUILDING_INFO, clock, hoursText, shortTimeRange, timeRange } from "./format";
 
 /** Height of one 15-minute step on the board. */
 const STEP_H = 14;
 const STRIP_W = 10;
+/** Shifts this wide or narrower switch to the compact layout. */
+const NARROW_SHIFT_PX = 110;
 
 const WARNING_TEXT = {
   "outside-availability": "Outside their availability",
@@ -240,8 +242,30 @@ export default function RoomBoard({
         minWidth: 52 + BUILDINGS.length * 162,
       }}
     >
-      {/* The shift under the mouse comes to the front, so a covered one can be read. */}
-      <style>{`.planner-shift:hover { z-index: 1000 !important; }`}</style>
+      {/*
+        The shift under the mouse comes to the front, so a covered one can be read.
+        Shifts sharing a column get too narrow for a one-line name and the full
+        time, so there the name wraps between words (cutting off a word that still
+        doesn't fit), the time is shorter, lines are tighter so an hour holds three,
+        and × waits for hover.
+      */}
+      <style>{`
+        .planner-shift { container-type: inline-size; }
+        .planner-shift:hover { z-index: 1000 !important; }
+        .planner-shift-card { padding: 3px 18px 3px 8px; }
+        .planner-shift-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .planner-shift-time { white-space: nowrap; }
+        .planner-shift-short-time { display: none; }
+        @container (max-width: ${NARROW_SHIFT_PX}px) {
+          .planner-shift-card { padding-right: 8px; line-height: 1.25; }
+          .planner-shift-name { white-space: normal; }
+          .planner-shift-time { display: none; }
+          .planner-shift-short-time { display: inline; }
+          .planner-shift-remove { opacity: 0; }
+          .planner-shift:hover .planner-shift-remove,
+          .planner-shift-remove:focus-visible { opacity: 1; }
+        }
+      `}</style>
       <div />
       {BUILDINGS.map((b) => (
         <div key={b} style={{ paddingBottom: 10 }}>
@@ -527,6 +551,7 @@ function BuildingColumn({
                 title={[`${name}, ${timeRange(s.start, s.end)}`, ...warnings.map((w) => WARNING_TEXT[w])].join(
                   "\n",
                 )}
+                className="planner-shift-card"
                 style={{
                   height: "100%",
                   boxSizing: "border-box",
@@ -534,7 +559,6 @@ function BuildingColumn({
                   outline: outside ? "2px solid #7f1d1d" : undefined,
                   color: "white",
                   borderRadius: 8,
-                  padding: "3px 18px 3px 8px",
                   fontSize: "0.74rem",
                   overflow: "hidden",
                   cursor: "grab",
@@ -542,19 +566,23 @@ function BuildingColumn({
                   boxShadow: "0 0 0 1px white, 0 2px 4px rgba(0,0,0,0.2)",
                 }}
               >
-                <div style={{ fontWeight: 700, whiteSpace: "nowrap", display: "flex", gap: 4 }}>
+                <div className="planner-shift-name" style={{ fontWeight: 700 }}>
                   {warnings.length > 0 && (
-                    <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} />
+                    <AlertTriangle size={12} style={{ verticalAlign: -2, marginRight: 4 }} />
                   )}
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+                  {name}
                 </div>
-                <div style={{ opacity: 0.9, whiteSpace: "nowrap" }}>{timeRange(s.start, s.end)}</div>
+                <div style={{ opacity: 0.9 }}>
+                  <span className="planner-shift-time">{timeRange(s.start, s.end)}</span>
+                  <span className="planner-shift-short-time">{shortTimeRange(s.start, s.end)}</span>
+                </div>
               </div>
 
               <button
                 onClick={() => onChange(original, null)}
                 aria-label={`Remove ${name}'s shift`}
                 title="Remove this shift"
+                className="planner-shift-remove"
                 style={{
                   position: "absolute",
                   top: 3,

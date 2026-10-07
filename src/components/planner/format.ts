@@ -26,6 +26,14 @@ export function timeRange(start: number, end: number): string {
   return `${clock(start)} – ${clock(end)}`;
 }
 
+/** "9–11", "1:30–3", or "11–1 pm" across noon, for shifts too narrow for the full range. */
+export function shortTimeRange(start: number, end: number): string {
+  const [from, to] = [clock(start), clock(end)];
+  const range = `${from.slice(0, -3)}–${to.slice(0, -3)}`;
+  // A non-breaking space, so "pm" never wraps onto a line by itself.
+  return from.slice(-2) === to.slice(-2) ? range : `${range} ${to.slice(-2)}`;
+}
+
 /** "4 h", "4.5 h", "4.25 h". */
 export function hoursText(minutes: number): string {
   return `${+(minutes / 60).toFixed(2)} h`;
