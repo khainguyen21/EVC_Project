@@ -79,6 +79,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
   | VPA-109/111 | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm |
 
   William confirmed MS, LE (Tue–Thu from the EVC site) and SQ. VPA is Khai's guess, kept for now.
+- William edits the hours on the Terms page. The form lets tutors pick any time from the first building opening to the last one closing, since it doesn't ask which building. The rules page shows MS-112's hours, since it is the MSRC's page.
 - Tutor shifts can start when a building opens, so MS shifts can start at 8 am.
 - Hovering the coverage strip lists the courses covered at that time.
 - Only the student tutors William places count. Staff and professor hours don't count toward coverage (William confirmed), and they are not shown in the first version.
@@ -140,16 +141,11 @@ Still to ask:
 
 ### Next up
 
-In this order, each with tests first:
-1. Course reader: accept `MATH020` and `PHYSIC`.
-2. Tutor form: 15-minute times.
-3. Planner: 3-hour default shifts.
-4. Building hours per term (new table, Terms page editor, form, planner, rules page).
-5. MS must-have Calc and Stats, and 1 tutor after 5 pm.
+Built in October 2026, each with tests first: the course reader accepts `MATH020` and `PHYSIC`; the form uses 15-minute times; dropped shifts start at 3 hours; building hours are stored per term (Terms page editor, form, planner, rules page); MS warns without a Calc or Stats tutor and expects 1 tutor after 5 pm.
 
-### Prototype
+The `20261006000000_add_building_hours` migration is on the test database, and the Terms page editor, form and planner were checked in the browser.
 
-`/admin/planner-prototype` is a throwaway prototype with three layouts and sample tutors. It lives on its own branch, `prototype/shift-planner`, and is never merged.
+Still to do: William tries the planner on the test database. Then one pull request, with the migration applied to the live database before it ships.
 
 ---
 
