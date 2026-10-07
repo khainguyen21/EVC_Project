@@ -143,6 +143,15 @@ describe("findUnrecognizedSubjects", () => {
     ).toEqual(["Intro to Python", "COMS 76"]);
   });
 
+  it.each([
+    "MATH020, 021, 022, 025, 062, 066/67, 071, 72, 78",
+    "PHYSIC 02A/2B, 7A, 7B",
+    "CHEM 015, 30A, 01A",
+    "MATH STAT C1000, MATH 020, 21-25, 062, 066, 071",
+  ])("reads subjects written like William's schedule: %s", (subjects) => {
+    expect(findUnrecognizedSubjects(subjects)).toEqual([]);
+  });
+
   it("knows Open Computer Lab, which has no course code", () => {
     expect(findUnrecognizedSubjects("Open Computer Lab, English 1A")).toEqual([]);
     expect(findUnrecognizedSubjects("open lab")).toEqual([]);

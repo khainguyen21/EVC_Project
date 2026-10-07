@@ -50,6 +50,7 @@ const PREFIX_ALIASES: Record<string, string> = {
   MUS: "MUS",
   MUSIC: "MUS",
   PHYS: "PHYS",
+  PHYSIC: "PHYS",
   PHYSICS: "PHYS",
   PSYC: "PSYC",
   PSYCH: "PSYC",
@@ -122,8 +123,9 @@ function expandNumbers(chunk: string): string[] {
 /**
  * Splits on commas and whitespace but keeps "020-025" and "066/67" intact.
  * A department joined to its number by a hyphen ("COMSC-075", as many stored
- * subject names are written) is split in two; only a known department is, so
- * a range's hyphen is never touched.
+ * subject names are written) or typed right against it ("MATH020") is split
+ * in two. Only a known department is, so a range's hyphen and a letter-led
+ * number like "C1000" are never touched.
  */
 function tokenize(raw: string): string[] {
   return raw
@@ -131,7 +133,7 @@ function tokenize(raw: string): string[] {
     .map((t) => t.trim())
     .filter(Boolean)
     .flatMap((t) => {
-      const joined = /^([A-Za-z]+)-(\S+)$/.exec(t);
+      const joined = /^([A-Za-z]+)-?(\d\S*)$/.exec(t) ?? /^([A-Za-z]+)-(\S+)$/.exec(t);
       return joined && PREFIX_ALIASES[joined[1].toUpperCase()]
         ? [joined[1], joined[2]]
         : [t];

@@ -2,6 +2,7 @@ import "server-only";
 import { randomInt } from "node:crypto";
 import type { Submission } from "@/types";
 import type { Weekday } from "@/utils/centerHours";
+import { parseCourseCodes } from "@/utils/courseCodes";
 import type { Building, Shift } from "@/utils/planner";
 import {
   submissionFlags,
@@ -19,7 +20,6 @@ interface DbSubmission {
   units: number;
   trainingDone: boolean;
   subjectsRaw: string;
-  subjectCodes: string[];
   availability: unknown;
   notes: string | null;
   status: string;
@@ -40,7 +40,9 @@ export function serializeSubmission(s: DbSubmission): Submission {
     units: s.units,
     trainingDone: s.trainingDone,
     subjectsRaw: s.subjectsRaw,
-    subjectCodes: s.subjectCodes,
+    // Read again, like the flags below, so a submission sent before the course
+    // reader learned a spelling ("MATH020", "PHYSIC") gets its courses now.
+    subjectCodes: parseCourseCodes(s.subjectsRaw),
     // Only ever written through toSubmissionData, so the shape is known.
     availability: s.availability as AvailabilityRow[],
     notes: s.notes,
