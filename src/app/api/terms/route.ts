@@ -48,6 +48,8 @@ export async function GET() {
 }
 
 // Admin: create a term. Activating it deactivates whichever term was active.
+// It starts with the building hours of the latest term, which William then
+// changes on the Terms page if this term's differ.
 export async function POST(request: Request) {
   try {
     const session = await getSession();
@@ -73,12 +75,17 @@ export async function POST(request: Request) {
           data: { isActive: false },
         });
       }
+      const last = await tx.term.findFirst({
+        orderBy: { startDate: "desc" },
+        select: { buildingHours: { select: { building: true, day: true, open: true, close: true } } },
+      });
       return tx.term.create({
         data: {
           name,
           startDate: new Date(startDate),
           endDate: new Date(endDate),
           isActive,
+          buildingHours: { create: last?.buildingHours ?? [] },
         },
         include: TERM_INCLUDE,
       });

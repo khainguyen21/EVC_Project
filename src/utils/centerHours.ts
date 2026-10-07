@@ -65,6 +65,18 @@ export function toBuildingHours(
   return hours;
 }
 
+/** The reverse of toBuildingHours: one row per building and open day. */
+export function toBuildingHoursRows(
+  hours: BuildingHours,
+): { building: Building; day: Weekday; open: number; close: number }[] {
+  return BUILDINGS.flatMap((building) =>
+    WEEKDAYS.flatMap((day) => {
+      const today = hours[building][day];
+      return today ? [{ building, day, open: today.open, close: today.close }] : [];
+    }),
+  );
+}
+
 /**
  * From the first building to open until the last one closes, or null when
  * every building is closed. Tutors can offer any time in it: the form doesn't

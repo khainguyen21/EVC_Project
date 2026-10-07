@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma'
-import { BUILDINGS, WEEKDAYS, type Weekday } from '../src/utils/centerHours'
+import { toBuildingHoursRows, type Weekday } from '../src/utils/centerHours'
 import { FALL_2026_HOURS } from '../src/utils/testFixtures'
 import {
   submissionSchema,
@@ -284,14 +284,7 @@ async function main() {
       startDate: new Date('2027-01-26'),
       endDate: new Date('2027-05-28'),
       availabilityCode: FORM_CODE,
-      buildingHours: {
-        create: BUILDINGS.flatMap((building) =>
-          WEEKDAYS.flatMap((day) => {
-            const hours = FALL_2026_HOURS[building][day]
-            return hours ? [{ building, day, ...hours }] : []
-          }),
-        ),
-      },
+      buildingHours: { create: toBuildingHoursRows(FALL_2026_HOURS) },
     },
   })
 

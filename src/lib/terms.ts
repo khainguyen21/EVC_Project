@@ -1,6 +1,12 @@
 import { z } from "zod";
 import type { Holiday, Term } from "@/types";
-import { toBuildingHours } from "@/utils/centerHours";
+import {
+  BUILDINGS,
+  SLOT_MINUTES,
+  WEEKDAYS,
+  toBuildingHours,
+  type BuildingHours,
+} from "@/utils/centerHours";
 
 // Structural shapes of the Prisma rows we serialize (so this file doesn't
 // depend on the generated client's export names).
@@ -41,6 +47,38 @@ export const isoDateSchema = z
     const parsed = new Date(`${s}T00:00:00Z`);
     return !Number.isNaN(parsed.getTime()) && toIsoDate(parsed) === s;
   }, "Invalid calendar date");
+
+const QUARTER_HOURS = "Hours must be quarter hours within the day";
+
+const minuteOfDay = z
+  .number()
+  .int(QUARTER_HOURS)
+  .min(0, QUARTER_HOURS)
+  .max(24 * 60, QUARTER_HOURS)
+  .refine((m) => m % SLOT_MINUTES === 0, QUARTER_HOURS);
+
+const openHoursSchema = z.object({ open: minuteOfDay, close: minuteOfDay });
+
+/** A term's hours as William saves them on the Terms page. */
+export const buildingHoursSchema = z
+  .record(
+    z.enum(BUILDINGS),
+    z.partialRecord(z.enum(WEEKDAYS), openHoursSchema),
+    "Invalid building hours",
+  )
+  .superRefine((hours: BuildingHours, ctx) => {
+    for (const building of BUILDINGS) {
+      for (const day of WEEKDAYS) {
+        const today = hours[building][day];
+        if (today && today.close <= today.open) {
+          ctx.addIssue({
+            code: "custom",
+            message: `${building} on ${day}: closing must be after opening`,
+          });
+        }
+      }
+    }
+  });
 
 export function serializeHoliday(holiday: DbHoliday): Holiday {
   return { id: holiday.id, name: holiday.name, date: toIsoDate(holiday.date) };

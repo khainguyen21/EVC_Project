@@ -5,6 +5,7 @@ import {
   hhmmToMinutes,
   timeMarks,
   toBuildingHours,
+  toBuildingHoursRows,
   type BuildingHours,
 } from "./centerHours";
 import { FALL_2026_HOURS } from "./testFixtures";
@@ -68,5 +69,20 @@ describe("toBuildingHours", () => {
         { building: "LE-237", day: "Saturday", open: 540, close: 720 },
       ]),
     ).toEqual(onlyMsOnMonday);
+  });
+});
+
+describe("toBuildingHoursRows", () => {
+  it("gives one database row per building and open day", () => {
+    const rows = toBuildingHoursRows(FALL_2026_HOURS);
+    expect(rows).toHaveLength(4 * 5);
+    expect(rows[0]).toEqual({ building: "MS-112", day: "Monday", open: at("08:00"), close: at("18:00") });
+    expect(toBuildingHours(rows)).toEqual(FALL_2026_HOURS);
+  });
+
+  it("leaves closed days out", () => {
+    expect(toBuildingHoursRows(onlyMsOnMonday)).toEqual([
+      { building: "MS-112", day: "Monday", open: at("09:00"), close: at("12:00") },
+    ]);
   });
 });
