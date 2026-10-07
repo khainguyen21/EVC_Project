@@ -5,10 +5,12 @@ import { Plus, X } from "lucide-react";
 import type { Submission } from "@/types";
 import { formatCourseCode, parseCourseCodes } from "@/utils/courseCodes";
 import {
-  CENTER_HOURS,
   WEEKDAYS,
+  dayHours,
   formatHour,
+  formatOpenHours,
   timeMarks,
+  type BuildingHours,
   type Weekday,
 } from "@/utils/centerHours";
 import {
@@ -26,6 +28,8 @@ interface Row {
 }
 
 export interface AvailabilityFormProps {
+  /** The term's building hours, which limit the times tutors can pick. */
+  hours: BuildingHours;
   /** Pre-fills the form when William edits an existing submission. */
   initial?: Submission;
   /** The student ID is how resubmissions find a row, so edits cannot change it. */
@@ -50,6 +54,7 @@ const newRow = (day: Weekday = "Monday"): Row => ({
 });
 
 export default function AvailabilityForm({
+  hours,
   initial,
   lockStudentId = false,
   publicForm = false,
@@ -119,7 +124,7 @@ export default function AvailabilityForm({
         if (row.key !== key) return row;
         const next = { ...row, ...patch };
         // Switching to a day with shorter hours can strand a chosen time.
-        const marks = timeMarks(next.day);
+        const marks = timeMarks(hours, next.day);
         if (next.start && !marks.slice(0, -1).includes(next.start)) next.start = "";
         if (next.end && (!marks.includes(next.end) || next.end <= next.start)) {
           next.end = "";
@@ -160,7 +165,7 @@ export default function AvailabilityForm({
       nextErrors.trainingDone = "Please answer this question";
     }
 
-    const result = submissionSchema.safeParse({
+    const result = submissionSchema(hours).safeParse({
       name,
       studentId,
       email,
@@ -346,17 +351,17 @@ export default function AvailabilityForm({
       <div className="avail-form__field">
         <span className="avail-form__label">Weekly availability</span>
         <span className="avail-form__hint">
-          Add a row for each day. Center hours:{" "}
-          {WEEKDAYS.map(
-            (d) =>
-              `${d.slice(0, 3)} ${formatHour(CENTER_HOURS[d].open)}–${formatHour(CENTER_HOURS[d].close)}`,
-          ).join(", ")}
+          Add a row for each day. Tutoring hours:{" "}
+          {WEEKDAYS.map((d) => {
+            const span = dayHours(hours, d);
+            return `${d.slice(0, 3)} ${span ? formatOpenHours(span).replace(" – ", "–") : "closed"}`;
+          }).join(", ")}
           . Times go in 15-minute steps. If you are free until a time like
           12:10, pick 12:00 and write the exact time in Notes.
         </span>
         <div className="avail-form__rows">
           {rows.map((row, i) => {
-            const marks = timeMarks(row.day);
+            const marks = timeMarks(hours, row.day);
             return (
               <div key={row.key} className="avail-form__row">
                 <div className="avail-form__row-fields">
@@ -388,8 +393,10 @@ export default function AvailabilityForm({
 
                   {row.allDay ? (
                     <span className="avail-form__hint">
-                      {formatHour(CENTER_HOURS[row.day].open)} –{" "}
-                      {formatHour(CENTER_HOURS[row.day].close)}
+                      {(() => {
+                        const span = dayHours(hours, row.day);
+                        return span ? formatOpenHours(span) : "Closed";
+                      })()}
                     </span>
                   ) : (
                     <>

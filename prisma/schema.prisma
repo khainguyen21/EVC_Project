@@ -67,8 +67,24 @@ model Term {
   // the key in the link William emails. Null means the form is closed.
   availabilityCode String?                  @unique
   holidays         Holiday[]
+  buildingHours    BuildingHours[]
   submissions      AvailabilitySubmission[]
   createdAt        DateTime                 @default(now())
+}
+
+// When one building is open on one weekday of a term. They change every term,
+// so they live here rather than in the code; a new term copies the last
+// term's. A building with no row for a day is closed that day.
+model BuildingHours {
+  id       Int    @id @default(autoincrement())
+  term     Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId   Int
+  building String // e.g. "MS-112"
+  day      String // e.g. "Monday"
+  open     Int // minutes after midnight, so 8 am is 480
+  close    Int
+
+  @@unique([termId, building, day])
 }
 
 // A day inside a term when campus tutoring is closed (Labor Day, Thanksgiving, ...).

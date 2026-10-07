@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import InfoSection from "@/components/InfoSection";
 import PublicAvailabilityForm from "@/components/availability/PublicAvailabilityForm";
 import { prisma } from "@/lib/client";
+import { toBuildingHours } from "@/utils/centerHours";
 
 // The code in the link decides which term (if any) the form is for, and
 // William can close it at any moment, so never cache this page.
@@ -21,7 +22,7 @@ async function findOpenTerm(code: string | undefined) {
   try {
     return await prisma.term.findUnique({
       where: { availabilityCode: code },
-      select: { name: true },
+      select: { name: true, buildingHours: true },
     });
   } catch (error) {
     console.error("[availability page]", error);
@@ -72,7 +73,11 @@ export default async function AvailabilityPage({
               </>
             }
           >
-            <PublicAvailabilityForm code={code} termName={term.name} />
+            <PublicAvailabilityForm
+              code={code}
+              termName={term.name}
+              hours={toBuildingHours(term.buildingHours)}
+            />
           </InfoSection>
         ) : (
           <InfoSection title="Tutor Availability">

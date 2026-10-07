@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/client";
-import { serializeTerm } from "@/lib/terms";
+import { TERM_INCLUDE, serializeTerm } from "@/lib/terms";
 import type { Term } from "@/types";
 
 /**
@@ -17,7 +17,7 @@ export async function getActiveTerm(): Promise<Term | null> {
   const term = await prisma.term.findFirst({
     where: { isActive: true },
     orderBy: { startDate: "desc" },
-    include: { holidays: true },
+    include: TERM_INCLUDE,
   });
 
   return term ? serializeTerm(term) : null;

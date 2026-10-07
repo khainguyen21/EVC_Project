@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Holiday, Term } from "@/types";
+import { toBuildingHours } from "@/utils/centerHours";
 
 // Structural shapes of the Prisma rows we serialize (so this file doesn't
 // depend on the generated client's export names).
@@ -16,7 +17,11 @@ interface DbTerm {
   endDate: Date;
   isActive: boolean;
   holidays: DbHoliday[];
+  buildingHours: { building: string; day: string; open: number; close: number }[];
 }
+
+/** What serializeTerm needs loaded with a term. */
+export const TERM_INCLUDE = { holidays: true, buildingHours: true } as const;
 
 // Prisma hands back @db.Date columns as UTC-midnight Date objects; slicing the
 // ISO string recovers the calendar date exactly, with no timezone drift.
@@ -51,5 +56,6 @@ export function serializeTerm(term: DbTerm): Term {
     holidays: [...term.holidays]
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .map(serializeHoliday),
+    buildingHours: toBuildingHours(term.buildingHours),
   };
 }

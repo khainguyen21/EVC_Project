@@ -2,7 +2,8 @@ import 'dotenv/config'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma'
-import type { Weekday } from '../src/utils/centerHours'
+import { BUILDINGS, WEEKDAYS, type Weekday } from '../src/utils/centerHours'
+import { FALL_2026_HOURS } from '../src/utils/testFixtures'
 import {
   submissionSchema,
   toSubmissionData,
@@ -283,13 +284,21 @@ async function main() {
       startDate: new Date('2027-01-26'),
       endDate: new Date('2027-05-28'),
       availabilityCode: FORM_CODE,
+      buildingHours: {
+        create: BUILDINGS.flatMap((building) =>
+          WEEKDAYS.flatMap((day) => {
+            const hours = FALL_2026_HOURS[building][day]
+            return hours ? [{ building, day, ...hours }] : []
+          }),
+        ),
+      },
     },
   })
 
   const now = new Date()
   await prisma.availabilitySubmission.createMany({
     data: tutors.map((t, i) => {
-      const input = submissionSchema.parse({
+      const input = submissionSchema(FALL_2026_HOURS).parse({
         name: t.name,
         studentId: String(9100001 + i),
         email: `${t.name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
@@ -305,7 +314,7 @@ async function main() {
         notes: t.notes,
       })
       return {
-        ...toSubmissionData(input),
+        ...toSubmissionData(input, FALL_2026_HOURS),
         termId: term.id,
         studentId: input.studentId,
         status: t.status,

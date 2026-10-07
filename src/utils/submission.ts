@@ -8,10 +8,13 @@
 import { z } from "zod";
 import { parseCourseCodes } from "./courseCodes";
 import {
-  CENTER_HOURS,
   SLOT_MINUTES,
   WEEKDAYS,
+  dayHours,
+  formatHour,
   hhmmToMinutes,
+  toHHMM,
+  type BuildingHours,
 } from "./centerHours";
 
 export const SUBMISSION_STATUSES = ["pending", "approved", "declined"] as const;
@@ -22,51 +25,58 @@ export const MIN_UNITS = 6;
 
 const HHMM = /^\d{2}:\d{2}$/;
 
-export const availabilityRowSchema = z
-  .object({
-    day: z.enum(WEEKDAYS, "Pick a weekday"),
-    allDay: z.boolean(),
-    // Blank on "all day" rows, which get the center's hours instead.
-    start: z.string(),
-    end: z.string(),
-  })
-  .superRefine((row, ctx) => {
-    if (row.allDay) return;
+/** Times are checked against the term's hours, from first opening to last closing. */
+function availabilityRowSchema(hours: BuildingHours) {
+  return z
+    .object({
+      day: z.enum(WEEKDAYS, "Pick a weekday"),
+      allDay: z.boolean(),
+      // Blank on "all day" rows, which get the term's hours instead.
+      start: z.string(),
+      end: z.string(),
+    })
+    .superRefine((row, ctx) => {
+      const span = dayHours(hours, row.day);
+      if (!span) {
+        ctx.addIssue({ code: "custom", message: `Tutoring is closed on ${row.day}s` });
+        return;
+      }
+      if (row.allDay) return;
 
-    if (!HHMM.test(row.start) || !HHMM.test(row.end)) {
-      ctx.addIssue({
-        code: "custom",
-        message: `${row.day}: pick a start and end time`,
-      });
-      return;
-    }
+      if (!HHMM.test(row.start) || !HHMM.test(row.end)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${row.day}: pick a start and end time`,
+        });
+        return;
+      }
 
-    const { open, close } = CENTER_HOURS[row.day];
-    const start = hhmmToMinutes(row.start);
-    const end = hhmmToMinutes(row.end);
+      const start = hhmmToMinutes(row.start);
+      const end = hhmmToMinutes(row.end);
 
-    if (start % SLOT_MINUTES !== 0 || end % SLOT_MINUTES !== 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Times must be in 15-minute steps",
-      });
-    } else if (start < hhmmToMinutes(open) || end > hhmmToMinutes(close)) {
-      ctx.addIssue({
-        code: "custom",
-        message: `${row.day} times must be within center hours`,
-      });
-    } else if (start >= end) {
-      ctx.addIssue({
-        code: "custom",
-        message: `${row.day}: end time must be after start time`,
-      });
-    }
-  });
+      if (start % SLOT_MINUTES !== 0 || end % SLOT_MINUTES !== 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Times must be in 15-minute steps",
+        });
+      } else if (start < span.open || end > span.close) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${row.day} times must be between ${formatHour(toHHMM(span.open))} and ${formatHour(toHHMM(span.close))}`,
+        });
+      } else if (start >= end) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${row.day}: end time must be after start time`,
+        });
+      }
+    });
+}
 
-export type AvailabilityRow = z.infer<typeof availabilityRowSchema>;
+export type AvailabilityRow = z.infer<ReturnType<typeof availabilityRowSchema>>;
 
 /** Every field except the student ID, which only the tutor ever sets. */
-export const submissionFieldsSchema = z.object({
+export const submissionFieldsSchema = (hours: BuildingHours) => z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
   email: z.email("Enter a valid email address").trim().max(200),
   units: z
@@ -80,7 +90,7 @@ export const submissionFieldsSchema = z.object({
     .min(1, "List at least one subject")
     .max(1000),
   availability: z
-    .array(availabilityRowSchema)
+    .array(availabilityRowSchema(hours))
     .min(1, "Add at least one day you are available")
     .max(25),
   notes: z.string().trim().max(1000).optional().default(""),
@@ -91,28 +101,25 @@ export const studentIdSchema = z
   .trim()
   .regex(/^\d{7}$/, "Student ID must be exactly 7 digits");
 
-export const submissionSchema = submissionFieldsSchema.extend({
-  studentId: studentIdSchema,
-});
+export const submissionSchema = (hours: BuildingHours) =>
+  submissionFieldsSchema(hours).extend({ studentId: studentIdSchema });
 
-export type SubmissionFields = z.infer<typeof submissionFieldsSchema>;
-export type SubmissionInput = z.infer<typeof submissionSchema>;
+export type SubmissionFields = z.infer<ReturnType<typeof submissionFieldsSchema>>;
+export type SubmissionInput = z.infer<ReturnType<typeof submissionSchema>>;
 
 /**
- * Turns "all day" rows into the center's hours for that day and puts rows in
+ * Turns "all day" rows into the term's hours for that day and puts rows in
  * week order, so everything downstream deals only in concrete times.
  */
-export function resolveAvailability(rows: AvailabilityRow[]): AvailabilityRow[] {
+export function resolveAvailability(
+  rows: AvailabilityRow[],
+  hours: BuildingHours,
+): AvailabilityRow[] {
   return rows
-    .map((row) =>
-      row.allDay
-        ? {
-            ...row,
-            start: CENTER_HOURS[row.day].open,
-            end: CENTER_HOURS[row.day].close,
-          }
-        : row,
-    )
+    .map((row) => {
+      const span = row.allDay ? dayHours(hours, row.day) : null;
+      return span ? { ...row, start: toHHMM(span.open), end: toHHMM(span.close) } : row;
+    })
     .sort(
       (a, b) =>
         WEEKDAYS.indexOf(a.day) - WEEKDAYS.indexOf(b.day) ||
@@ -169,7 +176,7 @@ export function submissionFlags(s: {
 }
 
 /** The database columns a validated form fills in. */
-export function toSubmissionData(input: SubmissionFields) {
+export function toSubmissionData(input: SubmissionFields, hours: BuildingHours) {
   return {
     name: input.name,
     email: input.email,
@@ -177,7 +184,7 @@ export function toSubmissionData(input: SubmissionFields) {
     trainingDone: input.trainingDone,
     subjectsRaw: input.subjects,
     subjectCodes: parseCourseCodes(input.subjects),
-    availability: resolveAvailability(input.availability),
+    availability: resolveAvailability(input.availability, hours),
     notes: input.notes ? input.notes : null,
   };
 }
@@ -188,9 +195,14 @@ export function toSubmissionData(input: SubmissionFields) {
  * pending so he knows to look again. If he had already placed them on the
  * planner, they get its "Availability changed" badge.
  */
-export function toResubmissionData(input: SubmissionFields, now: Date, hasShifts: boolean) {
+export function toResubmissionData(
+  input: SubmissionFields,
+  hours: BuildingHours,
+  now: Date,
+  hasShifts: boolean,
+) {
   return {
-    ...toSubmissionData(input),
+    ...toSubmissionData(input, hours),
     status: "pending" as const,
     resubmittedAt: now,
     availabilityChanged: hasShifts,

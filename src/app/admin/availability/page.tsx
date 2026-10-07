@@ -24,6 +24,7 @@ import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import { formatCourseCode } from "@/utils/courseCodes";
 import { pickDefaultTerm } from "@/utils/term";
+import type { BuildingHours } from "@/utils/centerHours";
 import type { SubmissionInput, SubmissionStatus } from "@/utils/submission";
 
 const STATUS_STYLES: Record<SubmissionStatus, { bg: string; color: string; label: string }> = {
@@ -390,7 +391,11 @@ export default function AvailabilityInboxPage() {
             For a tutor who replied by email or in person. The form doesn&apos;t
             need to be open.
           </p>
-          <AvailabilityForm submitLabel="Add submission" onSubmit={saveNew} />
+          <AvailabilityForm
+            hours={term.buildingHours}
+            submitLabel="Add submission"
+            onSubmit={saveNew}
+          />
         </div>
       )}
 
@@ -433,7 +438,7 @@ export default function AvailabilityInboxPage() {
             <RefreshCw size={14} /> Retry
           </button>
         </div>
-      ) : submissions.length === 0 ? (
+      ) : submissions.length === 0 || !term ? (
         <EmptyCard
           title={`No submissions for ${term?.name ?? "this term"} yet`}
           body={
@@ -534,6 +539,7 @@ export default function AvailabilityInboxPage() {
                             {editingId === s.id ? (
                               <div style={{ ...cardStyle, padding: "24px" }}>
                                 <AvailabilityForm
+                                  hours={term.buildingHours}
                                   initial={s}
                                   lockStudentId
                                   submitLabel="Save changes"
@@ -549,6 +555,7 @@ export default function AvailabilityInboxPage() {
                             ) : (
                               <SubmissionDetails
                                 s={s}
+                                hours={term.buildingHours}
                                 onApprove={() => setStatus(s, "approved")}
                                 onDecline={() => handleDecline(s)}
                                 onPending={() => setStatus(s, "pending")}
@@ -599,6 +606,7 @@ function EmptyCard({ title, body }: { title: string; body: React.ReactNode }) {
 
 function SubmissionDetails({
   s,
+  hours,
   onApprove,
   onDecline,
   onPending,
@@ -606,6 +614,7 @@ function SubmissionDetails({
   onDelete,
 }: {
   s: Submission;
+  hours: BuildingHours;
   onApprove: () => void;
   onDecline: () => void;
   onPending: () => void;
@@ -679,7 +688,7 @@ function SubmissionDetails({
         </div>
       </div>
 
-      <WeeklyGrid availability={s.availability} />
+      <WeeklyGrid availability={s.availability} hours={hours} />
     </div>
   );
 }

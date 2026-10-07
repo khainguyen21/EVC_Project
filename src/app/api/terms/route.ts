@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/client";
 import { getSession } from "@/lib/session";
-import { isoDateSchema, serializeTerm } from "@/lib/terms";
+import { TERM_INCLUDE, isoDateSchema, serializeTerm } from "@/lib/terms";
 import type { AdminTerm } from "@/types";
 
 const createTermSchema = z
@@ -26,7 +26,7 @@ export async function GET() {
     }
 
     const terms = await prisma.term.findMany({
-      include: { holidays: true, _count: { select: { submissions: true } } },
+      include: { ...TERM_INCLUDE, _count: { select: { submissions: true } } },
       orderBy: { startDate: "desc" },
     });
 
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
           endDate: new Date(endDate),
           isActive,
         },
-        include: { holidays: true },
+        include: TERM_INCLUDE,
       });
     });
 

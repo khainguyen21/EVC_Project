@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/client";
 import { allowSubmissionAttempt } from "@/lib/rateLimit";
+import { toBuildingHours } from "@/utils/centerHours";
 import {
   submissionSchema,
   toResubmissionData,
@@ -33,7 +34,10 @@ export async function POST(request: Request) {
 
     const code = typeof body.code === "string" ? body.code.trim() : "";
     const term = code
-      ? await prisma.term.findUnique({ where: { availabilityCode: code } })
+      ? await prisma.term.findUnique({
+          where: { availabilityCode: code },
+          include: { buildingHours: true },
+        })
       : null;
     if (!term) {
       return NextResponse.json(
@@ -45,7 +49,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const validation = submissionSchema.safeParse(body);
+    const hours = toBuildingHours(term.buildingHours);
+    const validation = submissionSchema(hours).safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
         { error: validation.error.issues[0]?.message ?? "Invalid submission" },
@@ -63,8 +68,8 @@ export async function POST(request: Request) {
     // Same student, same term: the new submission replaces the old one.
     await prisma.availabilitySubmission.upsert({
       where: { termId_studentId: key },
-      create: { ...key, ...toSubmissionData(input) },
-      update: toResubmissionData(input, new Date(), (existing?._count.shifts ?? 0) > 0),
+      create: { ...key, ...toSubmissionData(input, hours) },
+      update: toResubmissionData(input, hours, new Date(), (existing?._count.shifts ?? 0) > 0),
     });
 
     return NextResponse.json({ ok: true, resubmitted: existing !== null });
