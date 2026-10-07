@@ -61,10 +61,9 @@ function coverageTitle(c: Coverage, minute: number): string {
   const courses = c.courses.map((code) =>
     code === OPEN_LAB ? "Open Computer Lab" : formatCourseCode(code),
   );
+  if (courses.length === 0) return `${clock(minute)}: nobody here, goal ${c.goal}`;
   return [
-    `${clock(minute)}: ${c.count} on, goal ${c.goal}${
-      courses.length > 0 ? ` — ${courses.join(", ")}` : " — nobody here"
-    }`,
+    `${clock(minute)}: ${c.count} on, goal ${c.goal} — ${courses.join(", ")}`,
     ...(c.missing.length > 0 ? [`Missing: ${c.missing.join(", ")}`] : []),
     ...(c.wanted.length > 0 ? [`No ${c.wanted.join(" or ")} tutor`] : []),
   ].join("\n");
