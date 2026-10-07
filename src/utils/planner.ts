@@ -4,7 +4,15 @@
  *
  * Times are minutes after midnight, so 9:15 am is 555.
  */
-import { CENTER_HOURS, SLOT_MINUTES, hhmmToMinutes, type Weekday } from "./centerHours";
+import {
+  BUILDINGS,
+  SLOT_MINUTES,
+  formatOpenHours,
+  hhmmToMinutes,
+  type Building,
+  type BuildingHours,
+  type Weekday,
+} from "./centerHours";
 import { OPEN_LAB_PATTERN, findUnrecognizedSubjects, type AvailabilityRow } from "./submission";
 
 /** Shifts start, end and move in the same 15-minute steps tutors pick on the form. */
@@ -12,9 +20,6 @@ export const STEP_MINUTES = SLOT_MINUTES;
 /** William's usual shifts are 9-12 or 1-4. Only where a dropped shift starts. */
 export const DEFAULT_SHIFT_MINUTES = 180;
 export const MIN_SHIFT_MINUTES = 60;
-
-export const BUILDINGS = ["MS-112", "LE-237", "SQ-231", "VPA-109/111"] as const;
-export type Building = (typeof BUILDINGS)[number];
 
 /** Tutors William wants on at once. Fewer is a warning, never a block. */
 export const COVERAGE_GOAL: Record<Building, number> = {
@@ -161,39 +166,57 @@ export function freeTimes(tutor: PlannerTutor, day: Weekday): { start: number; e
   return joined;
 }
 
-export type ShiftWarning = "outside-availability" | "wrong-building" | "unknown-subjects";
+export type ShiftWarning =
+  | "outside-availability"
+  | "building-closed"
+  | "wrong-building"
+  | "unknown-subjects";
 
-/** What William should know about a shift. He can still keep it. */
-export function shiftWarnings(shift: Shift, tutor: PlannerTutor): ShiftWarning[] {
+/** Whether the building is open for the whole shift. */
+function insideBuildingHours(shift: Shift, hours: BuildingHours): boolean {
+  const open = hours[shift.building][shift.day];
+  return open !== undefined && open.open <= shift.start && shift.end <= open.close;
+}
+
+/**
+ * What William should know about a shift. He can still keep it. The board only
+ * makes shifts inside their building's hours, so "building-closed" means the
+ * hours changed on the Terms page after the shift was placed.
+ */
+export function shiftWarnings(shift: Shift, tutor: PlannerTutor, hours: BuildingHours): ShiftWarning[] {
   const warnings: ShiftWarning[] = [];
   const fits = freeTimes(tutor, shift.day).some(
     (free) => free.start <= shift.start && shift.end <= free.end,
   );
   if (!fits) warnings.push("outside-availability");
+  if (!insideBuildingHours(shift, hours)) warnings.push("building-closed");
   if (tutor.courses.length === 0) warnings.push("unknown-subjects");
   else if (!buildingsFor(tutor.courses).includes(shift.building)) warnings.push("wrong-building");
   return warnings;
 }
 
-/** The shift a tutor's card makes when dropped at a time, or null if none fits. */
+/**
+ * The shift a tutor's card makes when dropped at a time, or null if none fits.
+ * Dropped before the building opens, it starts at opening.
+ */
 export function shiftForDrop(
   tutor: PlannerTutor,
   shifts: Shift[],
+  hours: BuildingHours,
+  building: Building,
   day: Weekday,
   minute: number,
 ): { start: number; end: number } | null {
-  const start = Math.floor(minute / STEP_MINUTES) * STEP_MINUTES;
+  const open = hours[building][day];
+  if (!open) return null;
+  const start = Math.max(open.open, Math.floor(minute / STEP_MINUTES) * STEP_MINUTES);
   const own = shifts.filter((s) => s.tutorId === tutor.id && s.day === day);
   if (own.some((s) => s.start <= start && start < s.end)) return null;
 
   let end = start + DEFAULT_SHIFT_MINUTES;
   const free = freeTimes(tutor, day).find((f) => f.start <= start && start < f.end);
   if (free) end = Math.min(end, Math.max(free.end, start + MIN_SHIFT_MINUTES));
-  end = Math.min(
-    end,
-    hhmmToMinutes(CENTER_HOURS[day].close),
-    ...own.filter((s) => s.start > start).map((s) => s.start),
-  );
+  end = Math.min(end, open.close, ...own.filter((s) => s.start > start).map((s) => s.start));
   return end - start >= MIN_SHIFT_MINUTES ? { start, end } : null;
 }
 
@@ -201,14 +224,15 @@ export function shiftForDrop(
 export function moveShift(
   shift: Shift,
   shifts: Shift[],
+  hours: BuildingHours,
   day: Weekday,
   building: Building,
   minute: number,
 ): Shift | null {
   const length = shift.end - shift.start;
-  const open = hhmmToMinutes(CENTER_HOURS[day].open);
-  const close = hhmmToMinutes(CENTER_HOURS[day].close);
-  if (length > close - open) return null;
+  const hoursThere = hours[building][day];
+  if (!hoursThere || length > hoursThere.close - hoursThere.open) return null;
+  const { open, close } = hoursThere;
   const snapped = Math.round(minute / STEP_MINUTES) * STEP_MINUTES;
   const start = Math.max(open, Math.min(snapped, close - length));
   const moved = { ...shift, day, building, start, end: start + length };
@@ -231,14 +255,16 @@ function clashes(shift: Shift, shifts: Shift[]): boolean {
  * Why the server should refuse a shift, or null if it is fine. The board never
  * makes these, so one means a stale page or a hand-made request.
  */
-export function shiftProblem(shift: Shift, shifts: Shift[]): string | null {
-  const open = hhmmToMinutes(CENTER_HOURS[shift.day].open);
-  const close = hhmmToMinutes(CENTER_HOURS[shift.day].close);
+export function shiftProblem(shift: Shift, shifts: Shift[], hours: BuildingHours): string | null {
+  const open = hours[shift.building][shift.day];
   if (shift.start % STEP_MINUTES !== 0 || shift.end % STEP_MINUTES !== 0) {
     return "Shifts start and end in 15-minute steps";
   }
-  if (shift.start < open || shift.end > close) {
-    return `${shift.day} shifts must be within center hours`;
+  if (!open) {
+    return `${shift.building} is closed on ${shift.day}s`;
+  }
+  if (!insideBuildingHours(shift, hours)) {
+    return `${shift.building} is open ${formatOpenHours(open)} on ${shift.day}s`;
   }
   if (shift.end - shift.start < MIN_SHIFT_MINUTES) {
     return "A shift must be at least 1 hour";
@@ -250,10 +276,16 @@ export function shiftProblem(shift: Shift, shifts: Shift[]): string | null {
 }
 
 /** A shift whose bottom edge was dragged to a new end time. */
-export function resizeShift(shift: Shift, shifts: Shift[], minute: number): Shift {
+export function resizeShift(
+  shift: Shift,
+  shifts: Shift[],
+  hours: BuildingHours,
+  minute: number,
+): Shift {
   const snapped = Math.round(minute / STEP_MINUTES) * STEP_MINUTES;
   const latest = Math.min(
-    hhmmToMinutes(CENTER_HOURS[shift.day].close),
+    // A shift left in a closed building after its hours changed keeps its end.
+    hours[shift.building][shift.day]?.close ?? shift.end,
     ...shifts
       .filter(
         (s) =>

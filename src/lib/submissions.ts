@@ -1,9 +1,9 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import type { Submission } from "@/types";
-import type { Weekday } from "@/utils/centerHours";
+import type { Building, Weekday } from "@/utils/centerHours";
 import { parseCourseCodes } from "@/utils/courseCodes";
-import type { Building, Shift } from "@/utils/planner";
+import type { Shift } from "@/utils/planner";
 import {
   submissionFlags,
   type AvailabilityRow,

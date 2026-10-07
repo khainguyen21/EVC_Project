@@ -3,8 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/client";
 import { requireAdmin } from "@/lib/session";
 import { serializeShift } from "@/lib/submissions";
-import { WEEKDAYS } from "@/utils/centerHours";
-import { BUILDINGS, shiftProblem } from "@/utils/planner";
+import { BUILDINGS, WEEKDAYS, toBuildingHours } from "@/utils/centerHours";
+import { shiftProblem } from "@/utils/planner";
 
 const shiftSchema = z.object({
   tutorId: z.number().int(),
@@ -42,7 +42,7 @@ export async function PUT(
 
     const submission = await prisma.availabilitySubmission.findUnique({
       where: { id: shift.tutorId },
-      select: { status: true, shifts: true },
+      select: { status: true, shifts: true, term: { select: { buildingHours: true } } },
     });
     if (!submission) {
       return NextResponse.json({ error: "Tutor not found" }, { status: 404 });
@@ -67,7 +67,11 @@ export async function PUT(
       );
     }
 
-    const problem = shiftProblem(shift, submission.shifts.map(serializeShift));
+    const problem = shiftProblem(
+      shift,
+      submission.shifts.map(serializeShift),
+      toBuildingHours(submission.term.buildingHours),
+    );
     if (problem) {
       return NextResponse.json({ error: problem }, { status: 400 });
     }

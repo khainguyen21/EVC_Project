@@ -1,6 +1,6 @@
-import { formatHour, toHHMM } from "@/utils/centerHours";
+import { formatHour, toHHMM, type Building } from "@/utils/centerHours";
 import { shortenCourseCodes } from "@/utils/courseCodes";
-import { OPEN_LAB, type Building, type HoursColor } from "@/utils/planner";
+import { OPEN_LAB, type HoursColor } from "@/utils/planner";
 
 export const BUILDING_INFO: Record<Building, { name: string; color: string }> = {
   "MS-112": { name: "Math & Science", color: "#0891b2" },

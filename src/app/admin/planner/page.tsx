@@ -475,6 +475,7 @@ export default function ShiftPlannerPage() {
 
             <div style={{ ...cardStyle, flex: 1, minWidth: 0, overflowX: "auto" }}>
               <RoomBoard
+                hours={term.buildingHours}
                 tutors={plannerTutors}
                 names={names}
                 shifts={shifts}

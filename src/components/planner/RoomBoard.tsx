@@ -2,10 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
-import { CENTER_HOURS, hhmmToMinutes, type Weekday } from "@/utils/centerHours";
-import { formatCourseCode } from "@/utils/courseCodes";
 import {
   BUILDINGS,
+  dayHours,
+  type Building,
+  type BuildingHours,
+  type OpenHours,
+  type Weekday,
+} from "@/utils/centerHours";
+import { formatCourseCode } from "@/utils/courseCodes";
+import {
   COVERAGE_GOAL,
   OPEN_LAB,
   STEP_MINUTES,
@@ -18,7 +24,6 @@ import {
   resizeShift,
   shiftForDrop,
   shiftWarnings,
-  type Building,
   type Coverage,
   type PlannerTutor,
   type Shift,
@@ -31,10 +36,15 @@ const STRIP_W = 10;
 
 const WARNING_TEXT = {
   "outside-availability": "Outside their availability",
+  "building-closed": "Outside this building's hours, which changed after it was placed",
   "wrong-building": "None of their courses are taught here",
   "unknown-subjects": "Their subjects need review in the inbox",
   "same-subjects": "Someone here already covers all their courses",
 } as const;
+
+/** Hatching over the times a building is closed. */
+const CLOSED_HATCH =
+  "repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 4px, #e2e8f0 4px, #e2e8f0 8px)";
 
 /** Red when nobody is on, amber below the goal, green at it. */
 function coverageColor(c: Coverage): string {
@@ -104,6 +114,8 @@ export function startCardDrag(e: React.DragEvent, tutorId: number) {
 }
 
 interface Props {
+  /** The term's building hours. */
+  hours: BuildingHours;
   tutors: PlannerTutor[];
   names: Map<number, string>;
   shifts: Shift[];
@@ -120,6 +132,7 @@ interface Props {
 
 /** Buildings as columns and time running down, for one day. */
 export default function RoomBoard({
+  hours,
   tutors,
   names,
   shifts,
@@ -130,8 +143,16 @@ export default function RoomBoard({
   onChange,
   onRefuse,
 }: Props) {
-  const open = hhmmToMinutes(CENTER_HOURS[day].open);
-  const close = hhmmToMinutes(CENTER_HOURS[day].close);
+  // Time runs from the first building opening to the last one closing.
+  const span = dayHours(hours, day);
+  if (!span) {
+    return (
+      <p style={{ color: "#64748b" }}>
+        Every building is closed on {day}s. Change that on the Terms page.
+      </p>
+    );
+  }
+  const { open, close } = span;
   const steps: number[] = [];
   for (let m = open; m < close; m += STEP_MINUTES) steps.push(m);
   const height = steps.length * STEP_H;
@@ -155,21 +176,26 @@ export default function RoomBoard({
       return;
     }
     const top = e.currentTarget.getBoundingClientRect().top;
+    const hoursThere = hours[building][day];
+    if (!hoursThere) {
+      onRefuse(`${building} is closed on ${day}s.`);
+      return;
+    }
 
     if (data.kind === "tutor") {
       const tutor = tutorById.get(data.tutorId);
       if (!tutor) return;
       const minute = minuteAt(e.clientY - top);
-      const fit = shiftForDrop(tutor, shifts, day, minute);
+      const fit = shiftForDrop(tutor, shifts, hours, building, day, minute);
       if (!fit) {
-        const start = Math.floor(minute / STEP_MINUTES) * STEP_MINUTES;
+        const start = Math.max(hoursThere.open, Math.floor(minute / STEP_MINUTES) * STEP_MINUTES);
         const busy = shifts.some(
           (s) => s.tutorId === tutor.id && s.day === day && s.start <= start && start < s.end,
         );
         onRefuse(
           busy
             ? `${nameOf(tutor.id)} already has a shift at ${clock(start)}.`
-            : `Less than an hour is left after ${clock(start)} before closing or ${nameOf(tutor.id)}'s next shift.`,
+            : `Less than an hour is left after ${clock(start)} before ${building} closes or ${nameOf(tutor.id)}'s next shift.`,
         );
         return;
       }
@@ -177,9 +203,20 @@ export default function RoomBoard({
     } else {
       const shift = shifts.find((s) => s.id === data.id);
       if (!shift) return;
-      const moved = moveShift(shift, shifts, day, building, minuteAt(e.clientY - top - data.grabY));
+      const moved = moveShift(
+        shift,
+        shifts,
+        hours,
+        day,
+        building,
+        minuteAt(e.clientY - top - data.grabY),
+      );
       if (!moved) {
-        onRefuse(`${nameOf(shift.tutorId)} already has a shift at that time.`);
+        onRefuse(
+          shift.end - shift.start > hoursThere.close - hoursThere.open
+            ? `This shift is longer than ${building} is open on ${day}s.`
+            : `${nameOf(shift.tutorId)} already has a shift at that time.`,
+        );
         return;
       }
       if (moved.start !== shift.start || moved.building !== shift.building) onChange(shift, moved);
@@ -205,6 +242,9 @@ export default function RoomBoard({
           </div>
           <div style={{ fontSize: "0.72rem", color: "#64748b" }}>
             {BUILDING_INFO[b].name} · goal {COVERAGE_GOAL[b]}
+          </div>
+          <div style={{ fontSize: "0.72rem", color: "#64748b" }}>
+            {hours[b][day] ? `Open ${timeRange(hours[b][day].open, hours[b][day].close)}` : "Closed today"}
           </div>
           <div style={{ fontSize: "0.72rem", color: "#64748b" }}>
             {hoursText(weekTotals[b])} planned this week
@@ -237,6 +277,7 @@ export default function RoomBoard({
           key={b}
           building={b}
           day={day}
+          hours={hours}
           steps={steps}
           height={height}
           y={y}
@@ -261,6 +302,7 @@ export default function RoomBoard({
 function BuildingColumn({
   building,
   day,
+  hours,
   steps,
   height,
   y,
@@ -279,6 +321,7 @@ function BuildingColumn({
 }: {
   building: Building;
   day: Weekday;
+  hours: BuildingHours;
   steps: number[];
   height: number;
   y: (minute: number) => number;
@@ -299,9 +342,9 @@ function BuildingColumn({
   // Followed with window listeners, so the mouse can leave the thin handle.
   const [resizing, setResizing] = useState<Resizing | null>(null);
   const resizeRef = useRef<Resizing | null>(null);
-  const latest = useRef({ today, shifts, minuteAt, onChange });
+  const latest = useRef({ today, shifts, hours, minuteAt, onChange });
   useEffect(() => {
-    latest.current = { today, shifts, minuteAt, onChange };
+    latest.current = { today, shifts, hours, minuteAt, onChange };
   });
   const resizingId = resizing?.id ?? null;
   useEffect(() => {
@@ -311,8 +354,8 @@ function BuildingColumn({
       const r = resizeRef.current;
       const original = r && originalOf(r);
       if (!r || !original) return;
-      const { shifts, minuteAt } = latest.current;
-      const end = resizeShift(original, shifts, minuteAt(e.clientY - r.top)).end;
+      const { shifts, hours, minuteAt } = latest.current;
+      const end = resizeShift(original, shifts, hours, minuteAt(e.clientY - r.top)).end;
       if (end === r.end) return;
       resizeRef.current = { ...r, end };
       setResizing(resizeRef.current);
@@ -338,11 +381,33 @@ function BuildingColumn({
   const shown = today.map((s) => (resizing?.id === s.id ? { ...s, end: resizing.end } : s));
   const placed = stackShifts(shown);
   const color = BUILDING_INFO[building].color;
+  const openHours: OpenHours | undefined = hours[building][day];
+  const isOpen = (minute: number) =>
+    openHours !== undefined && openHours.open <= minute && minute < openHours.close;
+  // The stretches of the board this building is closed, to hatch.
+  const first = steps[0];
+  const last = steps[steps.length - 1] + STEP_MINUTES;
+  const closed = openHours
+    ? [
+        { start: first, end: openHours.open },
+        { start: openHours.close, end: last },
+      ].filter((c) => c.end > c.start)
+    : [{ start: first, end: last }];
 
   return (
     <div style={{ display: "flex", gap: 4, height }}>
       <div style={{ width: STRIP_W, flexShrink: 0 }}>
         {steps.map((m) => {
+          // Coverage only counts while the building is open.
+          if (!isOpen(m)) {
+            return (
+              <div
+                key={m}
+                title={`${clock(m)}: ${building} is closed`}
+                style={{ height: STEP_H, background: "#f1f5f9" }}
+              />
+            );
+          }
           const c = coverageAt(tutors, shifts, building, day, m);
           return (
             <div
@@ -377,6 +442,22 @@ function BuildingColumn({
           }px ${STEP_H * 4}px)`,
         }}
       >
+        {closed.map((c) => (
+          <div
+            key={c.start}
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: y(c.start),
+              height: y(c.end) - y(c.start),
+              background: CLOSED_HATCH,
+              borderRadius: 9,
+              pointerEvents: "none",
+            }}
+          />
+        ))}
+
         {draggingTutor &&
           freeTimes(draggingTutor, day).map((f) => (
             <div
@@ -399,10 +480,11 @@ function BuildingColumn({
         {shown.map((s) => {
           const tutor = tutorById.get(s.tutorId);
           const warnings = [
-            ...(tutor ? shiftWarnings(s, tutor) : []),
+            ...(tutor ? shiftWarnings(s, tutor, hours) : []),
             ...(tutor && addsNothingNew(s, tutors, shifts) ? (["same-subjects"] as const) : []),
           ];
-          const outside = warnings.includes("outside-availability");
+          const outside =
+            warnings.includes("outside-availability") || warnings.includes("building-closed");
           const { left, width, z } = placed.get(s.id)!;
           const name = nameOf(s.tutorId);
           const original = today.find((t) => t.id === s.id)!;
