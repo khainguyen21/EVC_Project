@@ -136,7 +136,7 @@ describe("coverageAt", () => {
     ];
     expect(
       coverageAt([chemAndEnglish, biologyOnly], shifts, "MS-112", "Wednesday", at("10:00")),
-    ).toEqual({ count: 1, goal: 2, courses: ["CHEM-1A"], sameSubjects: [] });
+    ).toMatchObject({ count: 1, goal: 2, courses: ["CHEM-1A"], sameSubjects: [] });
   });
 
   it("treats a tutor for any course in a department as covering its numbered courses", () => {
@@ -163,7 +163,72 @@ describe("coverageAt", () => {
       goal: 1,
       courses: [],
       sameSubjects: [],
+      missing: [],
+      wanted: [],
     });
+  });
+});
+
+describe("coverageAt must-haves", () => {
+  const calc = tutor(1, ["MATH-71", "MATH-72"]);
+  const stats = tutor(2, ["STAT-C1000"]);
+  const chem = tutor(3, ["CHEM-1A", "CHEM-*"]);
+  const physics = tutor(4, ["PHYS-2A"]);
+  const onAt = (ids: number[], start: string, end: string) =>
+    ids.map((id) => shift(id, "MS-112", "Tuesday", start, end));
+
+  it("needs a Calc and a Stats tutor in MS-112, however many are on", () => {
+    const calc2 = tutor(5, ["MATH-66", "MATH-79"]);
+    expect(
+      coverageAt([calc, calc2], onAt([1, 5], "10:00", "12:00"), "MS-112", "Tuesday", at("10:00")),
+    ).toMatchObject({ count: 2, goal: 2, missing: ["Stats"] });
+    expect(
+      coverageAt([calc, stats], onAt([1, 2], "10:00", "12:00"), "MS-112", "Tuesday", at("10:00")),
+    ).toMatchObject({ missing: [] });
+  });
+
+  it("doesn't count Any Math or the old MATH 63 as Calc or Stats", () => {
+    const anyMath = tutor(6, ["MATH-*"]);
+    const math63 = tutor(7, ["MATH-63"]);
+    expect(
+      coverageAt([anyMath, math63], onAt([6, 7], "10:00", "12:00"), "MS-112", "Tuesday", at("10:00")),
+    ).toMatchObject({ missing: ["Calc", "Stats"] });
+  });
+
+  it("is happy with one tutor who covers Calc or Stats after 5 pm", () => {
+    expect(
+      coverageAt([stats], onAt([2], "17:00", "20:00"), "MS-112", "Tuesday", at("17:00")),
+    ).toMatchObject({ count: 1, goal: 1, missing: [] });
+    expect(
+      coverageAt([chem], onAt([3], "17:00", "20:00"), "MS-112", "Tuesday", at("18:00")),
+    ).toMatchObject({ goal: 1, missing: ["Calc or Stats"] });
+    expect(
+      coverageAt([stats], onAt([2], "16:00", "18:00"), "MS-112", "Tuesday", at("16:45")),
+    ).toMatchObject({ goal: 2, missing: ["Calc"] });
+  });
+
+  it("asks for Chemistry and Physics during the day, as a lighter warning", () => {
+    const shifts = onAt([1, 2, 3], "10:00", "20:00");
+    expect(coverageAt([calc, stats, chem], shifts, "MS-112", "Tuesday", at("10:00"))).toMatchObject(
+      { missing: [], wanted: ["Physics"] },
+    );
+    expect(
+      coverageAt([calc, stats, chem, physics], [...shifts, ...onAt([4], "10:00", "12:00")], "MS-112", "Tuesday", at("10:00")),
+    ).toMatchObject({ wanted: [] });
+    expect(coverageAt([calc, stats, chem], shifts, "MS-112", "Tuesday", at("18:00"))).toMatchObject(
+      { wanted: [] },
+    );
+  });
+
+  it("drops LE-237's goal to 1 after 5 pm, and has no must-haves outside MS-112", () => {
+    const english = tutor(8, ["ENGL-1A"]);
+    const le = [shift(8, "LE-237", "Tuesday", "16:00", "18:00")];
+    expect(coverageAt([english], le, "LE-237", "Tuesday", at("16:00"))).toMatchObject({
+      goal: 2,
+      missing: [],
+      wanted: [],
+    });
+    expect(coverageAt([english], le, "LE-237", "Tuesday", at("17:00"))).toMatchObject({ goal: 1 });
   });
 });
 

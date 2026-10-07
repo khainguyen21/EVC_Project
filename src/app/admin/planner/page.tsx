@@ -35,8 +35,9 @@ const cardStyle: React.CSSProperties = {
 };
 
 const COVERAGE_LEGEND = [
-  { label: "Nobody", color: "#fecaca" },
+  { label: "Nobody, or MS has no Calc or Stats", color: "#fecaca" },
   { label: "Below goal", color: "#fde68a" },
+  { label: "MS has no Chemistry or Physics", color: "#d9f99d" },
   { label: "At goal", color: "#86efac" },
 ];
 

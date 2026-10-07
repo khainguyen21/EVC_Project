@@ -29,6 +29,19 @@ export const COVERAGE_GOAL: Record<Building, number> = {
   "VPA-109/111": 1,
 };
 
+/** From 5 pm it's slower and MSRC staff are there, so one tutor is the goal. */
+export const EVENING_START = 17 * 60;
+
+/** MS-112 must always have both. "Any Math" and the old MATH 63 don't count. */
+const CALC = ["MATH-66", "MATH-67", "MATH-71", "MATH-72", "MATH-73", "MATH-78", "MATH-79"];
+const STATS = ["STAT-C1000"];
+
+/** Nice to have in MS-112 through the day. Any course in the department counts. */
+const WANTED = [
+  { label: "Chemistry", department: "CHEM" },
+  { label: "Physics", department: "PHYS" },
+];
+
 export interface PlannerTutor {
   id: number;
   courses: string[];
@@ -50,6 +63,10 @@ export interface Coverage {
   courses: string[];
   /** Tutors here whose every course someone else here already covers. */
   sameSubjects: number[];
+  /** Must-haves nobody here covers, the strongest warning: "Calc", "Stats". */
+  missing: string[];
+  /** Nice-to-haves nobody here covers, a lighter warning: "Chemistry". */
+  wanted: string[];
 }
 
 /** Departments taught outside LE-237, which takes everything else. */
@@ -136,7 +153,26 @@ export function coverageAt(
     .filter((p) => coversAll(present.filter((o) => o.id !== p.id)))
     .map((p) => p.id);
 
-  return { count, goal: COVERAGE_GOAL[building], courses, sameSubjects };
+  const evening = minute >= EVENING_START;
+  const goal = evening ? Math.min(COVERAGE_GOAL[building], 1) : COVERAGE_GOAL[building];
+
+  const missing: string[] = [];
+  const wanted: string[] = [];
+  if (building === "MS-112") {
+    const calc = courses.some((c) => CALC.includes(c));
+    const stats = courses.some((c) => STATS.includes(c));
+    if (evening) {
+      if (!calc && !stats) missing.push("Calc or Stats");
+    } else {
+      if (!calc) missing.push("Calc");
+      if (!stats) missing.push("Stats");
+      for (const w of WANTED) {
+        if (!courses.some((c) => c.startsWith(`${w.department}-`))) wanted.push(w.label);
+      }
+    }
+  }
+
+  return { count, goal, courses, sameSubjects, missing, wanted };
 }
 
 /**

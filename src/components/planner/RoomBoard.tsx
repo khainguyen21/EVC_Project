@@ -46,19 +46,28 @@ const WARNING_TEXT = {
 const CLOSED_HATCH =
   "repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 4px, #e2e8f0 4px, #e2e8f0 8px)";
 
-/** Red when nobody is on, amber below the goal, green at it. */
+/**
+ * Red when nobody is on or a must-have (Calc, Stats) is missing, amber below
+ * the goal, lime when only a nice-to-have (Chemistry, Physics) is missing,
+ * green otherwise. Keep in step with the planner page's legend.
+ */
 function coverageColor(c: Coverage): string {
-  if (c.count === 0) return "#fecaca";
-  return c.count < c.goal ? "#fde68a" : "#86efac";
+  if (c.count === 0 || c.missing.length > 0) return "#fecaca";
+  if (c.count < c.goal) return "#fde68a";
+  return c.wanted.length > 0 ? "#d9f99d" : "#86efac";
 }
 
 function coverageTitle(c: Coverage, minute: number): string {
   const courses = c.courses.map((code) =>
     code === OPEN_LAB ? "Open Computer Lab" : formatCourseCode(code),
   );
-  return `${clock(minute)}: ${c.count} on, goal ${c.goal}${
-    courses.length > 0 ? ` — ${courses.join(", ")}` : " — nobody here"
-  }`;
+  return [
+    `${clock(minute)}: ${c.count} on, goal ${c.goal}${
+      courses.length > 0 ? ` — ${courses.join(", ")}` : " — nobody here"
+    }`,
+    ...(c.missing.length > 0 ? [`Missing: ${c.missing.join(", ")}`] : []),
+    ...(c.wanted.length > 0 ? [`No ${c.wanted.join(" or ")} tutor`] : []),
+  ].join("\n");
 }
 
 /** How far each stacked shift is indented past the one it covers. */
@@ -242,6 +251,7 @@ export default function RoomBoard({
           </div>
           <div style={{ fontSize: "0.72rem", color: "#64748b" }}>
             {BUILDING_INFO[b].name} · goal {COVERAGE_GOAL[b]}
+            {COVERAGE_GOAL[b] > 1 && ", 1 after 5 pm"}
           </div>
           <div style={{ fontSize: "0.72rem", color: "#64748b" }}>
             {hours[b][day] ? `Open ${timeRange(hours[b][day].open, hours[b][day].close)}` : "Closed today"}
