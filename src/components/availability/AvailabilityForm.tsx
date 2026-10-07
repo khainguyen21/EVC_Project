@@ -8,7 +8,7 @@ import {
   CENTER_HOURS,
   WEEKDAYS,
   formatHour,
-  halfHourMarks,
+  timeMarks,
   type Weekday,
 } from "@/utils/centerHours";
 import {
@@ -119,7 +119,7 @@ export default function AvailabilityForm({
         if (row.key !== key) return row;
         const next = { ...row, ...patch };
         // Switching to a day with shorter hours can strand a chosen time.
-        const marks = halfHourMarks(next.day);
+        const marks = timeMarks(next.day);
         if (next.start && !marks.slice(0, -1).includes(next.start)) next.start = "";
         if (next.end && (!marks.includes(next.end) || next.end <= next.start)) {
           next.end = "";
@@ -351,11 +351,12 @@ export default function AvailabilityForm({
             (d) =>
               `${d.slice(0, 3)} ${formatHour(CENTER_HOURS[d].open)}–${formatHour(CENTER_HOURS[d].close)}`,
           ).join(", ")}
-          .
+          . Times go in 15-minute steps. If you are free until a time like
+          12:10, pick 12:00 and write the exact time in Notes.
         </span>
         <div className="avail-form__rows">
           {rows.map((row, i) => {
-            const marks = halfHourMarks(row.day);
+            const marks = timeMarks(row.day);
             return (
               <div key={row.key} className="avail-form__row">
                 <div className="avail-form__row-fields">

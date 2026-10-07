@@ -4,11 +4,11 @@
  *
  * Times are minutes after midnight, so 9:15 am is 555.
  */
-import { CENTER_HOURS, hhmmToMinutes, type Weekday } from "./centerHours";
+import { CENTER_HOURS, SLOT_MINUTES, hhmmToMinutes, type Weekday } from "./centerHours";
 import { OPEN_LAB_PATTERN, findUnrecognizedSubjects, type AvailabilityRow } from "./submission";
 
-/** Shifts start, end and move in 15-minute steps. */
-export const STEP_MINUTES = 15;
+/** Shifts start, end and move in the same 15-minute steps tutors pick on the form. */
+export const STEP_MINUTES = SLOT_MINUTES;
 export const DEFAULT_SHIFT_MINUTES = 120;
 export const MIN_SHIFT_MINUTES = 60;
 

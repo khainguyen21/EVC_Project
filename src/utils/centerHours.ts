@@ -24,7 +24,8 @@ export const CENTER_HOURS: Record<Weekday, { open: string; close: string }> = {
   Friday: { open: "09:00", close: "17:00" },
 };
 
-export const SLOT_MINUTES = 30;
+/** Real shifts start at times like 9:15 and 1:45, so tutors pick quarter hours. */
+export const SLOT_MINUTES = 15;
 
 export function toHHMM(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -37,8 +38,8 @@ export function hhmmToMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
-/** Every half-hour mark from opening to closing, both included. */
-export function halfHourMarks(day: Weekday): string[] {
+/** Every quarter-hour mark from opening to closing, both included. */
+export function timeMarks(day: Weekday): string[] {
   const { open, close } = CENTER_HOURS[day];
   const marks: string[] = [];
   for (

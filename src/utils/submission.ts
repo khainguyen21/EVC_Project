@@ -48,7 +48,7 @@ export const availabilityRowSchema = z
     if (start % SLOT_MINUTES !== 0 || end % SLOT_MINUTES !== 0) {
       ctx.addIssue({
         code: "custom",
-        message: "Times must be on the hour or half hour",
+        message: "Times must be in 15-minute steps",
       });
     } else if (start < hhmmToMinutes(open) || end > hhmmToMinutes(close)) {
       ctx.addIssue({

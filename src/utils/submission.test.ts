@@ -73,14 +73,24 @@ describe("submissionSchema", () => {
     ).toBe("Friday times must be within center hours");
   });
 
-  it("rejects times off the half-hour grid", () => {
+  it("accepts quarter-hour times, since real shifts start at 9:15 or 1:45", () => {
+    expect(
+      parse({
+        availability: [
+          { day: "Monday", allDay: false, start: "09:15", end: "13:45" },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects times between the quarter hours", () => {
     expect(
       firstError({
         availability: [
-          { day: "Monday", allDay: false, start: "09:15", end: "11:00" },
+          { day: "Monday", allDay: false, start: "09:00", end: "12:10" },
         ],
       }),
-    ).toBe("Times must be on the hour or half hour");
+    ).toBe("Times must be in 15-minute steps");
   });
 
   it("rejects weekends", () => {
