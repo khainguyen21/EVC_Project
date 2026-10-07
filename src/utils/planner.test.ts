@@ -200,11 +200,11 @@ describe("shiftWarnings", () => {
 });
 
 describe("shiftForDrop", () => {
-  it("makes a two-hour shift starting where the card is dropped", () => {
+  it("makes a three-hour shift starting where the card is dropped, like William's 1-4", () => {
     const alex = tutor(1, ["MATH-71"], [free("Monday", "09:00", "18:00")]);
-    expect(shiftForDrop(alex, [], "Monday", at("10:00"))).toEqual({
-      start: at("10:00"),
-      end: at("12:00"),
+    expect(shiftForDrop(alex, [], "Monday", at("13:00"))).toEqual({
+      start: at("13:00"),
+      end: at("16:00"),
     });
   });
 
@@ -249,7 +249,7 @@ describe("shiftForDrop", () => {
     const alex = tutor(1, ["MATH-71"], [free("Monday", "09:00", "18:00")]);
     expect(shiftForDrop(alex, [], "Monday", at("10:14"))).toEqual({
       start: at("10:00"),
-      end: at("12:00"),
+      end: at("13:00"),
     });
   });
 });

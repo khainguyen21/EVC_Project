@@ -9,7 +9,8 @@ import { OPEN_LAB_PATTERN, findUnrecognizedSubjects, type AvailabilityRow } from
 
 /** Shifts start, end and move in the same 15-minute steps tutors pick on the form. */
 export const STEP_MINUTES = SLOT_MINUTES;
-export const DEFAULT_SHIFT_MINUTES = 120;
+/** William's usual shifts are 9-12 or 1-4. Only where a dropped shift starts. */
+export const DEFAULT_SHIFT_MINUTES = 180;
 export const MIN_SHIFT_MINUTES = 60;
 
 export const BUILDINGS = ["MS-112", "LE-237", "SQ-231", "VPA-109/111"] as const;
