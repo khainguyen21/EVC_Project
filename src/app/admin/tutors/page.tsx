@@ -110,11 +110,10 @@ export default function ManageTutorsPage() {
     });
   };
 
-  const handleDeleteTutor = (id?: number) => {
+  const handleDeleteTutor = ({ id, name }: Tutor) => {
     if (!id) return;
     setConfirmModal({
-      message:
-        "This will permanently remove the staff member and all their subjects and shifts.",
+      message: `This will permanently remove ${name} and all their subjects and shifts.`,
       onConfirm: async () => {
         setConfirmModal(null);
         try {
@@ -693,36 +692,35 @@ export default function ManageTutorsPage() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      <Link href={`/admin/tutors/${tutor.id}`}>
-                        <button
-                          style={{
-                            padding: "8px 16px",
-                            backgroundColor: "white",
-                            color: "#0f172a",
-                            border: "1px solid #e2e8f0",
-                            borderRadius: "8px",
-                            marginRight: "12px",
-                            cursor: "pointer",
-                            fontSize: "0.9rem",
-                            fontWeight: "600",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            transition: "all 0.2s",
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.borderColor = "#cbd5e1")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.borderColor = "#e2e8f0")
-                          }
-                        >
-                          <Edit2 size={14} /> Edit
-                        </button>
+                      <Link
+                        href={`/admin/tutors/${tutor.id}`}
+                        style={{
+                          padding: "8px 16px",
+                          backgroundColor: "white",
+                          color: "#0f172a",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          marginRight: "12px",
+                          fontSize: "0.9rem",
+                          fontWeight: "600",
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          transition: "all 0.2s",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.borderColor = "#cbd5e1")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.borderColor = "#e2e8f0")
+                        }
+                      >
+                        <Edit2 size={14} /> Edit
                       </Link>
                       <button
-                        onClick={() => handleDeleteTutor(tutor.id)}
+                        onClick={() => handleDeleteTutor(tutor)}
                         style={{
                           padding: "8px 16px",
                           backgroundColor: "#fef2f2",
