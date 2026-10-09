@@ -355,8 +355,8 @@ export default function ShiftPlannerPage() {
       ) : data && data.tutors.length === 0 ? (
         <div style={{ ...cardStyle, color: "#64748b" }}>
           Nobody is approved for {term.name} yet. Approve tutors in{" "}
-          <Link href="/admin/availability">Tutor Availability</Link> and they&apos;ll show up
-          here.
+          <Link href="/admin/availability">Tutor Availability</Link>{" "}
+          and they&apos;ll show up here.
         </div>
       ) : data ? (
         <>
