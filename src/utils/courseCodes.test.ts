@@ -69,6 +69,12 @@ describe("parseCourseCodes, as tutors write subjects", () => {
     }
   });
 
+  it("reads every whole subject in a list, not only the last one", () => {
+    expect(parseCourseCodes("English, ESL")).toEqual(["ENGL-*", "ESL-*"]);
+    expect(parseCourseCodes("Chemistry, Physics")).toEqual(["CHEM-*", "PHYS-*"]);
+    expect(parseCourseCodes("Vietnamese, English C1000")).toEqual(["ENGL-C1000", "VIET-*"]);
+  });
+
   it("ignores a colon or brackets around a word", () => {
     // William's schedule ends each course list with a colon.
     expect(parseCourseCodes("CHEM 015, 30A, 01A:")).toEqual(["CHEM-15", "CHEM-30A", "CHEM-1A"]);

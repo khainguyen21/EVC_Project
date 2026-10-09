@@ -127,8 +127,13 @@ function expandNumbers(chunk: string): string[] {
   return single ? [single] : [];
 }
 
+/** Stands where a comma or semicolon was, so the reader knows where a part ends. */
+const BREAK = ",";
+
 /**
  * Splits on commas and whitespace but keeps "020-025" and "066/67" intact.
+ * Each comma or semicolon stays behind as a BREAK: "English, ESL" names two
+ * subjects, where "MATH STAT C1000" names one.
  * A department joined to its number by a hyphen ("COMSC-075", as many stored
  * subject names are written) or typed right against it ("MATH020") is split
  * in two. Only a known department is, so a range's hyphen and a letter-led
@@ -136,9 +141,9 @@ function expandNumbers(chunk: string): string[] {
  */
 function tokenize(raw: string): string[] {
   return raw
-    .split(/[,;]|\s+/)
+    .split(/([,;])|\s+/)
     // "Math (any)", and William's schedule ends each course list with a colon.
-    .map((t) => t.trim().replace(/^[([]+|[)\]:.]+$/g, ""))
+    .map((t) => (t === ";" ? BREAK : (t ?? "").trim().replace(/^[([]+|[)\]:.]+$/g, "")))
     .filter(Boolean)
     .flatMap((t) => {
       const joined = /^([A-Za-z]+)-?(\d\S*)$/.exec(t) ?? /^([A-Za-z]+)-(\S+)$/.exec(t);
@@ -169,6 +174,8 @@ function read(raw: string): { codes: string[]; unread: string[] } {
   let current: string | null = null;
 
   for (let i = 0; i < words.length; i++) {
+    if (words[i] === BREAK) continue;
+
     // Try the longest multi-word alias first ("Computer Science" before "Computer").
     let alias: string | undefined;
     let consumed = 0;
@@ -182,8 +189,8 @@ function read(raw: string): { codes: string[]; unread: string[] } {
     }
 
     if (alias) {
-      // "MATH STAT C1000": a department immediately followed by another is a
-      // qualifier, not the subject. Let the second one win.
+      // "MATH STAT C1000": a department immediately followed by another, with
+      // no comma between, is a qualifier, not the subject. Let the second win.
       const next = words[i + consumed]?.toUpperCase();
       const nextIsPrefix = next !== undefined && PREFIX_ALIASES[next] !== undefined;
       if (!nextIsPrefix) {
