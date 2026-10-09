@@ -20,7 +20,6 @@ export default function Sidebar() {
   // Pending availability submissions, refreshed on navigation and whenever
   // the inbox changes one. A failure just hides the badge.
   useEffect(() => {
-    if (pathname === "/admin/login") return;
     const load = () =>
       fetch("/api/submissions/pending")
         .then((res) => (res.ok ? res.json() : { pending: 0 }))

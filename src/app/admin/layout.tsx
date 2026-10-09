@@ -1,5 +1,5 @@
 import { ToastProvider } from '@/components/admin/ToastProvider'
-import Sidebar from '@/components/admin/Sidebar'
+import AdminShell from '@/components/admin/AdminShell'
 
 export default function AdminLayout({
   children,
@@ -8,15 +8,7 @@ export default function AdminLayout({
 }) {
   return (
     <ToastProvider>
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'Inter, system-ui, sans-serif' }}>
-        <Sidebar />
-        <main style={{ flex: 1, padding: '48px 64px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          {/* The shift planner widens this; see admin/planner/page.tsx. */}
-          <div className="admin-content" style={{ maxWidth: '1200px', width: '100%', margin: '0 auto' }}>
-            {children}
-          </div>
-        </main>
-      </div>
+      <AdminShell>{children}</AdminShell>
     </ToastProvider>
   )
 }
