@@ -346,19 +346,24 @@ export function resizeShift(
 /** Student tutors must stay under 20 hours a week. */
 export const WEEKLY_LIMIT_MINUTES = 20 * 60;
 
-export type HoursColor = "unset" | "below" | "at" | "above" | "limit";
+export type HoursColor = "unset" | "below" | "inside" | "above" | "limit";
+
+/** William's fair share of hours per tutor per week, from min to max, both included. */
+export interface UsualHours {
+  min: number;
+  max: number;
+}
 
 /**
  * How a tutor's week compares with William's usual hours, for the card color.
  * The usual hours live in the database, never in this public repo; null means
  * William hasn't set them yet.
  */
-export function hoursColor(minutes: number, usualHours: number | null): HoursColor {
+export function hoursColor(minutes: number, usual: UsualHours | null): HoursColor {
   if (minutes >= WEEKLY_LIMIT_MINUTES) return "limit";
-  if (usualHours === null) return "unset";
-  const usual = usualHours * 60;
-  if (minutes < usual) return "below";
-  return minutes === usual ? "at" : "above";
+  if (usual === null) return "unset";
+  if (minutes < usual.min * 60) return "below";
+  return minutes <= usual.max * 60 ? "inside" : "above";
 }
 
 export function weeklyMinutes(tutorId: number, shifts: Shift[]): number {

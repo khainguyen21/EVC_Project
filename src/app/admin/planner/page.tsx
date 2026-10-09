@@ -7,7 +7,7 @@ import type { AdminTerm, Submission } from "@/types";
 import { useToast } from "@/components/admin/ToastProvider";
 import RoomBoard, { startCardDrag } from "@/components/planner/RoomBoard";
 import TutorCard from "@/components/planner/TutorCard";
-import { hoursText } from "@/components/planner/format";
+import { hoursText, usualHoursText } from "@/components/planner/format";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { WEEKDAYS, type Weekday } from "@/utils/centerHours";
 import {
@@ -17,6 +17,7 @@ import {
   tutorCourses,
   type PlannerTutor,
   type Shift,
+  type UsualHours,
 } from "@/utils/planner";
 import {
   forgetFailedChange,
@@ -45,7 +46,7 @@ const COVERAGE_LEGEND = [
 interface PlannerData {
   tutors: Submission[];
   shifts: Shift[];
-  usualWeeklyHours: number | null;
+  usualHours: UsualHours | null;
 }
 
 export default function ShiftPlannerPage() {
@@ -422,8 +423,8 @@ export default function ShiftPlannerPage() {
                 <Undo2 size={15} /> Undo
               </button>
               <UsualHours
-                value={data.usualWeeklyHours}
-                onSaved={(usualWeeklyHours) => setData({ ...data, usualWeeklyHours })}
+                value={data.usualHours}
+                onSaved={(usualHours) => setData({ ...data, usualHours })}
               />
               <div style={{ display: "flex", gap: 10, fontSize: "0.75rem", color: "#64748b" }}>
                 {COVERAGE_LEGEND.map((l) => (
@@ -471,7 +472,7 @@ export default function ShiftPlannerPage() {
                     tutor={plannerTutors[data.tutors.indexOf(s)]}
                     shifts={shifts}
                     day={day}
-                    usualHours={data.usualWeeklyHours}
+                    usualHours={data.usualHours}
                   />
                 </div>
               ))}
@@ -514,19 +515,23 @@ function describe({ before, after }: Change, names: Map<number, string>): string
   return `${what} ${names.get(shift.tutorId) ?? "a tutor"}'s ${shift.day} shift`;
 }
 
-/** William's usual weekly hours per tutor. Saved in the database, not the code. */
+/** William's usual weekly hours per tutor, a range. Saved in the database, not the code. */
 function UsualHours({
   value,
   onSaved,
 }: {
-  value: number | null;
-  onSaved: (hours: number | null) => void;
+  value: UsualHours | null;
+  onSaved: (hours: UsualHours | null) => void;
 }) {
   const { showToast } = useToast();
-  const [draft, setDraft] = useState(value === null ? "" : String(value));
+  const [min, setMin] = useState(value === null ? "" : String(value.min));
+  const [max, setMax] = useState(value === null ? "" : String(value.max));
   const [saving, setSaving] = useState(false);
-  const parsed = draft.trim() === "" ? null : Number(draft);
-  const changed = parsed !== value;
+  // Both blank clears the range; one blank isn't a range yet.
+  const blank = min.trim() === "" && max.trim() === "";
+  const parsed: UsualHours | null = blank ? null : { min: Number(min), max: Number(max) };
+  const complete = blank || (min.trim() !== "" && max.trim() !== "");
+  const changed = parsed?.min !== value?.min || parsed?.max !== value?.max;
 
   const save = async () => {
     setSaving(true);
@@ -534,10 +539,13 @@ function UsualHours({
       await adminFetch("/api/planner/usual-hours", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usualWeeklyHours: parsed }),
+        body: JSON.stringify({ usualHours: parsed }),
       });
       onSaved(parsed);
-      showToast(parsed === null ? "Usual hours cleared." : `Usual hours set to ${parsed}.`, "success");
+      showToast(
+        parsed === null ? "Usual hours cleared." : `Usual hours set to ${usualHoursText(parsed)}.`,
+        "success",
+      );
     } catch (error) {
       showToast(errorMessage(error, "Failed to save usual hours."), "error");
     } finally {
@@ -545,37 +553,45 @@ function UsualHours({
     }
   };
 
+  const input = (id: string, label: string, text: string, setText: (t: string) => void) => (
+    <input
+      id={id}
+      aria-label={label}
+      type="number"
+      min={0.25}
+      max={20}
+      step={0.25}
+      value={text}
+      placeholder="Not set"
+      onChange={(e) => setText(e.target.value)}
+      style={{
+        width: 72,
+        padding: "6px 8px",
+        borderRadius: 8,
+        border: "1px solid #e2e8f0",
+      }}
+    />
+  );
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (changed && !saving) save();
+        if (changed && complete && !saving) save();
       }}
       style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "#475569" }}
     >
-      <label htmlFor="usual-hours" style={{ fontWeight: 600 }}>
+      <label htmlFor="usual-hours-min" style={{ fontWeight: 600 }}>
         Usual hours / week
       </label>
-      <input
-        id="usual-hours"
-        type="number"
-        min={0.25}
-        max={20}
-        step={0.25}
-        value={draft}
-        placeholder="Not set"
-        onChange={(e) => setDraft(e.target.value)}
-        style={{
-          width: 84,
-          padding: "6px 8px",
-          borderRadius: 8,
-          border: "1px solid #e2e8f0",
-        }}
-      />
+      {input("usual-hours-min", "Fewest usual hours a week", min, setMin)}
+      to
+      {input("usual-hours-max", "Most usual hours a week", max, setMax)}
       {changed && (
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || !complete}
+          title={complete ? undefined : "Fill in both numbers, or clear both"}
           style={{
             padding: "6px 10px",
             borderRadius: 8,

@@ -49,10 +49,11 @@ model Schedule {
 model SiteSettings {
   id                  Int      @id @default(1)
   scheduleLastUpdated DateTime @default(now())
-  // William's usual weekly hours per tutor, for the planner's card colors.
-  // Admin only: never return it from the public /api/settings. Null until he
-  // sets it.
-  usualWeeklyHours    Float?
+  // William's usual weekly hours per tutor, a range from min to max, for the
+  // planner's card colors. Admin only: never return them from the public
+  // /api/settings. Null until he sets them.
+  usualHoursMin       Float?
+  usualHoursMax       Float?
 }
 
 // An academic term. The active one drives the homepage banner and decides

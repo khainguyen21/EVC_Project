@@ -454,15 +454,24 @@ describe("weeklyMinutes", () => {
 });
 
 describe("hoursColor", () => {
-  it("compares a tutor's week with William's usual hours", () => {
-    expect(hoursColor(9.75 * 60, 10)).toBe("below");
-    expect(hoursColor(10 * 60, 10)).toBe("at");
-    expect(hoursColor(10.25 * 60, 10)).toBe("above");
+  // Made-up numbers: William's real range lives in the database, not this repo.
+  const usual = { min: 4, max: 8 };
+
+  it("compares a tutor's week with William's usual range, both ends included", () => {
+    expect(hoursColor(3.75 * 60, usual)).toBe("below");
+    expect(hoursColor(4 * 60, usual)).toBe("inside");
+    expect(hoursColor(8 * 60, usual)).toBe("inside");
+    expect(hoursColor(8.25 * 60, usual)).toBe("above");
   });
 
-  it("turns red at 20 hours, and has no color until the usual hours are set", () => {
-    expect(hoursColor(19.75 * 60, 10)).toBe("above");
-    expect(hoursColor(20 * 60, 10)).toBe("limit");
+  it("works with a range of one number", () => {
+    expect(hoursColor(5 * 60, { min: 5, max: 5 })).toBe("inside");
+    expect(hoursColor(5.25 * 60, { min: 5, max: 5 })).toBe("above");
+  });
+
+  it("turns red at 20 hours, and has no color until the range is set", () => {
+    expect(hoursColor(19.75 * 60, usual)).toBe("above");
+    expect(hoursColor(20 * 60, usual)).toBe("limit");
     expect(hoursColor(5 * 60, null)).toBe("unset");
     expect(hoursColor(20 * 60, null)).toBe("limit");
   });

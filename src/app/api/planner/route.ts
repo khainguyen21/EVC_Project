@@ -34,14 +34,17 @@ export async function GET(request: Request) {
       prisma.plannedShift.findMany({ where: { submission: { termId } } }),
       prisma.siteSettings.findUnique({
         where: { id: 1 },
-        select: { usualWeeklyHours: true },
+        select: { usualHoursMin: true, usualHoursMax: true },
       }),
     ]);
 
     return NextResponse.json({
       tutors: submissions.map(serializeSubmission),
       shifts: shifts.map(serializeShift),
-      usualWeeklyHours: settings?.usualWeeklyHours ?? null,
+      usualHours:
+        settings?.usualHoursMin != null && settings.usualHoursMax != null
+          ? { min: settings.usualHoursMin, max: settings.usualHoursMax }
+          : null,
     });
   } catch (error) {
     console.error("[GET /api/planner]", error);

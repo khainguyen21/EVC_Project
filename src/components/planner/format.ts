@@ -1,6 +1,6 @@
 import { formatHour, toHHMM, type Building } from "@/utils/centerHours";
 import { shortenCourseCodes } from "@/utils/courseCodes";
-import { OPEN_LAB, type HoursColor } from "@/utils/planner";
+import { OPEN_LAB, type HoursColor, type UsualHours } from "@/utils/planner";
 
 export const BUILDING_INFO: Record<Building, { name: string; color: string }> = {
   "MS-112": { name: "Math & Science", color: "#0891b2" },
@@ -12,10 +12,15 @@ export const BUILDING_INFO: Record<Building, { name: string; color: string }> = 
 export const HOURS_TONE: Record<HoursColor, { bg: string; color: string; label: string }> = {
   unset: { bg: "#f1f5f9", color: "#475569", label: "Hours this week" },
   below: { bg: "#f1f5f9", color: "#475569", label: "Below your usual hours" },
-  at: { bg: "#dcfce7", color: "#15803d", label: "At your usual hours" },
+  inside: { bg: "#dcfce7", color: "#15803d", label: "Within your usual hours" },
   above: { bg: "#fef3c7", color: "#b45309", label: "Above your usual hours" },
   limit: { bg: "#fee2e2", color: "#b91c1c", label: "At the 20-hour limit" },
 };
+
+/** "4–8", or "5" when the range is one number. */
+export function usualHoursText(usual: UsualHours): string {
+  return usual.min === usual.max ? String(usual.min) : `${usual.min}–${usual.max}`;
+}
 
 /** "9 am", "10:15 am". */
 export function clock(minutes: number): string {

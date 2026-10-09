@@ -3,8 +3,15 @@
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import type { Submission } from "@/types";
 import type { Weekday } from "@/utils/centerHours";
-import { freeTimes, hoursColor, weeklyMinutes, type PlannerTutor, type Shift } from "@/utils/planner";
-import { BUILDING_INFO, HOURS_TONE, courseLines, hoursText, timeRange } from "./format";
+import {
+  freeTimes,
+  hoursColor,
+  weeklyMinutes,
+  type PlannerTutor,
+  type Shift,
+  type UsualHours,
+} from "@/utils/planner";
+import { BUILDING_INFO, HOURS_TONE, courseLines, hoursText, timeRange, usualHoursText } from "./format";
 
 const badge = (bg: string, color: string): React.CSSProperties => ({
   display: "inline-flex",
@@ -24,7 +31,7 @@ interface Props {
   tutor: PlannerTutor;
   shifts: Shift[];
   day: Weekday;
-  usualHours: number | null;
+  usualHours: UsualHours | null;
 }
 
 /** One tutor in the list on the left: who they are, what they cover, their week so far. */
@@ -51,7 +58,7 @@ export default function TutorCard({ submission, tutor, shifts, day, usualHours }
         <strong style={{ fontSize: "0.88rem" }}>{submission.name}</strong>
         <span title={tone.label} style={{ ...badge(tone.bg, tone.color), alignSelf: "center" }}>
           {hoursText(week)}
-          {usualHours !== null && ` / ${usualHours}`}
+          {usualHours !== null && ` / ${usualHoursText(usualHours)}`}
         </span>
       </div>
 
