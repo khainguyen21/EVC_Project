@@ -492,23 +492,28 @@ function BuildingColumn({
         ))}
 
         {draggingTutor &&
-          freeTimes(draggingTutor, day).map((f) => (
-            <div
-              key={f.start}
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                top: y(f.start),
-                height: y(f.end) - y(f.start),
-                background: "rgba(16,185,129,0.12)",
-                borderTop: "2px dashed #10b981",
-                borderBottom: "2px dashed #10b981",
-                boxSizing: "border-box",
-                pointerEvents: "none",
-              }}
-            />
-          ))}
+          freeTimes(draggingTutor, day)
+            // Tutors can offer times after every building closes (see formHours),
+            // so keep the band on the board.
+            .map((f) => ({ key: f.start, top: Math.max(0, y(f.start)), bottom: Math.min(height, y(f.end)) }))
+            .filter((f) => f.bottom > f.top)
+            .map((f) => (
+              <div
+                key={f.key}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  top: f.top,
+                  height: f.bottom - f.top,
+                  background: "rgba(16,185,129,0.12)",
+                  borderTop: "2px dashed #10b981",
+                  borderBottom: "2px dashed #10b981",
+                  boxSizing: "border-box",
+                  pointerEvents: "none",
+                }}
+              />
+            ))}
 
         {shown.map((s) => {
           const tutor = tutorById.get(s.tutorId);

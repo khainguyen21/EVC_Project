@@ -70,8 +70,7 @@ export function toBuildingHoursRows(
 
 /**
  * From the first building to open until the last one closes, or null when
- * every building is closed. Tutors can offer any time in it: the form doesn't
- * ask which building they want.
+ * every building is closed.
  */
 export function dayHours(hours: BuildingHours, day: Weekday): OpenHours | null {
   const open = BUILDINGS.map((b) => hours[b][day]).filter((h) => h !== undefined);
@@ -82,9 +81,24 @@ export function dayHours(hours: BuildingHours, day: Weekday): OpenHours | null {
   };
 }
 
-/** Every quarter-hour mark that day, opening and closing both included. */
+/**
+ * The times tutors can offer on the form: the same every open day, from the
+ * week's first opening to its last closing. William wants their full
+ * availability, so Monday runs until 8 pm even though MS closes at 6. A day
+ * every building is closed stays closed.
+ */
+export function formHours(hours: BuildingHours, day: Weekday): OpenHours | null {
+  if (!dayHours(hours, day)) return null;
+  const spans = WEEKDAYS.map((d) => dayHours(hours, d)).filter((s) => s !== null);
+  return {
+    open: Math.min(...spans.map((s) => s.open)),
+    close: Math.max(...spans.map((s) => s.close)),
+  };
+}
+
+/** Every quarter-hour mark the form offers that day, both ends included. */
 export function timeMarks(hours: BuildingHours, day: Weekday): string[] {
-  const span = dayHours(hours, day);
+  const span = formHours(hours, day);
   const marks: string[] = [];
   if (!span) return marks;
   for (let t = span.open; t <= span.close; t += SLOT_MINUTES) marks.push(toHHMM(t));

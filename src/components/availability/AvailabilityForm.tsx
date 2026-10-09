@@ -6,7 +6,7 @@ import type { Submission } from "@/types";
 import { formatCourseCode, parseCourseCodes } from "@/utils/courseCodes";
 import {
   WEEKDAYS,
-  dayHours,
+  formHours,
   formatHour,
   formatOpenHours,
   timeMarks,
@@ -110,6 +110,10 @@ export default function AvailabilityForm({
       return next;
     });
   };
+
+  // The same times every open day (see formHours), so one line says them all.
+  const week = WEEKDAYS.map((d) => formHours(hours, d)).find((span) => span !== null);
+  const closedDays = WEEKDAYS.filter((d) => !formHours(hours, d)).map((d) => `${d}s`);
 
   const codes = useMemo(() => parseCourseCodes(subjects), [subjects]);
   const unrecognized = useMemo(
@@ -351,13 +355,11 @@ export default function AvailabilityForm({
       <div className="avail-form__field">
         <span className="avail-form__label">Weekly availability</span>
         <span className="avail-form__hint">
-          Add a row for each day. Tutoring hours:{" "}
-          {WEEKDAYS.map((d) => {
-            const span = dayHours(hours, d);
-            return `${d.slice(0, 3)} ${span ? formatOpenHours(span).replace(" – ", "–") : "closed"}`;
-          }).join(", ")}
-          . Times go in 15-minute steps. If you are free until a time like
-          12:10, pick 12:00 and write the exact time in Notes.
+          Add a row for each day you can tutor
+          {week && `, between ${formatOpenHours(week).replace(" – ", " and ")}`}
+          {closedDays.length > 0 && ` (closed ${closedDays.join(", ")})`}. Times go in
+          15-minute steps. If you are free until a time like 12:10, pick 12:00
+          and write the exact time in Notes.
         </span>
         <div className="avail-form__rows">
           {rows.map((row, i) => {
@@ -394,7 +396,7 @@ export default function AvailabilityForm({
                   {row.allDay ? (
                     <span className="avail-form__hint">
                       {(() => {
-                        const span = dayHours(hours, row.day);
+                        const span = formHours(hours, row.day);
                         return span ? formatOpenHours(span) : "Closed";
                       })()}
                     </span>

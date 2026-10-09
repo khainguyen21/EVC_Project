@@ -64,15 +64,26 @@ describe("submissionSchema", () => {
     ).toBe("Tuesday: end time must be after start time");
   });
 
-  it("rejects times outside the term's hours", () => {
-    // In Fall 2026, the last building closes at 5 pm on Fridays.
+  it("rejects times outside the week's hours", () => {
+    // In Fall 2026, the first building opens at 8 am and the last closes at 8 pm.
     expect(
       firstError({
         availability: [
-          { day: "Friday", allDay: false, start: "15:00", end: "18:00" },
+          { day: "Friday", allDay: false, start: "07:00", end: "10:00" },
         ],
       }),
-    ).toBe("Friday times must be between 8:00 am and 5:00 pm");
+    ).toBe("Friday times must be between 8:00 am and 8:00 pm");
+  });
+
+  it("accepts evening times on a day every building closes earlier", () => {
+    // Every building closes by 5 pm on Fridays, but William still wants to know.
+    expect(
+      parse({
+        availability: [
+          { day: "Friday", allDay: false, start: "15:00", end: "20:00" },
+        ],
+      }).success,
+    ).toBe(true);
   });
 
   it("accepts times from when the first building opens", () => {
@@ -135,7 +146,7 @@ describe("submissionSchema", () => {
 });
 
 describe("resolveAvailability", () => {
-  it("fills 'all day' with the term's hours that day", () => {
+  it("fills 'all day' with the form's hours", () => {
     expect(
       resolveAvailability(
         [
@@ -146,7 +157,7 @@ describe("resolveAvailability", () => {
       ),
     ).toEqual([
       { day: "Tuesday", allDay: true, start: "08:00", end: "20:00" },
-      { day: "Friday", allDay: true, start: "08:00", end: "17:00" },
+      { day: "Friday", allDay: true, start: "08:00", end: "20:00" },
     ]);
   });
 
@@ -215,7 +226,7 @@ describe("toSubmissionData / toResubmissionData", () => {
       day: "Friday",
       allDay: true,
       start: "08:00",
-      end: "17:00",
+      end: "20:00",
     });
     expect(data.notes).toBeNull();
   });

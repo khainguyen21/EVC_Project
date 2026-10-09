@@ -10,7 +10,7 @@ import { parseCourseCodes } from "./courseCodes";
 import {
   SLOT_MINUTES,
   WEEKDAYS,
-  dayHours,
+  formHours,
   formatHour,
   hhmmToMinutes,
   toHHMM,
@@ -25,7 +25,7 @@ export const MIN_UNITS = 6;
 
 const HHMM = /^\d{2}:\d{2}$/;
 
-/** Times are checked against the term's hours, from first opening to last closing. */
+/** Times are checked against the hours the form offers (see formHours). */
 function availabilityRowSchema(hours: BuildingHours) {
   return z
     .object({
@@ -36,7 +36,7 @@ function availabilityRowSchema(hours: BuildingHours) {
       end: z.string(),
     })
     .superRefine((row, ctx) => {
-      const span = dayHours(hours, row.day);
+      const span = formHours(hours, row.day);
       if (!span) {
         ctx.addIssue({ code: "custom", message: `Tutoring is closed on ${row.day}s` });
         return;
@@ -108,7 +108,7 @@ export type SubmissionFields = z.infer<ReturnType<typeof submissionFieldsSchema>
 export type SubmissionInput = z.infer<ReturnType<typeof submissionSchema>>;
 
 /**
- * Turns "all day" rows into the term's hours for that day and puts rows in
+ * Turns "all day" rows into the hours the form offers and puts rows in
  * week order, so everything downstream deals only in concrete times.
  */
 export function resolveAvailability(
@@ -117,7 +117,7 @@ export function resolveAvailability(
 ): AvailabilityRow[] {
   return rows
     .map((row) => {
-      const span = row.allDay ? dayHours(hours, row.day) : null;
+      const span = row.allDay ? formHours(hours, row.day) : null;
       return span ? { ...row, start: toHHMM(span.open), end: toHHMM(span.close) } : row;
     })
     .sort(

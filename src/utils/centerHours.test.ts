@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   dayHours,
+  formHours,
   groupedHours,
   hhmmToMinutes,
   timeMarks,
@@ -30,12 +31,27 @@ describe("dayHours", () => {
   });
 });
 
+describe("formHours", () => {
+  it("offers the whole week's span, even on a day every building closes earlier", () => {
+    // William wants tutors' full availability: MS closes at 6 pm on Mondays
+    // and 5 pm on Fridays, but stays open until 8 pm Tuesday to Thursday.
+    const eightToEight = { open: at("08:00"), close: at("20:00") };
+    expect(formHours(FALL_2026_HOURS, "Monday")).toEqual(eightToEight);
+    expect(formHours(FALL_2026_HOURS, "Friday")).toEqual(eightToEight);
+  });
+
+  it("stays closed on a day every building is closed", () => {
+    expect(formHours(onlyMsOnMonday, "Tuesday")).toBeNull();
+    expect(formHours(onlyMsOnMonday, "Monday")).toEqual({ open: at("09:00"), close: at("12:00") });
+  });
+});
+
 describe("timeMarks", () => {
-  it("offers every quarter hour from the first opening to the last closing", () => {
+  it("offers every quarter hour of the form's hours", () => {
     const friday = timeMarks(FALL_2026_HOURS, "Friday");
     expect(friday.slice(0, 3)).toEqual(["08:00", "08:15", "08:30"]);
-    expect(friday.at(-1)).toBe("17:00");
-    expect(friday).toHaveLength(9 * 4 + 1);
+    expect(friday.at(-1)).toBe("20:00");
+    expect(friday).toHaveLength(12 * 4 + 1);
   });
 
   it("offers nothing on a day every building is closed", () => {
