@@ -157,7 +157,9 @@ William tried the planner on the test database in October 2026 and liked it. His
 
 Two of his other requests are elsewhere: an email to William for each new submission (see feature 2), and the public schedule jumping to the bottom when a subject is picked, a bug on the live site fixed on its own branch off `main`.
 
-Still to do: build the list above, then one pull request, with the migrations applied to the live database before it ships.
+All six are built, each with tests first. The `20261009000000_usual_hours_range` migration is on the test database, and all six were checked in the browser.
+
+Still to do: one pull request, with both migrations (`add_building_hours` and `usual_hours_range`) applied to the live database before it ships.
 
 ---
 
