@@ -257,7 +257,7 @@ A Publish button on the shift planner copies William's planned shifts for the se
 - **A copy to undo with:** Publish saves the student tutors it replaces, so a mistaken publish can be put back.
 - **Manage Staff still edits student tutors.** After publishing, William can change a student tutor's shifts and subjects on Manage Staff or in the planner (Khai's call, October 2026). Publishing again rebuilds student tutors from the planner and would replace those Manage Staff changes. So the review screen names every student tutor changed on Manage Staff since the last publish, and William decides before anything is replaced.
 - **How shifts and subjects carry over:** times become text like "09:15". Building names already match the public schedule. Subjects are grouped by subject area, one line each, written the way William types them ("MATH 20-25, 62"), under the subject-area names the public site already uses ("Mathematics", not "Math"). Otherwise the homepage would show two Math sections.
-- The planner shows when the term was last published, and whether shifts changed since.
+- The planner shows when the term was last published, and whether anything changed since: shifts, subjects or names, since publishing again would change all three.
 
 ### Waiting on William
 

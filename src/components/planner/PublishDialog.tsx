@@ -44,6 +44,8 @@ export default function PublishDialog({
 
   const shiftCount = plan.tutors.reduce((n, t) => n + t.schedules.length, 0);
   const tutorWord = (n: number) => (n === 1 ? "tutor" : "tutors");
+  // The server refuses an empty publish, so nothing would be removed.
+  const nothingToPublish = plan.tutors.length === 0;
 
   const publish = async () => {
     setPublishing(true);
@@ -89,47 +91,56 @@ export default function PublishDialog({
         <h3 id="publish-title" style={{ fontSize: "1.2rem", fontWeight: 800, color: "#0f172a" }}>
           Publish {termName} to the public schedule?
         </h3>
-        <p style={{ color: "#334155", margin: "10px 0 16px", lineHeight: 1.5 }}>
-          <strong>
-            {plan.tutors.length} {tutorWord(plan.tutors.length)} and {shiftCount}{" "}
-            {shiftCount === 1 ? "shift" : "shifts"}
-          </strong>{" "}
-          go live as soon as you click Publish. Professors and staff stay as they are.
-        </p>
-
-        {/* Publishing goes live at once whichever term is active. */}
-        {activeTerm === null ? (
-          <Note tone="warning">
-            No term is active, so the homepage shows no term dates and ignores closed days. Make
-            a term active on Terms &amp; Holidays.
-          </Note>
+        {nothingToPublish ? (
+          <p style={{ color: "#334155", margin: "10px 0 16px", lineHeight: 1.5 }}>
+            No tutors have shifts yet, so there is nothing to publish. The public schedule stays as
+            it is.
+          </p>
         ) : (
-          activeTerm.id !== termId && (
-            <Note tone="warning">
-              {activeTerm.name} is still the active term. Students will see {termName}&apos;s
-              shifts right away.
-            </Note>
-          )
-        )}
+          <>
+            <p style={{ color: "#334155", margin: "10px 0 16px", lineHeight: 1.5 }}>
+              <strong>
+                {plan.tutors.length} {tutorWord(plan.tutors.length)} and {shiftCount}{" "}
+                {shiftCount === 1 ? "shift" : "shifts"}
+              </strong>{" "}
+              go live as soon as you click Publish. Professors and staff stay as they are.
+            </p>
 
-        <Section
-          title={`Removes the ${status.onSchedule.length} student ${tutorWord(status.onSchedule.length)} on the public schedule now`}
-          names={status.onSchedule}
-          empty="No student tutors are on the public schedule now."
-        />
-        {status.editedOnManageStaff.length > 0 && (
-          <Section
-            tone="warning"
-            title="Changed on Manage Staff since you last published. Publishing replaces those changes:"
-            names={status.editedOnManageStaff}
-          />
-        )}
-        {plan.availabilityChanged.length > 0 && (
-          <Section
-            tone="warning"
-            title="Sent new availability after you placed them. Published with the shifts you gave them:"
-            names={names(plan.availabilityChanged)}
-          />
+            {/* Publishing goes live at once whichever term is active. */}
+            {activeTerm === null ? (
+              <Note tone="warning">
+                No term is active, so the homepage shows no term dates and ignores closed days.
+                Make a term active on Terms &amp; Holidays.
+              </Note>
+            ) : (
+              activeTerm.id !== termId && (
+                <Note tone="warning">
+                  {activeTerm.name} is still the active term. Students will see {termName}&apos;s
+                  shifts right away.
+                </Note>
+              )
+            )}
+
+            <Section
+              title={`Removes the ${status.onSchedule.length} student ${tutorWord(status.onSchedule.length)} on the public schedule now`}
+              names={status.onSchedule}
+              empty="No student tutors are on the public schedule now."
+            />
+            {status.editedOnManageStaff.length > 0 && (
+              <Section
+                tone="warning"
+                title="Changed on Manage Staff since you last published. Publishing replaces those changes:"
+                names={status.editedOnManageStaff}
+              />
+            )}
+            {plan.availabilityChanged.length > 0 && (
+              <Section
+                tone="warning"
+                title="Sent new availability after you placed them. Published with the shifts you gave them:"
+                names={names(plan.availabilityChanged)}
+              />
+            )}
+          </>
         )}
         {plan.needsReview.length > 0 && (
           <Section
@@ -159,23 +170,25 @@ export default function PublishDialog({
               cursor: publishing ? "default" : "pointer",
             }}
           >
-            Cancel
+            {nothingToPublish ? "Close" : "Cancel"}
           </button>
-          <button
-            onClick={publish}
-            disabled={publishing || plan.tutors.length === 0}
-            style={{
-              padding: "9px 20px",
-              background: plan.tutors.length === 0 ? "#94a3b8" : "#059669",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              fontWeight: 700,
-              cursor: publishing || plan.tutors.length === 0 ? "default" : "pointer",
-            }}
-          >
-            {publishing ? "Publishing…" : `Publish ${plan.tutors.length} ${tutorWord(plan.tutors.length)}`}
-          </button>
+          {!nothingToPublish && (
+            <button
+              onClick={publish}
+              disabled={publishing}
+              style={{
+                padding: "9px 20px",
+                background: "#059669",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                fontWeight: 700,
+                cursor: publishing ? "default" : "pointer",
+              }}
+            >
+              {publishing ? "Publishing…" : `Publish ${plan.tutors.length} ${tutorWord(plan.tutors.length)}`}
+            </button>
+          )}
         </div>
       </div>
     </>

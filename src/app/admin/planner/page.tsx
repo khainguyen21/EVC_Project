@@ -287,7 +287,8 @@ export default function ShiftPlannerPage() {
   const term = terms.find((t) => t.id === termId) ?? null;
   const shifts = data?.shifts ?? [];
 
-  // Worked out here from the board, so "changed since" follows every move.
+  // Worked out here from the board, so "not published" follows every move.
+  // Subjects and names count too: publishing again would change them as well.
   const plan = useMemo(() => (data ? planPublish(data.tutors, data.shifts) : null), [data]);
   const lastPublished = publishStatus?.lastPublished ?? null;
   const changedSincePublished =
@@ -370,7 +371,7 @@ export default function ShiftPlannerPage() {
                     })}
                     {changedSincePublished && (
                       <span style={{ display: "block", color: "#b45309", fontWeight: 700 }}>
-                        Shifts changed since
+                        Changes not published yet
                       </span>
                     )}
                   </>

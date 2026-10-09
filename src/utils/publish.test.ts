@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { hhmmToMinutes, type Building, type Weekday } from "./centerHours";
+import { parseCourseCodes } from "./courseCodes";
 import type { Shift } from "./planner";
-import { planPublish, type PublishSubmission } from "./publish";
+import { SUBJECT_AREAS, planPublish, type PublishSubmission } from "./publish";
 
 function submission(
   id: number,
@@ -77,6 +78,33 @@ describe("planPublish", () => {
     );
 
     expect(plan.tutors[0].subjects).toEqual([{ name: "English", field: "English" }]);
+  });
+
+  it("names a whole subject by its own name when it shares a section, like Stats with Math", () => {
+    const plan = planPublish(
+      [submission(1, "Alex Rivera", "Math 071, Chem1A, STAT, CHEM1b")],
+      [shift(1, "MS-112", "Monday", "09:00", "12:00")],
+    );
+
+    expect(plan.tutors[0].subjects).toEqual(
+      expect.arrayContaining([{ name: "Statistics, MATH 71", field: "Mathematics" }]),
+    );
+  });
+
+  it("writes every whole subject so the public search still finds it", () => {
+    for (const department of Object.keys(SUBJECT_AREAS)) {
+      // Next to a course in each shared section, where the section's name
+      // would read as a different subject. Not its own: "BUS, BUS 71" names
+      // one course, not every BUS course.
+      const others = ["MATH 71", "BUS 71"].filter((c) => !c.startsWith(`${department} `));
+      const plan = planPublish(
+        [submission(1, "Alex Rivera", [department, ...others].join(", "))],
+        [shift(1, "MS-112", "Monday", "09:00", "12:00")],
+      );
+
+      const searchable = plan.tutors[0].subjects.flatMap((s) => parseCourseCodes(s.name));
+      expect(searchable, department).toContain(`${department}-*`);
+    }
   });
 
   it("lists Open Computer Lab under its own name", () => {

@@ -57,7 +57,7 @@ export interface PublishPlan {
  * named as the live schedule already names them, so published tutors land in
  * the same sections as the professors and staff. Stats sits with Math there.
  */
-const SUBJECT_AREAS: Record<string, string> = {
+export const SUBJECT_AREAS: Record<string, string> = {
   ACCT: "Accounting",
   ART: "Art",
   ASTR: "Astronomy",
@@ -82,6 +82,16 @@ const SUBJECT_AREAS: Record<string, string> = {
   VIET: "Vietnamese",
 };
 
+/**
+ * A whole department's name on a subject line, where the subject area's name
+ * would read as its sibling: "Mathematics" means any Math course to students
+ * and to the public search, not any Stats one.
+ */
+const WHOLE_DEPARTMENT_NAMES: Record<string, string> = {
+  BIS: "BIS",
+  STAT: "Statistics",
+};
+
 /** One line per subject area, shortened the way William types them. */
 function subjectLines(subjectsRaw: string): PublicTutorRow["subjects"] {
   // Read again from the raw text, like the inbox, so a submission sent before
@@ -99,7 +109,8 @@ function subjectLines(subjectsRaw: string): PublicTutorRow["subjects"] {
     const whole = (c: string) => c.endsWith("-*") || c === OPEN_LAB;
     const anyOf = new Set(codes.filter(whole).map((c) => c.split("-")[0]));
     const numbered = codes.filter((c) => !anyOf.has(c.split("-")[0]));
-    const lines = [...(anyOf.size > 0 ? [field] : []), ...shortenCourseCodes(numbered)];
+    const wholeNames = new Set([...anyOf].map((d) => WHOLE_DEPARTMENT_NAMES[d] ?? field));
+    const lines = [...wholeNames, ...shortenCourseCodes(numbered)];
     return { name: lines.join(", "), field };
   });
 }
