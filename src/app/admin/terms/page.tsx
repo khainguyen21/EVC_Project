@@ -454,9 +454,9 @@ export default function ManageTermsPage() {
 
       {!loading && !loadError && terms.length > 0 && !activeTerm && (
         <Notice tone="danger" icon={<AlertTriangle size={20} />}>
-          <strong>No term is active.</strong> The homepage banner has no dates
-          and closed days are not applied. Pick a term below and choose
-          &ldquo;Set Active&rdquo;.
+          <strong>No term is active.</strong>{" "}
+          The homepage banner has no dates and closed days are not applied.
+          Pick a term below and choose &ldquo;Set Active&rdquo;.
         </Notice>
       )}
 
