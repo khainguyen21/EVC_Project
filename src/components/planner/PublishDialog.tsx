@@ -7,8 +7,8 @@ import type { PlanTutor, PublishPlan, PublishStatus } from "@/utils/publish";
 interface Props {
   termId: number;
   termName: string;
-  /** The active term's name when it isn't this one: students see the change at once. */
-  activeTermName: string | null;
+  /** The active term, or null when no term is active. */
+  activeTerm: { id: number; name: string } | null;
   plan: PublishPlan;
   status: PublishStatus;
   onCancel: () => void;
@@ -22,7 +22,7 @@ interface Props {
 export default function PublishDialog({
   termId,
   termName,
-  activeTermName,
+  activeTerm,
   plan,
   status,
   onCancel,
@@ -97,11 +97,19 @@ export default function PublishDialog({
           go live as soon as you click Publish. Professors and staff stay as they are.
         </p>
 
-        {activeTermName && (
+        {/* Publishing goes live at once whichever term is active. */}
+        {activeTerm === null ? (
           <Note tone="warning">
-            {activeTermName} is still the active term. Students will see {termName}&apos;s
-            shifts right away.
+            No term is active, so the homepage shows no term dates and ignores closed days. Make
+            a term active on Terms &amp; Holidays.
           </Note>
+        ) : (
+          activeTerm.id !== termId && (
+            <Note tone="warning">
+              {activeTerm.name} is still the active term. Students will see {termName}&apos;s
+              shifts right away.
+            </Note>
+          )
         )}
 
         <Section

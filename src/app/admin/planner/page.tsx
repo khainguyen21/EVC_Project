@@ -160,6 +160,35 @@ export default function ShiftPlannerPage() {
     };
   }, [termId, showToast, attempt, publishVersion]);
 
+  // The review screen reads the server fresh, once queued saves are out:
+  // Publish uses what the server has, and Manage Staff or Tutor Availability
+  // may have changed tutors in another tab since the page loaded.
+  const [openingReview, setOpeningReview] = useState(false);
+  const selectedTermId = useRef(termId);
+  useEffect(() => {
+    selectedTermId.current = termId;
+  }, [termId]);
+  const openReview = async () => {
+    if (termId === null) return;
+    setOpeningReview(true);
+    try {
+      await saving.current;
+      const [planner, status] = await Promise.all([
+        adminFetch<PlannerData>(`/api/planner?termId=${termId}`),
+        adminFetch<PublishStatus>(`/api/planner/publish?termId=${termId}`),
+      ]);
+      if (selectedTermId.current !== termId) return;
+      setData(planner);
+      setNames((m) => new Map([...m, ...planner.tutors.map((s) => [s.id, s.name] as const)]));
+      setPublishStatus(status);
+      setReviewing(true);
+    } catch (error) {
+      showToast(errorMessage(error, "Could not open the review screen."), "error");
+    } finally {
+      setOpeningReview(false);
+    }
+  };
+
   const refuse = useCallback((message: string) => showToast(message, "error"), [showToast]);
 
   /**
@@ -329,7 +358,7 @@ export default function ShiftPlannerPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           {term && plan && publishStatus && (
             <>
-              <span style={{ fontSize: "0.85rem", color: "#64748b", textAlign: "right" }}>
+              <span style={{ fontSize: "0.85rem", color: "#64748b", textAlign: "right", whiteSpace: "nowrap" }}>
                 {lastPublished ? (
                   <>
                     Published{" "}
@@ -350,7 +379,8 @@ export default function ShiftPlannerPage() {
                 )}
               </span>
               <button
-                onClick={() => setReviewing(true)}
+                onClick={openReview}
+                disabled={openingReview}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -361,10 +391,10 @@ export default function ShiftPlannerPage() {
                   background: "#059669",
                   color: "white",
                   fontWeight: 700,
-                  cursor: "pointer",
+                  cursor: openingReview ? "default" : "pointer",
                 }}
               >
-                <Globe size={16} /> Publish
+                <Globe size={16} /> {openingReview ? "Checking…" : "Publish"}
               </button>
             </>
           )}
@@ -400,7 +430,7 @@ export default function ShiftPlannerPage() {
         <PublishDialog
           termId={term.id}
           termName={term.name}
-          activeTermName={activeTerm && activeTerm.id !== term.id ? activeTerm.name : null}
+          activeTerm={activeTerm ?? null}
           plan={plan}
           status={publishStatus}
           onCancel={() => setReviewing(false)}
