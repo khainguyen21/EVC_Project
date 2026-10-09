@@ -7,6 +7,7 @@ import type { AdminTerm, Submission } from "@/types";
 import { useToast } from "@/components/admin/ToastProvider";
 import RoomBoard, { startCardDrag } from "@/components/planner/RoomBoard";
 import TutorCard from "@/components/planner/TutorCard";
+import WeekSummary from "@/components/planner/WeekSummary";
 import { hoursText, usualHoursText } from "@/components/planner/format";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { WEEKDAYS, type Weekday } from "@/utils/centerHours";
@@ -65,6 +66,8 @@ export default function ShiftPlannerPage() {
   // pending tutor who left the board when their last shift was removed.
   const [names, setNames] = useState(new Map<number, string>());
   const [day, setDay] = useState<Weekday>("Monday");
+  // The Week tab: every tutor's hours, in place of the day's board.
+  const [showWeek, setShowWeek] = useState(false);
   // The tutor list's order, set when a day opens (see keepOrder).
   const [order, setOrder] = useState({ key: "", ids: [] as number[] });
   const [dragging, setDragging] = useState<number | null>(null);
@@ -368,15 +371,17 @@ export default function ShiftPlannerPage() {
             }}
           >
             <div style={{ display: "flex", gap: 6 }}>
-              {WEEKDAYS.map((d) => {
-                const today = shifts.filter((s) => s.day === d);
-                const active = d === day;
+              {[...WEEKDAYS, "Week" as const].map((d) => {
+                const counted = d === "Week" ? shifts : shifts.filter((s) => s.day === d);
+                const active = d === "Week" ? showWeek : !showWeek && d === day;
                 return (
                   <button
                     key={d}
                     onClick={() => {
-                      setDay(d);
+                      setShowWeek(d === "Week");
+                      if (d !== "Week") setDay(d);
                     }}
+                    aria-pressed={active}
                     style={{
                       padding: "8px 14px",
                       borderRadius: 10,
@@ -386,11 +391,12 @@ export default function ShiftPlannerPage() {
                       fontWeight: 700,
                       fontSize: "0.85rem",
                       cursor: "pointer",
+                      marginLeft: d === "Week" ? 8 : 0,
                     }}
                   >
                     {d}
                     <span style={{ fontWeight: 500, color: "#64748b", marginLeft: 6 }}>
-                      {hoursText(today.reduce((sum, s) => sum + s.end - s.start, 0))}
+                      {hoursText(counted.reduce((sum, s) => sum + s.end - s.start, 0))}
                     </span>
                   </button>
                 );
@@ -437,70 +443,84 @@ export default function ShiftPlannerPage() {
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <div
-              style={{
-                ...cardStyle,
-                width: 250,
-                flexShrink: 0,
-                padding: "16px 12px",
-                maxHeight: "calc(100vh - 120px)",
-                overflowY: "auto",
-                position: "sticky",
-                top: 16,
-              }}
-            >
-              <h3 style={{ margin: "0 0 10px", fontSize: "1rem", fontWeight: 800 }}>
-                Free {day}
-              </h3>
-              <p style={{ margin: "0 0 10px", fontSize: "0.75rem", color: "#64748b" }}>
-                Drag a tutor onto a building at the time their shift should start.
-              </p>
-              {listed.map((s) => (
-                <div
-                  key={s.id}
-                  draggable
-                  onDragStart={(e) => {
-                    startCardDrag(e, s.id);
-                    beginDrag(s.id);
-                  }}
-                  onDragEnd={endDrag}
-                  style={{ cursor: "grab" }}
-                >
-                  <TutorCard
-                    submission={s}
-                    tutor={plannerTutors[data.tutors.indexOf(s)]}
-                    shifts={shifts}
-                    day={day}
-                    usualHours={data.usualHours}
-                  />
-                </div>
-              ))}
-              {listed.length === 0 && (
-                <p style={{ fontSize: "0.8rem", color: "#64748b" }}>Nobody is free {day}.</p>
-              )}
-              {notFree.length > 0 && (
-                <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "10px 0 0" }}>
-                  Not free {day}: {notFree.map((s) => s.name).join(", ")}
-                </p>
-              )}
-            </div>
-
-            <div style={{ ...cardStyle, flex: 1, minWidth: 0, overflowX: "auto" }}>
-              <RoomBoard
-                hours={term.buildingHours}
-                tutors={plannerTutors}
-                names={names}
+          {showWeek ? (
+            <div style={{ ...cardStyle, overflowX: "auto" }}>
+              <WeekSummary
+                tutors={data.tutors}
                 shifts={shifts}
-                day={day}
-                dragging={dragging}
-                beginDrag={beginDrag}
-                endDrag={endDrag}
-                onChange={changeShift}
-                onRefuse={refuse}
+                usualHours={data.usualHours}
+                onOpenDay={(d) => {
+                  setShowWeek(false);
+                  setDay(d);
+                }}
               />
             </div>
-          </div>
+          ) : (
+            <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div
+                style={{
+                  ...cardStyle,
+                  width: 250,
+                  flexShrink: 0,
+                  padding: "16px 12px",
+                  maxHeight: "calc(100vh - 120px)",
+                  overflowY: "auto",
+                  position: "sticky",
+                  top: 16,
+                }}
+              >
+                <h3 style={{ margin: "0 0 10px", fontSize: "1rem", fontWeight: 800 }}>
+                  Free {day}
+                </h3>
+                <p style={{ margin: "0 0 10px", fontSize: "0.75rem", color: "#64748b" }}>
+                  Drag a tutor onto a building at the time their shift should start.
+                </p>
+                {listed.map((s) => (
+                  <div
+                    key={s.id}
+                    draggable
+                    onDragStart={(e) => {
+                      startCardDrag(e, s.id);
+                      beginDrag(s.id);
+                    }}
+                    onDragEnd={endDrag}
+                    style={{ cursor: "grab" }}
+                  >
+                    <TutorCard
+                      submission={s}
+                      tutor={plannerTutors[data.tutors.indexOf(s)]}
+                      shifts={shifts}
+                      day={day}
+                      usualHours={data.usualHours}
+                    />
+                  </div>
+                ))}
+                {listed.length === 0 && (
+                  <p style={{ fontSize: "0.8rem", color: "#64748b" }}>Nobody is free {day}.</p>
+                )}
+                {notFree.length > 0 && (
+                  <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "10px 0 0" }}>
+                    Not free {day}: {notFree.map((s) => s.name).join(", ")}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ ...cardStyle, flex: 1, minWidth: 0, overflowX: "auto" }}>
+                <RoomBoard
+                  hours={term.buildingHours}
+                  tutors={plannerTutors}
+                  names={names}
+                  shifts={shifts}
+                  day={day}
+                  dragging={dragging}
+                  beginDrag={beginDrag}
+                  endDrag={endDrag}
+                  onChange={changeShift}
+                  onRefuse={refuse}
+                />
+              </div>
+            </div>
+          )}
         </>
       ) : null}
     </div>

@@ -7,6 +7,7 @@
 import {
   BUILDINGS,
   SLOT_MINUTES,
+  WEEKDAYS,
   formatOpenHours,
   hhmmToMinutes,
   type Building,
@@ -370,6 +371,15 @@ export function weeklyMinutes(tutorId: number, shifts: Shift[]): number {
   return shifts
     .filter((s) => s.tutorId === tutorId)
     .reduce((total, s) => total + s.end - s.start, 0);
+}
+
+/** Planned minutes each weekday, for one tutor or, without one, for everyone. */
+export function minutesByDay(shifts: Shift[], tutorId?: number): Record<Weekday, number> {
+  const totals = Object.fromEntries(WEEKDAYS.map((d) => [d, 0])) as Record<Weekday, number>;
+  for (const s of shifts) {
+    if (tutorId === undefined || s.tutorId === tutorId) totals[s.day] += s.end - s.start;
+  }
+  return totals;
 }
 
 export function buildingWeeklyMinutes(shifts: Shift[]): Record<Building, number> {

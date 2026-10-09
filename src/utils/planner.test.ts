@@ -14,6 +14,7 @@ import {
   shiftProblem,
   shiftWarnings,
   keepOrder,
+  minutesByDay,
   sortByFewestHours,
   tutorCourses,
   weeklyMinutes,
@@ -450,6 +451,32 @@ describe("weeklyMinutes", () => {
       shift(2, "MS-112", "Monday", "10:00", "18:00"),
     ];
     expect(weeklyMinutes(1, shifts)).toBe(4.5 * 60);
+  });
+});
+
+describe("minutesByDay", () => {
+  it("adds up a tutor's shifts each day, with 0 on days they have none", () => {
+    const shifts = [
+      shift(1, "MS-112", "Monday", "09:00", "12:00"),
+      shift(1, "LE-237", "Monday", "13:00", "14:30"),
+      shift(1, "MS-112", "Thursday", "10:00", "11:00"),
+      shift(2, "MS-112", "Tuesday", "10:00", "18:00"),
+    ];
+    expect(minutesByDay(shifts, 1)).toEqual({
+      Monday: 4.5 * 60,
+      Tuesday: 0,
+      Wednesday: 0,
+      Thursday: 60,
+      Friday: 0,
+    });
+  });
+
+  it("adds up everyone's shifts each day when no tutor is given", () => {
+    const shifts = [
+      shift(1, "MS-112", "Monday", "09:00", "12:00"),
+      shift(2, "SQ-231", "Monday", "10:00", "11:00"),
+    ];
+    expect(minutesByDay(shifts).Monday).toBe(4 * 60);
   });
 });
 
