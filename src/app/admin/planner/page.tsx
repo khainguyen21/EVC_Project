@@ -12,6 +12,7 @@ import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { WEEKDAYS, type Weekday } from "@/utils/centerHours";
 import {
   freeTimes,
+  keepOrder,
   sortByFewestHours,
   tutorCourses,
   type PlannerTutor,
@@ -52,6 +53,8 @@ export default function ShiftPlannerPage() {
   const [terms, setTerms] = useState<AdminTerm[]>([]);
   const [termId, setTermId] = useState<number | null>(null);
   const [data, setData] = useState<PlannerData | null>(null);
+  // The term `data` belongs to: the old term's data stays up while a new one loads.
+  const [loadedTermId, setLoadedTermId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -61,6 +64,8 @@ export default function ShiftPlannerPage() {
   // pending tutor who left the board when their last shift was removed.
   const [names, setNames] = useState(new Map<number, string>());
   const [day, setDay] = useState<Weekday>("Monday");
+  // The tutor list's order, set when a day opens (see keepOrder).
+  const [order, setOrder] = useState({ key: "", ids: [] as number[] });
   const [dragging, setDragging] = useState<number | null>(null);
   // Saves go out one at a time, in order, so a quick move-then-resize can't
   // reach the server backwards.
@@ -112,6 +117,7 @@ export default function ShiftPlannerPage() {
       .then((planner) => {
         if (stale) return;
         setData(planner);
+        setLoadedTermId(termId);
         setNames((m) => new Map([...m, ...planner.tutors.map((s) => [s.id, s.name] as const)]));
         setLoadFailed(false);
       })
@@ -230,10 +236,15 @@ export default function ShiftPlannerPage() {
   const onToday = (s: Submission, i: number) =>
     freeTimes(plannerTutors[i], day).length > 0 ||
     shifts.some((sh) => sh.tutorId === s.id && sh.day === day);
-  const listed = sortByFewestHours(
-    (data?.tutors ?? []).filter(onToday),
-    shifts,
-  );
+  const freeToday = (data?.tutors ?? []).filter(onToday);
+  // Fewest hours first when William opens a day, then held while he works on
+  // it: a card that jumped down after a drop looked to him like it had left.
+  const orderKey = `${loadedTermId}-${day}`;
+  if (data && order.key !== orderKey) {
+    setOrder({ key: orderKey, ids: sortByFewestHours(freeToday, shifts).map((s) => s.id) });
+  }
+  const listed =
+    order.key === orderKey ? keepOrder(freeToday, order.ids) : sortByFewestHours(freeToday, shifts);
   const notFree = (data?.tutors ?? []).filter((s, i) => !onToday(s, i));
 
   return (

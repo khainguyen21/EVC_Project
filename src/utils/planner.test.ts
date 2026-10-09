@@ -13,6 +13,7 @@ import {
   shiftForDrop,
   shiftProblem,
   shiftWarnings,
+  keepOrder,
   sortByFewestHours,
   tutorCourses,
   weeklyMinutes,
@@ -476,6 +477,22 @@ describe("sortByFewestHours", () => {
     ];
     const shifts = [shift(2, "MS-112", "Monday", "10:00", "12:00")];
     expect(sortByFewestHours(tutors, shifts).map((t) => t.name)).toEqual(["Bao", "Zoe", "Alex"]);
+  });
+});
+
+describe("keepOrder", () => {
+  it("keeps the order the list had when the day opened, with anyone new at the end", () => {
+    const tutors = [
+      { id: 1, name: "Zoe" },
+      { id: 2, name: "Alex" },
+      { id: 3, name: "Bao" },
+      { id: 4, name: "Chi" },
+    ];
+    expect(keepOrder(tutors, [3, 1, 2]).map((t) => t.name)).toEqual(["Bao", "Zoe", "Alex", "Chi"]);
+  });
+
+  it("leaves out tutors who are no longer listed", () => {
+    expect(keepOrder([{ id: 2, name: "Alex" }], [3, 1, 2]).map((t) => t.id)).toEqual([2]);
   });
 });
 

@@ -383,3 +383,15 @@ export function sortByFewestHours<T extends { id: number; name: string }>(
       weeklyMinutes(a.id, shifts) - weeklyMinutes(b.id, shifts) || a.name.localeCompare(b.name),
   );
 }
+
+/**
+ * The tutors in the order the list had when William opened the day, so a card
+ * doesn't jump away from under him as its hours grow. Anyone not in that order
+ * yet goes at the end, in the order given.
+ */
+export function keepOrder<T extends { id: number }>(tutors: T[], order: number[]): T[] {
+  const place = new Map(order.map((id, i) => [id, i]));
+  return [...tutors].sort(
+    (a, b) => (place.get(a.id) ?? order.length) - (place.get(b.id) ?? order.length),
+  );
+}
