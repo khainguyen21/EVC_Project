@@ -50,6 +50,7 @@ const PREFIX_ALIASES: Record<string, string> = {
   MUS: "MUS",
   MUSIC: "MUS",
   PHYS: "PHYS",
+  PHYSIC: "PHYS",
   PHYSICS: "PHYS",
   PSYC: "PSYC",
   PSYCH: "PSYC",
@@ -60,10 +61,17 @@ const PREFIX_ALIASES: Record<string, string> = {
   SPAN: "SPAN",
   SPANISH: "SPAN",
   STAT: "STAT",
+  STATS: "STAT",
   STATISTICS: "STAT",
   VIET: "VIET",
   VIETNAMESE: "VIET",
 };
+
+/**
+ * Words that don't change which courses a subject list names: "any Math",
+ * "all levels", "Chem 1A & 1B".
+ */
+const FILLER_WORDS = new Set(["ANY", "ALL", "AND", "&", "CLASS", "CLASSES", "COURSE", "COURSES", "LEVEL", "LEVELS"]);
 
 /** Longest alias key in words, so multi-word names are matched before single. */
 const MAX_ALIAS_WORDS = 2;
@@ -122,16 +130,18 @@ function expandNumbers(chunk: string): string[] {
 /**
  * Splits on commas and whitespace but keeps "020-025" and "066/67" intact.
  * A department joined to its number by a hyphen ("COMSC-075", as many stored
- * subject names are written) is split in two; only a known department is, so
- * a range's hyphen is never touched.
+ * subject names are written) or typed right against it ("MATH020") is split
+ * in two. Only a known department is, so a range's hyphen and a letter-led
+ * number like "C1000" are never touched.
  */
 function tokenize(raw: string): string[] {
   return raw
     .split(/[,;]|\s+/)
-    .map((t) => t.trim())
+    // "Math (any)", and William's schedule ends each course list with a colon.
+    .map((t) => t.trim().replace(/^[([]+|[)\]:.]+$/g, ""))
     .filter(Boolean)
     .flatMap((t) => {
-      const joined = /^([A-Za-z]+)-(\S+)$/.exec(t);
+      const joined = /^([A-Za-z]+)-?(\d\S*)$/.exec(t) ?? /^([A-Za-z]+)-(\S+)$/.exec(t);
       return joined && PREFIX_ALIASES[joined[1].toUpperCase()]
         ? [joined[1], joined[2]]
         : [t];
@@ -139,8 +149,21 @@ function tokenize(raw: string): string[] {
 }
 
 export function parseCourseCodes(raw: string): string[] {
+  return read(raw).codes;
+}
+
+/**
+ * The words in a subject list the reader had to skip, such as "up" in "Math
+ * 20 and up": a list read without them may name the wrong courses.
+ */
+export function unreadWords(raw: string): string[] {
+  return read(raw).unread;
+}
+
+function read(raw: string): { codes: string[]; unread: string[] } {
   const words = tokenize(raw);
   const codes = new Set<string>();
+  const unread: string[] = [];
   // Prefixes that were named but have not produced a number yet.
   const barePrefixes = new Set<string>();
   let current: string | null = null;
@@ -171,22 +194,64 @@ export function parseCourseCodes(raw: string): string[] {
       continue;
     }
 
-    if (!current) continue;
+    if (FILLER_WORDS.has(words[i].toUpperCase())) continue;
 
-    const expanded = expandNumbers(words[i]);
+    const expanded = current ? expandNumbers(words[i]) : [];
     for (const number of expanded) codes.add(`${current}-${number}`);
-    if (expanded.length > 0) barePrefixes.delete(current);
+    if (expanded.length > 0) barePrefixes.delete(current!);
+    else unread.push(words[i]);
   }
 
   // A department named without any course number still matches that department.
   for (const prefix of barePrefixes) codes.add(`${prefix}-*`);
 
-  return [...codes];
+  return { codes: [...codes], unread };
 }
 
 /** "CHEM-*" (any CHEM course) reads better as "CHEM (any)" on a chip. */
 export function formatCourseCode(code: string): string {
   return code.endsWith("-*") ? `${code.slice(0, -2)} (any)` : code;
+}
+
+/**
+ * The reverse of parseCourseCodes: "MATH-20" ... "MATH-25", "MATH-62" become
+ * "MATH 20-25, 62", one line per department.
+ */
+export function shortenCourseCodes(codes: string[]): string[] {
+  const byDepartment = new Map<string, string[]>();
+  for (const code of codes) {
+    const [department, number] = code.split("-");
+    byDepartment.set(department, [...(byDepartment.get(department) ?? []), number]);
+  }
+
+  return [...byDepartment.keys()].sort().map((department) => {
+    const all = byDepartment.get(department)!;
+    // "Any CHEM course" already includes the numbered ones.
+    if (all.includes("*")) return formatCourseCode(`${department}-*`);
+
+    const numbers = all
+      .map((text) => {
+        // Letter-led codes like C1000 sort after every numbered course.
+        const digits = /^\d+/.exec(text)?.[0];
+        return { text, value: digits ? parseInt(digits, 10) : Infinity, plain: /^\d+$/.test(text) };
+      })
+      .sort((a, b) => a.value - b.value || a.text.localeCompare(b.text));
+
+    const parts: string[] = [];
+    for (let i = 0; i < numbers.length; i++) {
+      let end = i;
+      while (
+        numbers[i].plain &&
+        numbers[end + 1]?.plain &&
+        numbers[end + 1].value === numbers[end].value + 1
+      ) {
+        end++;
+      }
+      parts.push(end > i ? `${numbers[i].text}-${numbers[end].text}` : numbers[i].text);
+      i = end;
+    }
+    return `${department} ${parts.join(", ")}`;
+  });
 }
 
 /**

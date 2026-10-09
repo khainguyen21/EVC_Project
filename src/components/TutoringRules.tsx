@@ -1,6 +1,6 @@
 import type { Term } from "@/types";
 import InfoSection from "./InfoSection";
-import { groupedCenterHours } from "@/utils/centerHours";
+import { groupedHours } from "@/utils/centerHours";
 
 interface Props {
   /** Active term, read on the server; null when none is configured. */
@@ -8,6 +8,10 @@ interface Props {
 }
 
 const TutoringRules = ({ term }: Props) => {
+  // This page is the MSRC's, so it lists MS-112's hours for the term.
+  const msrc = term?.buildingHours["MS-112"];
+  const hours = msrc && Object.keys(msrc).length > 0 ? groupedHours(msrc) : [];
+
   return (
     <InfoSection
       title="General Information & MSRC (Room MS-112) Rules"
@@ -34,11 +38,16 @@ const TutoringRules = ({ term }: Props) => {
           </h3>
 
           <ul className="info-section__list">
-            {groupedCenterHours().map(({ label, hours }) => (
+            {hours.map(({ label, hours }) => (
               <li key={label} className="info-section__list-item">
                 <strong>{label}:</strong> {hours}
               </li>
             ))}
+            {hours.length === 0 && (
+              <li className="info-section__list-item">
+                This term&apos;s hours will be posted soon.
+              </li>
+            )}
             <li className="info-section__list-item">
               <strong>Saturday, Sunday:</strong> CLOSED
             </li>

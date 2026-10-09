@@ -1,4 +1,4 @@
-import type { Term } from "@/types";
+import type { AdminTerm, Term } from "@/types";
 import type { CampusNow } from "./availability";
 
 export type CampusClosedReason = "before-term" | "after-term" | "holiday";
@@ -67,4 +67,16 @@ export function formatTermDate(isoDate: string): string {
     { month: "long" },
   );
   return `${monthName} ${ordinal(day)}, ${year}`;
+}
+
+/**
+ * The term the admin inbox and shift planner open on: the one whose form is
+ * open, else the active one, else the newest.
+ */
+export function pickDefaultTerm(terms: AdminTerm[]): AdminTerm | undefined {
+  return (
+    terms.find((t) => t.availabilityCode) ??
+    terms.find((t) => t.isActive) ??
+    terms[0]
+  );
 }

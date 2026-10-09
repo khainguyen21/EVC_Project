@@ -1,6 +1,9 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import type { Submission } from "@/types";
+import type { Building, Weekday } from "@/utils/centerHours";
+import { parseCourseCodes } from "@/utils/courseCodes";
+import type { Shift } from "@/utils/planner";
 import {
   submissionFlags,
   type AvailabilityRow,
@@ -17,13 +20,14 @@ interface DbSubmission {
   units: number;
   trainingDone: boolean;
   subjectsRaw: string;
-  subjectCodes: string[];
   availability: unknown;
   notes: string | null;
   status: string;
   resubmittedAt: Date | null;
+  availabilityChanged: boolean;
   createdAt: Date;
   updatedAt: Date;
+  _count: { shifts: number };
 }
 
 export function serializeSubmission(s: DbSubmission): Submission {
@@ -36,15 +40,40 @@ export function serializeSubmission(s: DbSubmission): Submission {
     units: s.units,
     trainingDone: s.trainingDone,
     subjectsRaw: s.subjectsRaw,
-    subjectCodes: s.subjectCodes,
+    // Read again, like the flags below, so a submission sent before the course
+    // reader learned a spelling ("MATH020", "PHYSIC") gets its courses now.
+    subjectCodes: parseCourseCodes(s.subjectsRaw),
     // Only ever written through toSubmissionData, so the shape is known.
     availability: s.availability as AvailabilityRow[],
     notes: s.notes,
     status: s.status as SubmissionStatus,
     resubmittedAt: s.resubmittedAt?.toISOString() ?? null,
+    availabilityChanged: s.availabilityChanged,
     createdAt: s.createdAt.toISOString(),
     updatedAt: s.updatedAt.toISOString(),
     flags: submissionFlags(s),
+    shiftCount: s._count.shifts,
+  };
+}
+
+interface DbPlannedShift {
+  id: string;
+  submissionId: number;
+  day: string;
+  building: string;
+  start: number;
+  end: number;
+}
+
+export function serializeShift(s: DbPlannedShift): Shift {
+  return {
+    id: s.id,
+    tutorId: s.submissionId,
+    // Only ever written through the planner's validated route.
+    day: s.day as Weekday,
+    building: s.building as Building,
+    start: s.start,
+    end: s.end,
   };
 }
 

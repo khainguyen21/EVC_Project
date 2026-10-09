@@ -23,6 +23,8 @@ import WeeklyGrid from "@/components/availability/WeeklyGrid";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import { formatCourseCode } from "@/utils/courseCodes";
+import { pickDefaultTerm } from "@/utils/term";
+import type { BuildingHours } from "@/utils/centerHours";
 import type { SubmissionInput, SubmissionStatus } from "@/utils/submission";
 
 const STATUS_STYLES: Record<SubmissionStatus, { bg: string; color: string; label: string }> = {
@@ -71,13 +73,9 @@ const cardStyle: React.CSSProperties = {
   boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)",
 };
 
-/** Default to the term whose form is open, else the active one, else the newest. */
-function pickDefaultTerm(terms: AdminTerm[]): AdminTerm | undefined {
-  return (
-    terms.find((t) => t.availabilityCode) ??
-    terms.find((t) => t.isActive) ??
-    terms[0]
-  );
+/** "1 planned shift", "3 planned shifts". */
+function plannedShifts(count: number): string {
+  return `${count} planned shift${count === 1 ? "" : "s"}`;
 }
 
 const formatDateTime = (iso: string) =>
@@ -106,6 +104,7 @@ export default function AvailabilityInboxPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     message: string;
+    confirmLabel?: string;
     onConfirm: () => void;
   } | null>(null);
 
@@ -198,9 +197,22 @@ export default function AvailabilityInboxPage() {
     }
   };
 
+  // Declining removes their planner shifts, so ask first if they have any.
+  const handleDecline = (s: Submission) => {
+    if (s.shiftCount === 0) return setStatus(s, "declined");
+    setConfirmModal({
+      message: `${s.name} has ${plannedShifts(s.shiftCount)}. Declining removes ${s.shiftCount === 1 ? "it" : "them"}.`,
+      confirmLabel: "Yes, decline",
+      onConfirm: () => {
+        setConfirmModal(null);
+        setStatus(s, "declined");
+      },
+    });
+  };
+
   const handleDelete = (s: Submission) =>
     setConfirmModal({
-      message: `Delete ${s.name}'s availability for ${term?.name ?? "this term"}? This can't be undone. To keep a record that they won't tutor, decline it instead.`,
+      message: `Delete ${s.name}'s availability${s.shiftCount > 0 ? ` and ${plannedShifts(s.shiftCount)}` : ""} for ${term?.name ?? "this term"}? This can't be undone. To keep a record that they won't tutor, decline it instead.`,
       onConfirm: async () => {
         setConfirmModal(null);
         try {
@@ -249,6 +261,7 @@ export default function AvailabilityInboxPage() {
       {confirmModal && (
         <ConfirmModal
           message={confirmModal.message}
+          confirmLabel={confirmModal.confirmLabel}
           onConfirm={confirmModal.onConfirm}
           onCancel={() => setConfirmModal(null)}
         />
@@ -378,7 +391,11 @@ export default function AvailabilityInboxPage() {
             For a tutor who replied by email or in person. The form doesn&apos;t
             need to be open.
           </p>
-          <AvailabilityForm submitLabel="Add submission" onSubmit={saveNew} />
+          <AvailabilityForm
+            hours={term.buildingHours}
+            submitLabel="Add submission"
+            onSubmit={saveNew}
+          />
         </div>
       )}
 
@@ -421,7 +438,7 @@ export default function AvailabilityInboxPage() {
             <RefreshCw size={14} /> Retry
           </button>
         </div>
-      ) : submissions.length === 0 ? (
+      ) : submissions.length === 0 || !term ? (
         <EmptyCard
           title={`No submissions for ${term?.name ?? "this term"} yet`}
           body={
@@ -522,6 +539,7 @@ export default function AvailabilityInboxPage() {
                             {editingId === s.id ? (
                               <div style={{ ...cardStyle, padding: "24px" }}>
                                 <AvailabilityForm
+                                  hours={term.buildingHours}
                                   initial={s}
                                   lockStudentId
                                   submitLabel="Save changes"
@@ -537,8 +555,9 @@ export default function AvailabilityInboxPage() {
                             ) : (
                               <SubmissionDetails
                                 s={s}
+                                hours={term.buildingHours}
                                 onApprove={() => setStatus(s, "approved")}
-                                onDecline={() => setStatus(s, "declined")}
+                                onDecline={() => handleDecline(s)}
                                 onPending={() => setStatus(s, "pending")}
                                 onEdit={() => setEditingId(s.id)}
                                 onDelete={() => handleDelete(s)}
@@ -587,6 +606,7 @@ function EmptyCard({ title, body }: { title: string; body: React.ReactNode }) {
 
 function SubmissionDetails({
   s,
+  hours,
   onApprove,
   onDecline,
   onPending,
@@ -594,6 +614,7 @@ function SubmissionDetails({
   onDelete,
 }: {
   s: Submission;
+  hours: BuildingHours;
   onApprove: () => void;
   onDecline: () => void;
   onPending: () => void;
@@ -667,7 +688,7 @@ function SubmissionDetails({
         </div>
       </div>
 
-      <WeeklyGrid availability={s.availability} />
+      <WeeklyGrid availability={s.availability} hours={hours} />
     </div>
   );
 }

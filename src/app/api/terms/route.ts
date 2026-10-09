@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/client";
 import { getSession } from "@/lib/session";
-import { isoDateSchema, serializeTerm } from "@/lib/terms";
+import { TERM_INCLUDE, isoDateSchema, serializeTerm } from "@/lib/terms";
 import type { AdminTerm } from "@/types";
 
 const createTermSchema = z
@@ -26,7 +26,7 @@ export async function GET() {
     }
 
     const terms = await prisma.term.findMany({
-      include: { holidays: true, _count: { select: { submissions: true } } },
+      include: { ...TERM_INCLUDE, _count: { select: { submissions: true } } },
       orderBy: { startDate: "desc" },
     });
 
@@ -48,6 +48,8 @@ export async function GET() {
 }
 
 // Admin: create a term. Activating it deactivates whichever term was active.
+// It starts with the building hours of the latest term, which William then
+// changes on the Terms page if this term's differ.
 export async function POST(request: Request) {
   try {
     const session = await getSession();
@@ -73,14 +75,19 @@ export async function POST(request: Request) {
           data: { isActive: false },
         });
       }
+      const last = await tx.term.findFirst({
+        orderBy: { startDate: "desc" },
+        select: { buildingHours: { select: { building: true, day: true, open: true, close: true } } },
+      });
       return tx.term.create({
         data: {
           name,
           startDate: new Date(startDate),
           endDate: new Date(endDate),
           isActive,
+          buildingHours: { create: last?.buildingHours ?? [] },
         },
-        include: { holidays: true },
+        include: TERM_INCLUDE,
       });
     });
 

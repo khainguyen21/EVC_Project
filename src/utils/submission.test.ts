@@ -8,11 +8,13 @@ import {
   toSubmissionData,
   type SubmissionInput,
 } from "./submission";
+import type { BuildingHours } from "./centerHours";
+import { FALL_2026_HOURS } from "./testFixtures";
 
 const validInput = {
-  name: "Hong Khai Nguyen",
-  studentId: "1068957",
-  email: "khai@example.com",
+  name: "Sam Tutor",
+  studentId: "1234567",
+  email: "sam@example.com",
   units: 17,
   trainingDone: true,
   subjects: "COMSC-020, COMSC-075",
@@ -23,12 +25,12 @@ const validInput = {
   notes: "",
 };
 
-function parse(overrides: Record<string, unknown>) {
-  return submissionSchema.safeParse({ ...validInput, ...overrides });
+function parse(overrides: Record<string, unknown>, hours: BuildingHours = FALL_2026_HOURS) {
+  return submissionSchema(hours).safeParse({ ...validInput, ...overrides });
 }
 
-function firstError(overrides: Record<string, unknown>) {
-  const result = parse(overrides);
+function firstError(overrides: Record<string, unknown>, hours?: BuildingHours) {
+  const result = parse(overrides, hours);
   return result.success ? null : result.error.issues[0]?.message;
 }
 
@@ -39,8 +41,8 @@ describe("submissionSchema", () => {
   });
 
   it("keeps the leading zero in a student ID", () => {
-    const result = parse({ studentId: "0202849" });
-    expect(result.success && result.data.studentId).toBe("0202849");
+    const result = parse({ studentId: "0123456" });
+    expect(result.success && result.data.studentId).toBe("0123456");
   });
 
   it.each(["123456", "12345678", "12a4567", ""])(
@@ -62,25 +64,64 @@ describe("submissionSchema", () => {
     ).toBe("Tuesday: end time must be after start time");
   });
 
-  it("rejects times outside center hours", () => {
-    // Friday closes at 5 pm.
+  it("rejects times outside the week's hours", () => {
+    // In Fall 2026, the first building opens at 8 am and the last closes at 8 pm.
     expect(
       firstError({
         availability: [
-          { day: "Friday", allDay: false, start: "15:00", end: "18:00" },
+          { day: "Friday", allDay: false, start: "07:00", end: "10:00" },
         ],
       }),
-    ).toBe("Friday times must be within center hours");
+    ).toBe("Friday times must be between 8:00 am and 8:00 pm");
   });
 
-  it("rejects times off the half-hour grid", () => {
+  it("accepts evening times on a day every building closes earlier", () => {
+    // Every building closes by 5 pm on Fridays, but William still wants to know.
+    expect(
+      parse({
+        availability: [
+          { day: "Friday", allDay: false, start: "15:00", end: "20:00" },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts times from when the first building opens", () => {
+    // MS-112 opens at 8 am, an hour before the others.
+    expect(
+      parse({
+        availability: [
+          { day: "Monday", allDay: false, start: "08:00", end: "10:00" },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a day every building is closed", () => {
+    const noFridays = Object.fromEntries(
+      Object.entries(FALL_2026_HOURS).map(([b, week]) => [b, { ...week, Friday: undefined }]),
+    ) as BuildingHours;
+    expect(firstError({}, noFridays)).toBe("Tutoring is closed on Fridays");
+  });
+
+  it("accepts quarter-hour times, since real shifts start at 9:15 or 1:45", () => {
+    expect(
+      parse({
+        availability: [
+          { day: "Monday", allDay: false, start: "09:15", end: "13:45" },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects times between the quarter hours", () => {
     expect(
       firstError({
         availability: [
-          { day: "Monday", allDay: false, start: "09:15", end: "11:00" },
+          { day: "Monday", allDay: false, start: "09:00", end: "12:10" },
         ],
       }),
-    ).toBe("Times must be on the hour or half hour");
+    ).toBe("Times must be in 15-minute steps");
   });
 
   it("rejects weekends", () => {
@@ -105,15 +146,18 @@ describe("submissionSchema", () => {
 });
 
 describe("resolveAvailability", () => {
-  it("fills 'all day' with that day's center hours", () => {
+  it("fills 'all day' with the form's hours", () => {
     expect(
-      resolveAvailability([
-        { day: "Friday", allDay: true, start: "", end: "" },
-        { day: "Tuesday", allDay: true, start: "", end: "" },
-      ]),
+      resolveAvailability(
+        [
+          { day: "Friday", allDay: true, start: "", end: "" },
+          { day: "Tuesday", allDay: true, start: "", end: "" },
+        ],
+        FALL_2026_HOURS,
+      ),
     ).toEqual([
-      { day: "Tuesday", allDay: true, start: "09:00", end: "20:00" },
-      { day: "Friday", allDay: true, start: "09:00", end: "17:00" },
+      { day: "Tuesday", allDay: true, start: "08:00", end: "20:00" },
+      { day: "Friday", allDay: true, start: "08:00", end: "20:00" },
     ]);
   });
 
@@ -123,7 +167,7 @@ describe("resolveAvailability", () => {
         { day: "Wednesday", allDay: false, start: "14:00", end: "16:00" },
         { day: "Monday", allDay: false, start: "12:00", end: "13:00" },
         { day: "Monday", allDay: false, start: "09:00", end: "10:00" },
-      ]).map((r) => `${r.day} ${r.start}`),
+      ], FALL_2026_HOURS).map((r) => `${r.day} ${r.start}`),
     ).toEqual(["Monday 09:00", "Monday 12:00", "Wednesday 14:00"]);
   });
 });
@@ -142,6 +186,34 @@ describe("findUnrecognizedSubjects", () => {
       findUnrecognizedSubjects("COMSC 75, Intro to Python, COMS 76"),
     ).toEqual(["Intro to Python", "COMS 76"]);
   });
+
+  it.each([
+    "MATH020, 021, 022, 025, 062, 066/67, 071, 72, 78",
+    "PHYSIC 02A/2B, 7A, 7B",
+    "CHEM 015, 30A, 01A",
+    "MATH STAT C1000, MATH 020, 21-25, 062, 066, 071",
+  ])("reads subjects written like William's schedule: %s", (subjects) => {
+    expect(findUnrecognizedSubjects(subjects)).toEqual([]);
+  });
+
+  it("asks to double-check a part with words the reader can't use", () => {
+    // Read as only MATH 20, or any Math, these would quietly be wrong.
+    expect(findUnrecognizedSubjects("Math 20 and up, Chem 1A")).toEqual(["Math 20 and up"]);
+    expect(findUnrecognizedSubjects("any math up to Calc")).toEqual(["any math up to Calc"]);
+  });
+
+  it("leaves course names it can't match to a number for William to check", () => {
+    expect(findUnrecognizedSubjects("Calc 1, Precalc")).toEqual(["Calc 1", "Precalc"]);
+  });
+
+  it("accepts any Math course and Stats", () => {
+    expect(findUnrecognizedSubjects("Math Any, Stats")).toEqual([]);
+  });
+
+  it("knows Open Computer Lab, which has no course code", () => {
+    expect(findUnrecognizedSubjects("Open Computer Lab, English 1A")).toEqual([]);
+    expect(findUnrecognizedSubjects("open lab")).toEqual([]);
+  });
 });
 
 describe("submissionFlags", () => {
@@ -158,27 +230,33 @@ describe("submissionFlags", () => {
 });
 
 describe("toSubmissionData / toResubmissionData", () => {
-  const input = submissionSchema.parse(validInput) as SubmissionInput;
+  const input = submissionSchema(FALL_2026_HOURS).parse(validInput) as SubmissionInput;
 
   it("stores the raw subjects, parsed codes and resolved times", () => {
-    const data = toSubmissionData(input);
+    const data = toSubmissionData(input, FALL_2026_HOURS);
     expect(data.subjectsRaw).toBe("COMSC-020, COMSC-075");
     expect(data.subjectCodes).toEqual(["COMSC-20", "COMSC-75"]);
     expect(data.availability[1]).toEqual({
       day: "Friday",
       allDay: true,
-      start: "09:00",
-      end: "17:00",
+      start: "08:00",
+      end: "20:00",
     });
     expect(data.notes).toBeNull();
   });
 
   it("puts a resubmission back to pending and stamps it", () => {
     const now = new Date("2026-08-21T21:09:00Z");
-    const data = toResubmissionData(input, now);
+    const data = toResubmissionData(input, FALL_2026_HOURS, now, false);
     expect(data.status).toBe("pending");
     expect(data.resubmittedAt).toBe(now);
     // Everything the tutor sent replaces what was there, William's edits included.
-    expect(data.name).toBe("Hong Khai Nguyen");
+    expect(data.name).toBe("Sam Tutor");
+  });
+
+  it("marks the availability changed only for a tutor already on the planner", () => {
+    const now = new Date("2026-08-21T21:09:00Z");
+    expect(toResubmissionData(input, FALL_2026_HOURS, now, true).availabilityChanged).toBe(true);
+    expect(toResubmissionData(input, FALL_2026_HOURS, now, false).availabilityChanged).toBe(false);
   });
 });

@@ -1,3 +1,5 @@
+import type { BuildingHours } from "@/utils/centerHours";
+
 export type Location = string;
 
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | '';
@@ -40,7 +42,8 @@ export interface Term {
     startDate: string,
     endDate: string,
     isActive: boolean,
-    holidays: Holiday[]
+    holidays: Holiday[],
+    buildingHours: BuildingHours
 }
 // What the admin Terms page sees: a Term plus the private availability-form
 // state. Kept out of Term so the public /api/term never carries the code.
@@ -63,7 +66,9 @@ export interface Submission {
     notes: string | null,
     status: 'pending' | 'approved' | 'declined',
     resubmittedAt: string | null,
+    availabilityChanged: boolean, // resubmitted while on the shift planner
     createdAt: string,
     updatedAt: string,
-    flags: ('under-units' | 'subjects-need-review')[]
+    flags: ('under-units' | 'subjects-need-review')[],
+    shiftCount: number // shifts placed on the shift planner
 }

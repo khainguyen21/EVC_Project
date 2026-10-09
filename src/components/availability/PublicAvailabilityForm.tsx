@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import AvailabilityForm from "./AvailabilityForm";
-import { formatHour } from "@/utils/centerHours";
+import { formatHour, type BuildingHours } from "@/utils/centerHours";
 import {
   resolveAvailability,
   type SubmissionInput,
@@ -12,6 +12,7 @@ import {
 interface Props {
   code: string;
   termName: string;
+  hours: BuildingHours;
 }
 
 interface Receipt {
@@ -19,7 +20,7 @@ interface Receipt {
   resubmitted: boolean;
 }
 
-export default function PublicAvailabilityForm({ code, termName }: Props) {
+export default function PublicAvailabilityForm({ code, termName, hours }: Props) {
   const [receipt, setReceipt] = useState<Receipt | null>(null);
 
   const submit = async (input: SubmissionInput, honeypot: string) => {
@@ -70,7 +71,7 @@ export default function PublicAvailabilityForm({ code, termName }: Props) {
           </li>
           <li className="info-section__list-item">
             <strong>Availability:</strong>{" "}
-            {resolveAvailability(input.availability)
+            {resolveAvailability(input.availability, hours)
               .map(
                 (r) =>
                   `${r.day} ${formatHour(r.start)}–${formatHour(r.end)}${r.allDay ? " (all day)" : ""}`,
@@ -91,6 +92,7 @@ export default function PublicAvailabilityForm({ code, termName }: Props) {
 
   return (
     <AvailabilityForm
+      hours={hours}
       publicForm
       submitLabel="Send my availability"
       onSubmit={submit}

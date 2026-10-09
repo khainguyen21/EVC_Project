@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { type AdminTerm } from "@/types";
 import { useToast } from "@/components/admin/ToastProvider";
 import ConfirmModal from "@/components/admin/ConfirmModal";
+import BuildingHoursEditor from "@/components/admin/BuildingHoursEditor";
 import { formatTermDate, getTermLifecycle } from "@/utils/term";
 import { useCampusNow } from "@/hooks/useCampusNow";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
@@ -913,6 +914,28 @@ export default function ManageTermsPage() {
                       </button>
                     </div>
                   )}
+                </div>
+
+                {/* Building hours */}
+                <div
+                  style={{
+                    borderTop: "1px solid #f1f5f9",
+                    padding: "20px 0",
+                  }}
+                >
+                  <h4
+                    style={{
+                      fontSize: "0.8rem",
+                      fontWeight: "700",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: "#64748b",
+                      margin: "0 0 12px 0",
+                    }}
+                  >
+                    Building Hours
+                  </h4>
+                  <BuildingHoursEditor term={term} onSaved={fetchTerms} />
                 </div>
 
                 {/* Closed days */}

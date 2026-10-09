@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/client";
 import { getSession } from "@/lib/session";
-import { isoDateSchema, serializeTerm, toIsoDate } from "@/lib/terms";
+import { TERM_INCLUDE, isoDateSchema, serializeTerm, toIsoDate } from "@/lib/terms";
 
 const updateTermSchema = z.object({
   name: z.string().trim().min(1, "Name cannot be empty").optional(),
@@ -68,7 +68,7 @@ export async function PUT(
           endDate: data.endDate ? new Date(data.endDate) : undefined,
           isActive: data.isActive,
         },
-        include: { holidays: true },
+        include: TERM_INCLUDE,
       });
     });
 

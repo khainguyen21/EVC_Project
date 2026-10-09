@@ -3,17 +3,20 @@ import { z } from "zod";
 import { prisma } from "@/lib/client";
 import { requireAdmin } from "@/lib/session";
 import { serializeSubmission } from "@/lib/submissions";
+import { toBuildingHours } from "@/utils/centerHours";
 import {
   SUBMISSION_STATUSES,
   submissionFieldsSchema,
   toSubmissionData,
+  type SubmissionFields,
 } from "@/utils/submission";
 
 // Either or both: a new status, and/or corrected fields. The student ID is
-// not editable; it is how a tutor's resubmission finds this row.
+// not editable; it is how a tutor's resubmission finds this row. The fields
+// are checked once the submission's term, and so its hours, is known.
 const updateSchema = z.object({
   status: z.enum(SUBMISSION_STATUSES).optional(),
-  fields: submissionFieldsSchema.optional(),
+  fields: z.unknown().optional(),
 });
 
 async function readId(params: Promise<{ id: string }>) {
@@ -42,11 +45,11 @@ export async function PUT(
         { status: 400 },
       );
     }
-    const { status, fields } = validation.data;
+    const { status } = validation.data;
 
     const existing = await prisma.availabilitySubmission.findUnique({
       where: { id },
-      select: { id: true },
+      select: { term: { select: { buildingHours: true } } },
     });
     if (!existing) {
       return NextResponse.json(
@@ -55,13 +58,43 @@ export async function PUT(
       );
     }
 
-    const submission = await prisma.availabilitySubmission.update({
+    const hours = toBuildingHours(existing.term.buildingHours);
+    let fields: SubmissionFields | undefined;
+    if (validation.data.fields !== undefined) {
+      const checked = submissionFieldsSchema(hours).safeParse(validation.data.fields);
+      if (!checked.success) {
+        return NextResponse.json(
+          { error: checked.error.issues[0]?.message ?? "Invalid update" },
+          { status: 400 },
+        );
+      }
+      fields = checked.data;
+    }
+
+    const update = prisma.availabilitySubmission.update({
       where: { id },
       data: {
-        ...(fields ? toSubmissionData(fields) : {}),
+        ...(fields ? toSubmissionData(fields, hours) : {}),
         ...(status ? { status } : {}),
+        // Approving means William has checked their new hours; declining
+        // removes their shifts. Either way the planner badge is done.
+        ...(status === "approved" || status === "declined"
+          ? { availabilityChanged: false }
+          : {}),
       },
+      include: { _count: { select: { shifts: true } } },
     });
+    // A declined tutor can't keep shifts on the planner. The inbox warns
+    // William before he declines someone who has any.
+    const submission =
+      status === "declined"
+        ? (
+            await prisma.$transaction([
+              prisma.plannedShift.deleteMany({ where: { submissionId: id } }),
+              update,
+            ])
+          )[1]
+        : await update;
 
     return NextResponse.json({ submission: serializeSubmission(submission) });
   } catch (error) {
@@ -74,6 +107,7 @@ export async function PUT(
 }
 
 // Admin: remove a submission (spam, a test entry, someone who backed out).
+// Its planned shifts go with it.
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
