@@ -311,26 +311,33 @@ export function shiftProblem(shift: Shift, shifts: Shift[], hours: BuildingHours
   return null;
 }
 
-/** A shift whose bottom edge was dragged to a new end time. */
+/** A shift whose top ("start") or bottom ("end") edge was dragged to a new time. */
 export function resizeShift(
   shift: Shift,
   shifts: Shift[],
   hours: BuildingHours,
   minute: number,
+  edge: "start" | "end",
 ): Shift {
   const snapped = Math.round(minute / STEP_MINUTES) * STEP_MINUTES;
+  const others = shifts.filter(
+    (s) => s.id !== shift.id && s.tutorId === shift.tutorId && s.day === shift.day,
+  );
+  // A shift left in a closed building after its hours changed keeps its ends.
+  const open = hours[shift.building][shift.day];
+
+  if (edge === "start") {
+    const earliest = Math.max(
+      open?.open ?? shift.start,
+      ...others.filter((s) => s.end <= shift.start).map((s) => s.end),
+    );
+    const start = Math.min(shift.end - MIN_SHIFT_MINUTES, Math.max(snapped, earliest));
+    return { ...shift, start };
+  }
+
   const latest = Math.min(
-    // A shift left in a closed building after its hours changed keeps its end.
-    hours[shift.building][shift.day]?.close ?? shift.end,
-    ...shifts
-      .filter(
-        (s) =>
-          s.id !== shift.id &&
-          s.tutorId === shift.tutorId &&
-          s.day === shift.day &&
-          s.start >= shift.end,
-      )
-      .map((s) => s.start),
+    open?.close ?? shift.end,
+    ...others.filter((s) => s.start >= shift.end).map((s) => s.start),
   );
   const end = Math.max(shift.start + MIN_SHIFT_MINUTES, Math.min(snapped, latest));
   return { ...shift, end };

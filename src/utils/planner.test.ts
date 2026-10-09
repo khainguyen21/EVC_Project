@@ -404,22 +404,39 @@ describe("moveShift", () => {
 });
 
 describe("resizeShift", () => {
-  it("ends at the nearest quarter hour", () => {
+  it("ends at the nearest quarter hour when the bottom edge is dragged", () => {
     const monday = shift(1, "MS-112", "Monday", "10:00", "12:00");
-    expect(resizeShift(monday, [monday], hours, at("13:05"))).toEqual({ ...monday, end: at("13:00") });
-    expect(resizeShift(monday, [monday], hours, at("13:10"))).toEqual({ ...monday, end: at("13:15") });
+    expect(resizeShift(monday, [monday], hours, at("13:05"), "end")).toEqual({ ...monday, end: at("13:00") });
+    expect(resizeShift(monday, [monday], hours, at("13:10"), "end")).toEqual({ ...monday, end: at("13:15") });
   });
 
   it("stays at least an hour long, inside the building's hours, and before the tutor's next shift", () => {
     const morning = shift(1, "LE-237", "Friday", "10:00", "11:00");
     const afternoon = shift(1, "MS-112", "Friday", "14:00", "16:00");
     const shifts = [morning, afternoon];
-    expect(resizeShift(morning, shifts, hours, at("10:20")).end).toBe(at("11:00"));
+    expect(resizeShift(morning, shifts, hours, at("10:20"), "end").end).toBe(at("11:00"));
     // LE-237 closes at 1 pm on Fridays, before this tutor's 2 pm shift.
-    expect(resizeShift(morning, shifts, hours, at("15:00")).end).toBe(at("13:00"));
-    expect(resizeShift(afternoon, shifts, hours, at("18:00")).end).toBe(at("17:00"));
+    expect(resizeShift(morning, shifts, hours, at("15:00"), "end").end).toBe(at("13:00"));
+    expect(resizeShift(afternoon, shifts, hours, at("18:00"), "end").end).toBe(at("17:00"));
     const twoShifts = [shift(1, "MS-112", "Friday", "10:00", "12:00"), afternoon];
-    expect(resizeShift(twoShifts[0], twoShifts, hours, at("15:00")).end).toBe(at("14:00"));
+    expect(resizeShift(twoShifts[0], twoShifts, hours, at("15:00"), "end").end).toBe(at("14:00"));
+  });
+
+  it("starts at the nearest quarter hour when the top edge is dragged", () => {
+    const monday = shift(1, "MS-112", "Monday", "10:00", "12:00");
+    expect(resizeShift(monday, [monday], hours, at("09:05"), "start")).toEqual({ ...monday, start: at("09:00") });
+    expect(resizeShift(monday, [monday], hours, at("09:10"), "start")).toEqual({ ...monday, start: at("09:15") });
+  });
+
+  it("starts no later than an hour before the end, not before opening, and after the tutor's last shift", () => {
+    const morning = shift(1, "LE-237", "Friday", "10:00", "11:00");
+    const afternoon = shift(1, "MS-112", "Friday", "14:00", "16:00");
+    const shifts = [morning, afternoon];
+    expect(resizeShift(afternoon, shifts, hours, at("15:40"), "start").start).toBe(at("15:00"));
+    // LE-237 opens at 9 am on Fridays.
+    expect(resizeShift(morning, shifts, hours, at("07:00"), "start").start).toBe(at("09:00"));
+    // MS-112 opens at 8, but the tutor is in LE until 11.
+    expect(resizeShift(afternoon, shifts, hours, at("09:00"), "start").start).toBe(at("11:00"));
   });
 });
 

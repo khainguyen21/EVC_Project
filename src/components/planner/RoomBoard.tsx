@@ -111,7 +111,8 @@ function stackShifts(list: Shift[]) {
   return placed;
 }
 
-type Resizing = { id: string; top: number; end: number };
+/** A shift whose edge is being dragged: the times it would get, shown before it saves. */
+type Resizing = { id: string; top: number; edge: "start" | "end"; start: number; end: number };
 
 /** What a drag carries: a tutor card, or a shift and where on it it was grabbed. */
 type DragData = { kind: "tutor"; tutorId: number } | { kind: "shift"; id: string; grabY: number };
@@ -371,7 +372,6 @@ function BuildingColumn({
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   onChange: (before: Shift | null, after: Shift | null) => void;
 }) {
-  // The end a shift's bottom edge is being dragged to, shown before it saves.
   // Followed with window listeners, so the mouse can leave the thin handle.
   const [resizing, setResizing] = useState<Resizing | null>(null);
   const resizeRef = useRef<Resizing | null>(null);
@@ -388,16 +388,16 @@ function BuildingColumn({
       const original = r && originalOf(r);
       if (!r || !original) return;
       const { shifts, hours, minuteAt } = latest.current;
-      const end = resizeShift(original, shifts, hours, minuteAt(e.clientY - r.top)).end;
-      if (end === r.end) return;
-      resizeRef.current = { ...r, end };
+      const { start, end } = resizeShift(original, shifts, hours, minuteAt(e.clientY - r.top), r.edge);
+      if (start === r.start && end === r.end) return;
+      resizeRef.current = { ...r, start, end };
       setResizing(resizeRef.current);
     };
     const up = () => {
       const r = resizeRef.current;
       const original = r && originalOf(r);
-      if (r && original && r.end !== original.end) {
-        latest.current.onChange(original, { ...original, end: r.end });
+      if (r && original && (r.start !== original.start || r.end !== original.end)) {
+        latest.current.onChange(original, { ...original, start: r.start, end: r.end });
       }
       resizeRef.current = null;
       setResizing(null);
@@ -411,7 +411,9 @@ function BuildingColumn({
       window.removeEventListener("pointercancel", up);
     };
   }, [resizingId]);
-  const shown = today.map((s) => (resizing?.id === s.id ? { ...s, end: resizing.end } : s));
+  const shown = today.map((s) =>
+    resizing?.id === s.id ? { ...s, start: resizing.start, end: resizing.end } : s,
+  );
   const placed = stackShifts(shown);
   const color = BUILDING_INFO[building].color;
   const openHours: OpenHours | undefined = hours[building][day];
@@ -583,6 +585,35 @@ function BuildingColumn({
                 </div>
               </div>
 
+              {(["start", "end"] as const).map((edge) => (
+                <div
+                  key={edge}
+                  title={edge === "start" ? "Drag to change the start" : "Drag to change the end"}
+                  onPointerDown={(e) => {
+                    const column = e.currentTarget.closest<HTMLElement>("[data-building-column]");
+                    if (!column) return;
+                    e.preventDefault();
+                    resizeRef.current = {
+                      id: s.id,
+                      top: column.getBoundingClientRect().top,
+                      edge,
+                      start: s.start,
+                      end: s.end,
+                    };
+                    setResizing(resizeRef.current);
+                  }}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    [edge === "start" ? "top" : "bottom"]: -3,
+                    height: 9,
+                    cursor: "ns-resize",
+                    touchAction: "none",
+                  }}
+                />
+              ))}
+
               <button
                 onClick={() => onChange(original, null)}
                 aria-label={`Remove ${name}'s shift`}
@@ -603,30 +634,6 @@ function BuildingColumn({
               >
                 <X size={12} />
               </button>
-
-              <div
-                title="Drag to change the length"
-                onPointerDown={(e) => {
-                  const column = e.currentTarget.closest<HTMLElement>("[data-building-column]");
-                  if (!column) return;
-                  e.preventDefault();
-                  resizeRef.current = {
-                    id: s.id,
-                    top: column.getBoundingClientRect().top,
-                    end: s.end,
-                  };
-                  setResizing(resizeRef.current);
-                }}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: -3,
-                  height: 9,
-                  cursor: "ns-resize",
-                  touchAction: "none",
-                }}
-              />
             </div>
           );
         })}
