@@ -6,7 +6,7 @@
  * what a tutor had to pass.
  */
 import { z } from "zod";
-import { parseCourseCodes } from "./courseCodes";
+import { parseCourseCodes, unreadWords } from "./courseCodes";
 import {
   SLOT_MINUTES,
   WEEKDAYS,
@@ -136,7 +136,9 @@ export const OPEN_LAB_PATTERN = /open\s+(computer\s+)?lab/i;
  * A part that is only numbers ("71", "30A") continues the department before
  * it, so "MATH 63, 71" is fine. A part with words of its own must name a
  * department itself: the tokenizer would read "COMS 76" as a continuation of
- * the COMSC before it, and William should get to check that guess.
+ * the COMSC before it, and William should get to check that guess. So should
+ * a part with words the reader had to skip: "Math 20 and up" would otherwise
+ * quietly read as MATH 20 alone.
  */
 export function findUnrecognizedSubjects(raw: string): string[] {
   const parts = raw
@@ -153,9 +155,10 @@ export function findUnrecognizedSubjects(raw: string): string[] {
     // A repeat ("Math 63, Math 63") adds nothing new but still names a course.
     const standsAlone = parseCourseCodes(parts[i]).length > 0;
     const openLab = OPEN_LAB_PATTERN.test(parts[i]);
-    if (!standsAlone && !(onlyNumbers && addedSomething) && !openLab) {
-      unrecognized.push(parts[i]);
-    }
+    const readable = standsAlone
+      ? unreadWords(parts[i]).length === 0
+      : onlyNumbers && addedSomething;
+    if (!readable && !openLab) unrecognized.push(parts[i]);
     seen = soFar;
   }
   return unrecognized;

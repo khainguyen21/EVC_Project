@@ -61,10 +61,17 @@ const PREFIX_ALIASES: Record<string, string> = {
   SPAN: "SPAN",
   SPANISH: "SPAN",
   STAT: "STAT",
+  STATS: "STAT",
   STATISTICS: "STAT",
   VIET: "VIET",
   VIETNAMESE: "VIET",
 };
+
+/**
+ * Words that don't change which courses a subject list names: "any Math",
+ * "all levels", "Chem 1A & 1B".
+ */
+const FILLER_WORDS = new Set(["ANY", "ALL", "AND", "&", "CLASS", "CLASSES", "COURSE", "COURSES", "LEVEL", "LEVELS"]);
 
 /** Longest alias key in words, so multi-word names are matched before single. */
 const MAX_ALIAS_WORDS = 2;
@@ -130,7 +137,8 @@ function expandNumbers(chunk: string): string[] {
 function tokenize(raw: string): string[] {
   return raw
     .split(/[,;]|\s+/)
-    .map((t) => t.trim())
+    // "Math (any)", and William's schedule ends each course list with a colon.
+    .map((t) => t.trim().replace(/^[([]+|[)\]:.]+$/g, ""))
     .filter(Boolean)
     .flatMap((t) => {
       const joined = /^([A-Za-z]+)-?(\d\S*)$/.exec(t) ?? /^([A-Za-z]+)-(\S+)$/.exec(t);
@@ -141,8 +149,21 @@ function tokenize(raw: string): string[] {
 }
 
 export function parseCourseCodes(raw: string): string[] {
+  return read(raw).codes;
+}
+
+/**
+ * The words in a subject list the reader had to skip, such as "up" in "Math
+ * 20 and up": a list read without them may name the wrong courses.
+ */
+export function unreadWords(raw: string): string[] {
+  return read(raw).unread;
+}
+
+function read(raw: string): { codes: string[]; unread: string[] } {
   const words = tokenize(raw);
   const codes = new Set<string>();
+  const unread: string[] = [];
   // Prefixes that were named but have not produced a number yet.
   const barePrefixes = new Set<string>();
   let current: string | null = null;
@@ -173,17 +194,18 @@ export function parseCourseCodes(raw: string): string[] {
       continue;
     }
 
-    if (!current) continue;
+    if (FILLER_WORDS.has(words[i].toUpperCase())) continue;
 
-    const expanded = expandNumbers(words[i]);
+    const expanded = current ? expandNumbers(words[i]) : [];
     for (const number of expanded) codes.add(`${current}-${number}`);
-    if (expanded.length > 0) barePrefixes.delete(current);
+    if (expanded.length > 0) barePrefixes.delete(current!);
+    else unread.push(words[i]);
   }
 
   // A department named without any course number still matches that department.
   for (const prefix of barePrefixes) codes.add(`${prefix}-*`);
 
-  return [...codes];
+  return { codes: [...codes], unread };
 }
 
 /** "CHEM-*" (any CHEM course) reads better as "CHEM (any)" on a chip. */

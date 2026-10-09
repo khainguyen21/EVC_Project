@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCourseCodes, shortenCourseCodes } from "./courseCodes";
+import { parseCourseCodes, shortenCourseCodes, unreadWords } from "./courseCodes";
 
 describe("parseCourseCodes", () => {
   it("reads a department hyphenated to its number", () => {
@@ -55,6 +55,39 @@ describe("parseCourseCodes", () => {
 
   it("keeps a letter-led course number such as C1000 whole", () => {
     expect(parseCourseCodes("MATH STAT C1000, MATH 020")).toEqual(["STAT-C1000", "MATH-20"]);
+  });
+});
+
+describe("parseCourseCodes, as tutors write subjects", () => {
+  it("reads Stats as any Statistics course", () => {
+    expect(parseCourseCodes("Stats")).toEqual(["STAT-*"]);
+  });
+
+  it("reads any Math course however it is put", () => {
+    for (const text of ["Math Any", "Any Math", "Math (any)", "Math: any", "all math"]) {
+      expect(parseCourseCodes(text)).toEqual(["MATH-*"]);
+    }
+  });
+
+  it("ignores a colon or brackets around a word", () => {
+    // William's schedule ends each course list with a colon.
+    expect(parseCourseCodes("CHEM 015, 30A, 01A:")).toEqual(["CHEM-15", "CHEM-30A", "CHEM-1A"]);
+  });
+});
+
+describe("unreadWords", () => {
+  it("lists words that change the meaning but the reader can't use", () => {
+    expect(unreadWords("Math 20 and up")).toEqual(["up"]);
+    expect(unreadWords("any math up to Calc")).toEqual(["up", "to", "Calc"]);
+    expect(unreadWords("Math 20 through 25")).toEqual(["through"]);
+  });
+
+  it("lets words through that don't change which courses", () => {
+    expect(unreadWords("Math (any), all levels")).toEqual([]);
+    expect(unreadWords("Chem 1A & 1B")).toEqual([]);
+    expect(unreadWords("Math 20 and 21")).toEqual([]);
+    expect(unreadWords("MATH STAT C1000")).toEqual([]);
+    expect(unreadWords("Computer Science 75")).toEqual([]);
   });
 });
 

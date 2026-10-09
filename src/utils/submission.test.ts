@@ -196,6 +196,20 @@ describe("findUnrecognizedSubjects", () => {
     expect(findUnrecognizedSubjects(subjects)).toEqual([]);
   });
 
+  it("asks to double-check a part with words the reader can't use", () => {
+    // Read as only MATH 20, or any Math, these would quietly be wrong.
+    expect(findUnrecognizedSubjects("Math 20 and up, Chem 1A")).toEqual(["Math 20 and up"]);
+    expect(findUnrecognizedSubjects("any math up to Calc")).toEqual(["any math up to Calc"]);
+  });
+
+  it("leaves course names it can't match to a number for William to check", () => {
+    expect(findUnrecognizedSubjects("Calc 1, Precalc")).toEqual(["Calc 1", "Precalc"]);
+  });
+
+  it("accepts any Math course and Stats", () => {
+    expect(findUnrecognizedSubjects("Math Any, Stats")).toEqual([]);
+  });
+
   it("knows Open Computer Lab, which has no course code", () => {
     expect(findUnrecognizedSubjects("Open Computer Lab, English 1A")).toEqual([]);
     expect(findUnrecognizedSubjects("open lab")).toEqual([]);
