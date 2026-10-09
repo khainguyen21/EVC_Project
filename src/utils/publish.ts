@@ -142,3 +142,30 @@ export function planPublish(submissions: PublishSubmission[], shifts: Shift[]): 
   }
   return { tutors, noShifts, needsReview, availabilityChanged };
 }
+
+/**
+ * Whether two plans put the same tutors on the website. Compared field by
+ * field because a plan read back from the database has its JSON keys in
+ * another order.
+ */
+export function samePublicRows(a: PublicTutorRow[], b: PublicTutorRow[]): boolean {
+  const flat = (rows: PublicTutorRow[]) =>
+    JSON.stringify(
+      rows.map((t) => [
+        t.name,
+        t.subjects.map((s) => [s.name, s.field]),
+        t.schedules.map((s) => [s.day, s.start, s.end, s.location]),
+      ]),
+    );
+  return flat(a) === flat(b);
+}
+
+/** What the planner needs to know about publishing, besides its own plan. */
+export interface PublishStatus {
+  /** This term's last publish, and the tutors it put up. */
+  lastPublished: { at: string; tutors: PublicTutorRow[] } | null;
+  /** Student tutors on the public schedule now, which Publish removes. */
+  onSchedule: string[];
+  /** Student tutors William changed on Manage Staff since the last publish. */
+  editedOnManageStaff: string[];
+}

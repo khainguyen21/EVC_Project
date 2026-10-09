@@ -1,7 +1,12 @@
 import "server-only";
 import { prisma } from "@/lib/client";
 import { serializeShift } from "@/lib/submissions";
-import { planPublish, type PublicTutorRow, type PublishPlan } from "@/utils/publish";
+import {
+  planPublish,
+  type PublicTutorRow,
+  type PublishPlan,
+  type PublishStatus,
+} from "@/utils/publish";
 import type { Building, Weekday } from "@/utils/centerHours";
 import type { SubmissionStatus } from "@/utils/submission";
 
@@ -19,6 +24,38 @@ export async function loadPublishPlan(termId: number): Promise<PublishPlan> {
     submissions.map((s) => ({ ...s, status: s.status as SubmissionStatus })),
     shifts.map(serializeShift),
   );
+}
+
+export async function loadPublishStatus(termId: number): Promise<PublishStatus> {
+  const [lastForTerm, lastOfAny, onSchedule] = await Promise.all([
+    prisma.publication.findFirst({
+      where: { termId },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true, published: true },
+    }),
+    // Any term's: whichever publish last replaced the student tutors.
+    prisma.publication.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.tutor.findMany({
+      where: { type: "tutor" },
+      select: { name: true, editedOnManageStaffAt: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+  return {
+    lastPublished: lastForTerm && {
+      at: lastForTerm.createdAt.toISOString(),
+      // Only ever written by publishTerm.
+      tutors: lastForTerm.published as PublicTutorRow[],
+    },
+    onSchedule: onSchedule.map((t) => t.name),
+    // Before the first publish every student tutor was typed by hand, and
+    // the review screen already names them all as removed.
+    editedOnManageStaff: lastOfAny
+      ? onSchedule
+          .filter((t) => t.editedOnManageStaffAt && t.editedOnManageStaffAt > lastOfAny.createdAt)
+          .map((t) => t.name)
+      : [],
+  };
 }
 
 export class NothingToPublishError extends Error {}

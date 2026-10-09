@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { RefreshCw, Undo2 } from "lucide-react";
+import { Globe, RefreshCw, Undo2 } from "lucide-react";
 import type { AdminTerm, Submission } from "@/types";
 import { useToast } from "@/components/admin/ToastProvider";
 import RoomBoard, { startCardDrag } from "@/components/planner/RoomBoard";
 import TutorCard from "@/components/planner/TutorCard";
 import WeekSummary from "@/components/planner/WeekSummary";
+import PublishDialog from "@/components/planner/PublishDialog";
 import { hoursText, usualHoursText } from "@/components/planner/format";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { WEEKDAYS, type Weekday } from "@/utils/centerHours";
@@ -26,6 +27,7 @@ import {
   restoreChange,
   type Change,
 } from "@/utils/plannerHistory";
+import { planPublish, samePublicRows, type PublishStatus } from "@/utils/publish";
 import type { AvailabilityRow } from "@/utils/submission";
 import { pickDefaultTerm } from "@/utils/term";
 
@@ -68,6 +70,10 @@ export default function ShiftPlannerPage() {
   const [day, setDay] = useState<Weekday>("Monday");
   // The Week tab: every tutor's hours, in place of the day's board.
   const [showWeek, setShowWeek] = useState(false);
+  // When the term was last published and who is on the public schedule now.
+  const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
+  const [publishVersion, setPublishVersion] = useState(0);
+  const [reviewing, setReviewing] = useState(false);
   // The tutor list's order, set when a day opens (see keepOrder).
   const [order, setOrder] = useState({ key: "", ids: [] as number[] });
   const [dragging, setDragging] = useState<number | null>(null);
@@ -137,6 +143,22 @@ export default function ShiftPlannerPage() {
       stale = true;
     };
   }, [termId, showToast, attempt, plannerVersion]);
+
+  useEffect(() => {
+    if (termId === null) return;
+    let stale = false;
+    setPublishStatus(null);
+    adminFetch<PublishStatus>(`/api/planner/publish?termId=${termId}`)
+      .then((status) => {
+        if (!stale) setPublishStatus(status);
+      })
+      .catch((error) => {
+        if (!stale) showToast(errorMessage(error, "Could not check when this term was published."), "error");
+      });
+    return () => {
+      stale = true;
+    };
+  }, [termId, showToast, attempt, publishVersion]);
 
   const refuse = useCallback((message: string) => showToast(message, "error"), [showToast]);
 
@@ -236,6 +258,13 @@ export default function ShiftPlannerPage() {
   const term = terms.find((t) => t.id === termId) ?? null;
   const shifts = data?.shifts ?? [];
 
+  // Worked out here from the board, so "changed since" follows every move.
+  const plan = useMemo(() => (data ? planPublish(data.tutors, data.shifts) : null), [data]);
+  const lastPublished = publishStatus?.lastPublished ?? null;
+  const changedSincePublished =
+    plan !== null && lastPublished !== null && !samePublicRows(plan.tutors, lastPublished.tutors);
+  const activeTerm = terms.find((t) => t.isActive);
+
   // Free that day, or already placed that day even if no longer free.
   const onToday = (s: Submission, i: number) =>
     freeTimes(plannerTutors[i], day).length > 0 ||
@@ -297,32 +326,91 @@ export default function ShiftPlannerPage() {
           </p>
         </div>
 
-        {terms.length > 1 && (
-          <select
-            value={termId ?? ""}
-            onChange={(e) => {
-              setLoading(true);
-              setData(null);
-              setHistory([]);
-              setTermId(Number(e.target.value));
-            }}
-            aria-label="Term"
-            style={{
-              padding: "10px 14px",
-              borderRadius: "12px",
-              border: "1px solid #e2e8f0",
-              fontWeight: 600,
-              background: "white",
-            }}
-          >
-            {terms.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {term && plan && publishStatus && (
+            <>
+              <span style={{ fontSize: "0.85rem", color: "#64748b", textAlign: "right" }}>
+                {lastPublished ? (
+                  <>
+                    Published{" "}
+                    {new Date(lastPublished.at).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                    {changedSincePublished && (
+                      <span style={{ display: "block", color: "#b45309", fontWeight: 700 }}>
+                        Shifts changed since
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  "Not published yet"
+                )}
+              </span>
+              <button
+                onClick={() => setReviewing(true)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 18px",
+                  borderRadius: 12,
+                  border: "none",
+                  background: "#059669",
+                  color: "white",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <Globe size={16} /> Publish
+              </button>
+            </>
+          )}
+          {terms.length > 1 && (
+            <select
+              value={termId ?? ""}
+              onChange={(e) => {
+                setLoading(true);
+                setData(null);
+                setHistory([]);
+                setTermId(Number(e.target.value));
+              }}
+              aria-label="Term"
+              style={{
+                padding: "10px 14px",
+                borderRadius: "12px",
+                border: "1px solid #e2e8f0",
+                fontWeight: 600,
+                background: "white",
+              }}
+            >
+              {terms.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
+
+      {reviewing && term && plan && publishStatus && (
+        <PublishDialog
+          termId={term.id}
+          termName={term.name}
+          activeTermName={activeTerm && activeTerm.id !== term.id ? activeTerm.name : null}
+          plan={plan}
+          status={publishStatus}
+          onCancel={() => setReviewing(false)}
+          onPublished={({ tutors }) => {
+            setReviewing(false);
+            showToast(`Published: ${tutors} ${tutors === 1 ? "tutor is" : "tutors are"} on the public schedule.`);
+            setPublishVersion((n) => n + 1);
+          }}
+        />
+      )}
 
       {loading ? (
         <div style={{ ...cardStyle, color: "#64748b" }}>Loading the planner…</div>
