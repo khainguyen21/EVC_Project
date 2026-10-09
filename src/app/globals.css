@@ -532,6 +532,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  /* At least a screen tall: picking a subject with only a few tutors would
+     otherwise shrink the page under the pinned filter bar, and the browser
+     would drop the student at the very bottom. */
+  min-height: 100vh;
 }
 
 /* ==========================================
