@@ -32,7 +32,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - Tutors free that day are listed on the left as cards. William drags a card into a building at the time the shift should start.
 - Shifts start, end, and move in 15-minute steps (9:00, 9:15, 9:30, 9:45). The tutor form uses the same 15-minute steps, since real shifts start at times like 9:15 and 1:45.
 - A few shifts end at times like 12:10 or 1:40, between classes. Those tutors round inward on the form (until 12:00) and write the exact time in Notes, which William sees on their card. William can still type the exact time on Manage Staff. (Khai's call while William was unavailable. Mention it to him; 5-minute steps are a small change if he wants them.)
-- A dropped shift is 3 hours by default (William's usual shifts are 9–12 or 1–4), shortened to fit the tutor's free time but never below 1 hour. Drag its bottom edge to change the length, with a 1-hour minimum.
+- A dropped shift is 3 hours by default (William's usual shifts are 9–12 or 1–4), shortened to fit the tutor's free time but never below 1 hour. Drag its top or bottom edge to change when it starts or ends, with a 1-hour minimum. (William asked for the top edge after trying it.)
 - There is no daily limit. The 3 hours is only where a new shift starts; a tutor's week is kept in check by the usual hours and the 20-hour limit (see Hours).
 - A tutor can have more than one shift in a day (split shifts), but can't be in two places at the same time. Shifts in different buildings can touch; no walking time is needed between them.
 - Each card shows the tutor's notes from the form.
@@ -79,7 +79,8 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
   | VPA-109/111 | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm | 11 am–3 pm |
 
   William confirmed MS, LE (Tue–Thu from the EVC site) and SQ. VPA is Khai's guess, kept for now.
-- William edits the hours on the Terms page. The form lets tutors pick any time from the first building opening to the last one closing, since it doesn't ask which building. The rules page shows MS-112's hours, since it is the MSRC's page.
+- William edits the hours on the Terms page. The rules page shows MS-112's hours, since it is the MSRC's page.
+- The form offers the same times every weekday: from the week's earliest opening to its latest closing (8 am–8 pm in Fall 2026), even on a day when every building closes earlier. William wants each tutor's full availability, not only the hours that fit a building that day (he asked for this after trying it). "All day" means that whole span. The planner still counts coverage only while a building is open.
 - Tutor shifts can start when a building opens, so MS shifts can start at 8 am.
 - Hovering the coverage strip lists the courses covered at that time.
 - Only the student tutors William places count. Staff and professor hours don't count toward coverage (William confirmed), and they are not shown in the first version.
@@ -87,12 +88,13 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 
 **Hours**
 - Each card shows the tutor's total hours this week, across all days.
-- William aims to give each tutor about the same weekly hours, his "usual hours". It is a planner setting, stored in the database rather than the code.
-- The usual hours have no starting value in the code. William types his number once on the planner page.
-- Cards show progress toward the usual hours: gray below it, green at it, amber above it. Until William sets the number, cards only change color at 20 hours.
+- William aims to give each tutor a fair share of hours each week, his "usual hours". It is a range, a minimum and a maximum per week, because he thinks of fair hours as a range. It is a planner setting, stored in the database rather than the code.
+- The usual hours have no starting value in the code. William types his range once on the planner page.
+- Cards show where each tutor's week stands: gray below the range, green inside it (both ends included), amber above it. Until William sets the range, cards only change color at 20 hours.
 - Only student tutors fill out the availability form, so everyone in the planner is a student tutor. They turn red at 20 hours a week; exactly 20 is already red.
-- The tutor list sorts the fewest hours to the top, so nobody gets forgotten.
+- When William opens a day, the tutor list sorts the fewest hours to the top, so nobody gets forgotten. The cards then keep their places while he works on that day, and sort again when he switches days. (Before this, a card jumped down the list after a drop, which looked to William as if the tutor had left it.)
 - The top of each building's column shows its total planned hours for the week. William keeps track of the budget himself; the planner doesn't enforce one.
+- A "Week" tab, after Monday to Friday, lists every tutor with their hours each day and their weekly total, colored like the cards. The bottom row totals each day and the whole week, for the budget. Clicking a day's hours opens that day. (William asked for this after trying it.)
 
 **Outside availability**
 - William can place a shift outside the hours a tutor sent. It gets a clear "outside their availability" warning.
@@ -104,7 +106,6 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 
 **Not in the first version**
 - Copying one day to another ("Wednesday same as Monday"). This is the first thing to add afterward.
-- A whole-week overview screen. The print view (feature 3) covers this.
 - Approving tutors from inside the planner. William keeps using the inbox.
 - A separate login for the Biology supervisor. William hires every tutor, Biology included. The Biology supervisor schedules the Biology tutors and sends William the schedule, and William enters it on the master schedule. So William is the only one using the planner.
 - Showing staff and professor hours.
@@ -115,6 +116,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - One branch with small commits, and one pull request after William has tried it.
 - Tests for the rules (coverage, "adds a new course", hour totals, fitting a shift into free time, shortening course lists) are written before the code. Dragging is checked in the browser.
 - The course reader must accept subject lists the way they appear in William's Fall 2026 schedule, including `MATH020` with no space and his spelling `PHYSIC`. Both are flagged "subjects need review" today, which leaves those tutors out of coverage.
+- William asked for unusual subjects to be read or double-checked. "Math Any" already reads as any Math course. The reader also accepts "Stats" as STAT. A part with words it can't use ("Math 20 and up", "any math up to Calc") gets the double-check warning instead of being quietly read as something else. "Calc" and "Precalc" aren't matched to course numbers, since that would be a guess; they get the warning too, and William fixes them in the inbox.
 - Sample tutors for the test database: `npm run db:sample`. It only runs when `.env` has `ALLOW_SAMPLE_DATA=true`, which only the test database's `.env` should have.
 
 ### Waiting on William
@@ -145,7 +147,17 @@ Built in October 2026, each with tests first: the course reader accepts `MATH020
 
 The `20261006000000_add_building_hours` migration is on the test database, and the Terms page editor, form and planner were checked in the browser.
 
-Still to do: William tries the planner on the test database. Then one pull request, with the migration applied to the live database before it ships.
+William tried the planner on the test database in October 2026 and liked it. His changes, each decided above:
+- The form offers 8 am–8 pm every weekday (see Coverage).
+- Shifts stretch from the top edge as well as the bottom (see Layout).
+- Cards keep their places while William works on a day (see Hours).
+- The usual hours become a range (see Hours).
+- A Week tab with every tutor's hours (see Hours).
+- The course reader closes its gaps (see How it's built).
+
+Two of his other requests are elsewhere: an email to William for each new submission (see feature 2), and the public schedule jumping to the bottom when a subject is picked, a bug on the live site fixed on its own branch off `main`.
+
+Still to do: build the list above, then one pull request, with the migrations applied to the live database before it ships.
 
 ---
 
@@ -165,6 +177,7 @@ Branch: `feature/confirmation-email`
 - **Never mentions** William's usual hours per tutor.
 - **Sender:** a new Gmail account just for the site, sending through Gmail with an app password. Replies go to William's evc.edu address. William approved this and says replies reaching evc.edu are very important. So the Gmail account also forwards everything it receives to his evc.edu address, and a test reply is checked before launch.
 - **If sending fails,** the submission is still saved.
+- **William gets an email too,** one for each submission or resubmission, sent to his evc.edu address from the same Gmail account. It names the tutor, says whether it is new or updated, and links to the inbox. He doesn't check the dashboard out of habit, so he asked for this after trying the planner (October 2026). It replaces the earlier "no email notifications" decision for the availability form. It never includes his usual hours.
 - **Accepted risk:** someone could type another person's email, who would then get a receipt. The 50-per-hour limit per network keeps this small.
 
 ### Waiting on William
