@@ -20,12 +20,15 @@ export interface PublishSubmission {
   availabilityChanged: boolean;
 }
 
-/** One student tutor as the public schedule stores it. */
-export interface PublicTutorRow {
+/**
+ * One student tutor as the public schedule stores it. A type rather than an
+ * interface so Prisma accepts it as JSON on a Publication.
+ */
+export type PublicTutorRow = {
   name: string;
   subjects: { name: string; field: string }[];
   schedules: { day: Weekday; start: string; end: string; location: Building }[];
-}
+};
 
 /** A tutor the review screen names. */
 export interface PlanTutor {
