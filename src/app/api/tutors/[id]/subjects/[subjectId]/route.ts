@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
-import { touchScheduleTimestamp } from '@/lib/touchSettings'
+import { markEditedOnManageStaff, touchScheduleTimestamp } from '@/lib/touchSettings'
 import { requireAdmin } from '@/lib/session'
 
 export async function DELETE(
@@ -15,10 +15,11 @@ export async function DELETE(
     
     if (isNaN(subjectId)) return NextResponse.json({ error: 'Invalid Subject ID' }, { status: 400 });
 
-    await prisma.subject.delete({
+    const { tutorId } = await prisma.subject.delete({
       where: { id: subjectId }
     });
 
+    await markEditedOnManageStaff(tutorId)
     await touchScheduleTimestamp()
     return NextResponse.json({ message: 'Subject unassigned successfully' });
   } catch (error) {

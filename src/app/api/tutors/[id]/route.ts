@@ -64,6 +64,7 @@ export async function PUT(
       data: {
         name: validation.data.name,
         type: validation.data.type,
+        editedOnManageStaffAt: new Date(),
       }
     })
 

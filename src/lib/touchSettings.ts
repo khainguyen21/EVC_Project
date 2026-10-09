@@ -7,3 +7,12 @@ export async function touchScheduleTimestamp() {
     create: { id: 1, scheduleLastUpdated: new Date() },
   })
 }
+
+// Manage Staff changed this tutor. Publish rebuilds student tutors from the
+// planner, so its review screen names them (see Tutor.editedOnManageStaffAt).
+export async function markEditedOnManageStaff(tutorId: number) {
+  await prisma.tutor.update({
+    where: { id: tutorId },
+    data: { editedOnManageStaffAt: new Date() },
+  })
+}
