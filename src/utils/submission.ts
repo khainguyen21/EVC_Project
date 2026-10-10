@@ -6,7 +6,7 @@
  * what a tutor had to pass.
  */
 import { z } from "zod";
-import { parseCourseCodes, unreadWords } from "./courseCodes";
+import { parseCourseCodes, unknownCourses, unreadWords } from "./courseCodes";
 import {
   SLOT_MINUTES,
   WEEKDAYS,
@@ -165,7 +165,11 @@ export function findUnrecognizedSubjects(raw: string): string[] {
   return unrecognized;
 }
 
-export type SubmissionFlag = "under-units" | "subjects-need-review";
+/**
+ * "courses-not-in-catalog" is the softer one: the tutor still counts on the
+ * planner and is still published, where "subjects-need-review" holds them back.
+ */
+export type SubmissionFlag = "under-units" | "subjects-need-review" | "courses-not-in-catalog";
 
 export function submissionFlags(s: {
   units: number;
@@ -176,6 +180,7 @@ export function submissionFlags(s: {
   if (findUnrecognizedSubjects(s.subjectsRaw).length > 0) {
     flags.push("subjects-need-review");
   }
+  if (unknownCourses(s.subjectsRaw).length > 0) flags.push("courses-not-in-catalog");
   return flags;
 }
 

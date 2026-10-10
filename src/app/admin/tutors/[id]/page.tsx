@@ -22,6 +22,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { formatTime } from "@/utils/formatTime";
+import { fieldSuggestions } from "@/utils/publish";
 
 type TutorSubject = { id: number; name: string; field: string };
 type TutorSchedule = {
@@ -62,6 +63,9 @@ export default function EditTutorPage() {
   const [isAddingSubject, setIsAddingSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
   const [newSubjectField, setNewSubjectField] = useState("");
+  // Sections on the public schedule now, listed first in the Field box.
+  const [sectionsInUse, setSectionsInUse] = useState<string[]>([]);
+  const fieldOptions = fieldSuggestions(sectionsInUse);
 
   // Schedule Form states
   const [isAddingShift, setIsAddingShift] = useState(false);
@@ -102,6 +106,16 @@ export default function EditTutorPage() {
   useEffect(() => {
     fetchTutorProfile();
   }, [id]);
+
+  // Only orders the Field box, so if it fails every section is still offered.
+  useEffect(() => {
+    fetch("/api/tutors")
+      .then((res) => res.json())
+      .then((data: { tutors?: { fields: string[] }[] }) =>
+        setSectionsInUse((data.tutors ?? []).flatMap((t) => t.fields)),
+      )
+      .catch((error) => console.error("Error fetching sections:", error));
+  }, []);
 
   const handleSaveBasics = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -781,24 +795,9 @@ export default function EditTutorPage() {
                                 }}
                               />
                               <datalist id="ai-field-options">
-                                <option value="Accounting" />
-                                <option value="Art" />
-                                <option value="Astronomy" />
-                                <option value="Biology" />
-                                <option value="Business" />
-                                <option value="Chemistry" />
-                                <option value="Computer Science" />
-                                <option value="English" />
-                                <option value="ESL" />
-                                <option value="Ethnic Studies" />
-                                <option value="History" />
-                                <option value="Mathematics" />
-                                <option value="Music" />
-                                <option value="Physics" />
-                                <option value="Psychology" />
-                                <option value="Sociology" />
-                                <option value="Spanish" />
-                                <option value="Vietnamese" />
+                                {fieldOptions.map((section) => (
+                                  <option key={section} value={section} />
+                                ))}
                               </datalist>
                               <button
                                 onClick={() =>
@@ -1303,23 +1302,9 @@ export default function EditTutorPage() {
                     onBlur={(e) => (e.target.style.borderColor = "#cbd5e1")}
                   />
                   <datalist id="field-options">
-                    <option value="Accounting" />
-                    <option value="Art" />
-                    <option value="Astronomy" />
-                    <option value="Biology" />
-                    <option value="Business" />
-                    <option value="Chemistry" />
-                    <option value="Computer Science" />
-                    <option value="English" />
-                    <option value="Ethnic Studies" />
-                    <option value="History" />
-                    <option value="Mathematics" />
-                    <option value="Music" />
-                    <option value="Physics" />
-                    <option value="Psychology" />
-                    <option value="Sociology" />
-                    <option value="Spanish" />
-                    <option value="Vietnamese" />
+                    {fieldOptions.map((section) => (
+                      <option key={section} value={section} />
+                    ))}
                   </datalist>
                 </div>
                 <div

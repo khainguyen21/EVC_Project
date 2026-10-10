@@ -72,7 +72,7 @@ export interface Coverage {
 
 /** Departments taught outside LE-237, which takes everything else. */
 const DEPARTMENT_BUILDINGS: Record<string, Building> = {
-  ASTR: "MS-112",
+  ASTRO: "MS-112",
   CHEM: "MS-112",
   COMSC: "MS-112",
   ENGR: "MS-112",
@@ -80,7 +80,7 @@ const DEPARTMENT_BUILDINGS: Record<string, Building> = {
   PHYS: "MS-112",
   STAT: "MS-112",
   BIOL: "SQ-231",
-  MUS: "VPA-109/111",
+  MUSIC: "VPA-109/111",
 };
 
 function buildingOf(code: string): Building {

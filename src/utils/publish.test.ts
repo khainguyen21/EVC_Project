@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { hhmmToMinutes, type Building, type Weekday } from "./centerHours";
 import { parseCourseCodes } from "./courseCodes";
 import type { Shift } from "./planner";
-import { SUBJECT_AREAS, planPublish, type PublishSubmission } from "./publish";
+import { SUBJECT_AREAS, WEBSITE_SECTIONS, fieldSuggestions, planPublish, type PublishSubmission } from "./publish";
 
 function submission(
   id: number,
@@ -56,17 +56,18 @@ describe("planPublish", () => {
     ]);
   });
 
-  it("writes one subject line per website subject area, with Stats in the Math line", () => {
+  it("writes one subject line per website subject area, with Stats in its own section", () => {
     const plan = planPublish(
       [submission(1, "Alex Rivera", "Math 71, 72, Stat C1000, Chem 1A")],
       [shift(1, "MS-112", "Monday", "09:00", "12:00")],
     );
 
-    expect(plan.tutors[0].subjects).toHaveLength(2);
+    expect(plan.tutors[0].subjects).toHaveLength(3);
     expect(plan.tutors[0].subjects).toEqual(
       expect.arrayContaining([
-        { name: "MATH 71-72, STAT C1000", field: "Mathematics" },
-        { name: "CHEM 1A", field: "Chemistry" },
+        { name: "MATH 071-072", field: "Mathematics" },
+        { name: "STAT C1000", field: "Statistics" },
+        { name: "CHEM 001A", field: "Chemistry" },
       ]),
     );
   });
@@ -80,14 +81,28 @@ describe("planPublish", () => {
     expect(plan.tutors[0].subjects).toEqual([{ name: "English", field: "English" }]);
   });
 
-  it("names a whole subject by its own name when it shares a section, like Stats with Math", () => {
+  it("names a whole subject by its own name when it shares a section, like BIS with Business", () => {
     const plan = planPublish(
-      [submission(1, "Alex Rivera", "Math 071, Chem1A, STAT, CHEM1b")],
+      [submission(1, "Alex Rivera", "Bus 71, Chem1A, BIS, CHEM1b")],
+      [shift(1, "LE-237", "Monday", "09:00", "12:00")],
+    );
+
+    expect(plan.tutors[0].subjects).toEqual(
+      expect.arrayContaining([{ name: "BIS, BUS 071", field: "Business" }]),
+    );
+  });
+
+  it("puts any Stats course under Statistics, apart from Math", () => {
+    const plan = planPublish(
+      [submission(1, "Alex Rivera", "Math 071, Stats")],
       [shift(1, "MS-112", "Monday", "09:00", "12:00")],
     );
 
     expect(plan.tutors[0].subjects).toEqual(
-      expect.arrayContaining([{ name: "Statistics, MATH 71", field: "Mathematics" }]),
+      expect.arrayContaining([
+        { name: "MATH 071", field: "Mathematics" },
+        { name: "Statistics", field: "Statistics" },
+      ]),
     );
   });
 
@@ -105,6 +120,35 @@ describe("planPublish", () => {
       const searchable = plan.tutors[0].subjects.flatMap((s) => parseCourseCodes(s.name));
       expect(searchable, department).toContain(`${department}-*`);
     }
+  });
+
+  it("puts a department the website has no section for yet under its catalog name", () => {
+    const plan = planPublish(
+      [submission(1, "Alex Rivera", "Anthropology 62, AJ 110")],
+      [shift(1, "LE-237", "Monday", "09:00", "12:00")],
+    );
+
+    expect(plan.tutors[0].subjects).toEqual(
+      expect.arrayContaining([
+        { name: "ANTH 062", field: "Anthropology" },
+        { name: "AJ 110", field: "Administration of Justice" },
+      ]),
+    );
+  });
+
+  it("still publishes a course that isn't in EVC's catalog, as the tutor wrote it", () => {
+    const plan = planPublish(
+      [submission(1, "Alex Rivera", "COMSC 9999, English 1A")],
+      [shift(1, "MS-112", "Monday", "09:00", "12:00")],
+    );
+
+    expect(plan.needsReview).toEqual([]);
+    expect(plan.tutors[0].subjects).toEqual(
+      expect.arrayContaining([
+        { name: "COMSC 9999", field: "Computer Science" },
+        { name: "ENGL 001A", field: "English" },
+      ]),
+    );
   });
 
   it("lists Open Computer Lab under its own name", () => {
@@ -158,5 +202,60 @@ describe("planPublish", () => {
     );
 
     expect(plan).toEqual({ tutors: [], noShifts: [], needsReview: [], availabilityChanged: [] });
+  });
+});
+
+describe("WEBSITE_SECTIONS", () => {
+  it("offers every section Publish can put a tutor in", () => {
+    for (const section of [...Object.values(SUBJECT_AREAS), "Open Computer Lab"]) {
+      expect(WEBSITE_SECTIONS).toContain(section);
+    }
+  });
+
+  it("keeps every field Manage Staff offered before", () => {
+    for (const field of [
+      "Accounting", "Art", "Astronomy", "Biology", "Business", "Chemistry", "Computer Science",
+      "English", "ESL", "Ethnic Studies", "History", "Mathematics", "Music", "Physics",
+      "Psychology", "Sociology", "Spanish", "Vietnamese",
+    ]) {
+      expect(WEBSITE_SECTIONS).toContain(field);
+    }
+  });
+
+  it("offers no name that would start a second section for the same subject", () => {
+    // BIS shares a section with Business; ESL is "ESL" on the live site.
+    for (const name of ["Business Information Systems", "English As a Second Language", "Math", "Stats"]) {
+      expect(WEBSITE_SECTIONS).not.toContain(name);
+    }
+  });
+
+  it("offers Statistics as a section of its own", () => {
+    expect(WEBSITE_SECTIONS).toContain("Statistics");
+  });
+
+  it("lists each section once, in alphabetical order", () => {
+    expect(new Set(WEBSITE_SECTIONS).size).toBe(WEBSITE_SECTIONS.length);
+    expect([...WEBSITE_SECTIONS].sort((a, b) => a.localeCompare(b))).toEqual(WEBSITE_SECTIONS);
+  });
+});
+
+describe("fieldSuggestions", () => {
+  it("lists the sections on the schedule now first, then every other section", () => {
+    const list = fieldSuggestions(["Mathematics", "Biology", "Mathematics"]);
+
+    expect(list.slice(0, 2)).toEqual(["Biology", "Mathematics"]);
+    expect([...list].sort((a, b) => a.localeCompare(b))).toEqual(WEBSITE_SECTIONS);
+  });
+
+  it("keeps a section William named himself", () => {
+    const list = fieldSuggestions(["Tutoring Center", "Biology"]);
+
+    expect(list.slice(0, 2)).toEqual(["Biology", "Tutoring Center"]);
+    expect(list).toHaveLength(WEBSITE_SECTIONS.length + 1);
+  });
+
+  it("offers every section when nothing is on the schedule yet", () => {
+    expect(fieldSuggestions([])).toEqual(WEBSITE_SECTIONS);
+    expect(fieldSuggestions(["", "  "])).toEqual(WEBSITE_SECTIONS);
   });
 });

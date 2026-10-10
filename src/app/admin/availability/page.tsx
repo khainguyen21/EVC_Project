@@ -23,7 +23,7 @@ import WeeklyGrid from "@/components/availability/WeeklyGrid";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { readRememberedTerm, rememberTerm } from "@/lib/rememberedTerm";
 import { announceSubmissionsChanged } from "@/lib/submissionEvents";
-import { formatCourseCode } from "@/utils/courseCodes";
+import { formatCourseCode, unknownCourses } from "@/utils/courseCodes";
 import { pickDefaultTerm } from "@/utils/term";
 import type { BuildingHours } from "@/utils/centerHours";
 import type { SubmissionInput, SubmissionStatus } from "@/utils/submission";
@@ -37,6 +37,14 @@ const STATUS_STYLES: Record<SubmissionStatus, { bg: string; color: string; label
 const FLAG_LABELS: Record<Submission["flags"][number], string> = {
   "under-units": "Under 6 units",
   "subjects-need-review": "Subjects need review",
+  "courses-not-in-catalog": "Course not in catalog",
+};
+
+/** The softer flag is amber: the tutor still counts on the planner and is published. */
+const FLAG_COLORS: Record<Submission["flags"][number], [string, string]> = {
+  "under-units": ["#fef2f2", "#b91c1c"],
+  "subjects-need-review": ["#fef2f2", "#b91c1c"],
+  "courses-not-in-catalog": ["#fffbeb", "#b45309"],
 };
 
 const pill = (bg: string, color: string): React.CSSProperties => ({
@@ -527,7 +535,7 @@ export default function AvailabilityInboxPage() {
                               <span style={pill("#eff6ff", "#1d4ed8")}>Updated</span>
                             )}
                             {s.flags.map((f) => (
-                              <span key={f} style={pill("#fef2f2", "#b91c1c")}>
+                              <span key={f} style={pill(...FLAG_COLORS[f])}>
                                 {FLAG_LABELS[f]}
                               </span>
                             ))}
@@ -623,6 +631,7 @@ function SubmissionDetails({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const notInCatalog = unknownCourses(s.subjectsRaw);
   const detail = (label: string, value: React.ReactNode) => (
     <div>
       <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -654,6 +663,11 @@ function SubmissionDetails({
                 </span>
               ))}
             </div>
+            {notInCatalog.length > 0 && (
+              <div style={{ color: "#b45309", fontSize: "0.85rem", marginTop: "6px" }}>
+                {`Not in EVC's catalog: ${notInCatalog.join(", ")}. It may be a typo or an older course number.`}
+              </div>
+            )}
           </>,
         )}
         {s.notes && detail("Notes", <span style={{ whiteSpace: "pre-wrap" }}>{s.notes}</span>)}

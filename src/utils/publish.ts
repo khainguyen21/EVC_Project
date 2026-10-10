@@ -8,6 +8,7 @@
  */
 import { WEEKDAYS, toHHMM, type Building, type Weekday } from "./centerHours";
 import { parseCourseCodes, shortenCourseCodes } from "./courseCodes";
+import { DEPARTMENTS } from "./departments";
 import { OPEN_LAB, tutorCourses, type Shift } from "./planner";
 import type { SubmissionStatus } from "./submission";
 
@@ -53,43 +54,53 @@ export interface PublishPlan {
 }
 
 /**
- * The website's subject area for each department the course reader knows,
- * named as the live schedule already names them, so published tutors land in
- * the same sections as the professors and staff. Stats sits with Math there.
+ * Where the live schedule already names a section its own way. BIS sits with
+ * Business there. Stats used to sit with Math; it has its own section now.
  */
-export const SUBJECT_AREAS: Record<string, string> = {
-  ACCT: "Accounting",
-  ART: "Art",
-  ASTR: "Astronomy",
-  BIOL: "Biology",
+const LIVE_SECTION_NAMES: Record<string, string> = {
   BIS: "Business",
-  BUS: "Business",
-  CHEM: "Chemistry",
-  COMSC: "Computer Science",
-  ECON: "Economics",
-  ENGL: "English",
-  ENGR: "Engineering",
   ESL: "ESL",
-  ETHN: "Ethnic Studies",
-  HIST: "History",
-  MATH: "Mathematics",
-  MUS: "Music",
-  PHYS: "Physics",
-  PSYC: "Psychology",
-  SOCI: "Sociology",
-  SPAN: "Spanish",
-  STAT: "Mathematics",
-  VIET: "Vietnamese",
 };
 
 /**
+ * The website's subject area for each department, so published tutors land in
+ * the same sections as the professors and staff. A department the website has
+ * no section for yet gets its catalog name.
+ */
+export const SUBJECT_AREAS: Record<string, string> = Object.fromEntries(
+  DEPARTMENTS.map(({ code, name }) => [code, LIVE_SECTION_NAMES[code] ?? name]),
+);
+
+/** The section for Open Computer Lab, which has no course code. */
+const OPEN_LAB_SECTION = "Open Computer Lab";
+
+/**
+ * Every section the public schedule can have, for the Field box on Manage
+ * Staff, so a professor William adds there lands in the same section as the
+ * tutors Publish puts up.
+ */
+export const WEBSITE_SECTIONS: string[] = [
+  ...new Set([...Object.values(SUBJECT_AREAS), OPEN_LAB_SECTION]),
+].sort((a, b) => a.localeCompare(b));
+
+/**
+ * The Field box's list: the sections on the public schedule now come first,
+ * so William sees the few he uses before scrolling, then every other one.
+ */
+export function fieldSuggestions(inUse: string[]): string[] {
+  const used = [...new Set(inUse.map((f) => f.trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+  return [...used, ...WEBSITE_SECTIONS.filter((section) => !used.includes(section))];
+}
+
+/**
  * A whole department's name on a subject line, where the subject area's name
- * would read as its sibling: "Mathematics" means any Math course to students
- * and to the public search, not any Stats one.
+ * would read as its sibling: "Business" means any Business course to students
+ * and to the public search, not any BIS one.
  */
 const WHOLE_DEPARTMENT_NAMES: Record<string, string> = {
   BIS: "BIS",
-  STAT: "Statistics",
 };
 
 /** One line per subject area, shortened the way William types them. */
@@ -100,7 +111,7 @@ function subjectLines(subjectsRaw: string): PublicTutorRow["subjects"] {
   const byArea = new Map<string, string[]>();
   for (const code of courses) {
     const department = code.split("-")[0];
-    const area = code === OPEN_LAB ? "Open Computer Lab" : (SUBJECT_AREAS[department] ?? department);
+    const area = code === OPEN_LAB ? OPEN_LAB_SECTION : (SUBJECT_AREAS[department] ?? department);
     byArea.set(area, [...(byArea.get(area) ?? []), code]);
   }
   return [...byArea].map(([field, codes]) => {

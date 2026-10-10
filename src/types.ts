@@ -69,6 +69,6 @@ export interface Submission {
     availabilityChanged: boolean, // resubmitted while on the shift planner
     createdAt: string,
     updatedAt: string,
-    flags: ('under-units' | 'subjects-need-review')[],
+    flags: ('under-units' | 'subjects-need-review' | 'courses-not-in-catalog')[],
     shiftCount: number // shifts placed on the shift planner
 }
