@@ -246,6 +246,7 @@ A Publish button on the shift planner copies William's planned shifts for the se
 ### Decided
 
 - **When:** the public schedule changes the moment William clicks Publish. He publishes the new term over winter break, so the old term stays up through finals.
+- **Publish makes the term active** (Khai's call, October 2026). The public schedule has no term of its own, so publishing Spring while Fall was active showed Spring's tutors under Fall's banner, dates and closed days. William never publishes a term early, so publishing also sets the term active. Set Active on Terms & Holidays stays, for terms not published from the planner, and warns when another term's tutors are the ones on the public schedule.
 - **Rebuild, don't match:** Publish removes every student tutor from the public schedule and creates them again from the planner, one for each approved tutor with at least one shift. William already confirmed that a new term removes all of last term's student tutors at once. Rebuilding means no public tutor has to be matched to a submission, which settles the old matching question. Professors and staff are never touched. They don't come from the form, and William keeps entering them on Manage Staff.
 - **All or nothing:** Publish runs as one database transaction, so students never see half a schedule.
 - **Review first:** the button opens a review screen before anything changes. It shows:
@@ -253,7 +254,7 @@ A Publish button on the shift planner copies William's planned shifts for the se
   - the student tutors it will remove from the public site, by name
   - tutors left out: approved with no shifts, or subjects that couldn't be read (they would have no subject section to appear under)
   - tutors whose availability changed since William placed them. They are published, with a warning.
-  - a warning when the term isn't the active one
+  - a note when publishing will make the term active in place of another
 - **A copy to undo with:** Publish saves the student tutors it replaces, so a mistaken publish can be put back.
 - **Manage Staff still edits student tutors.** After publishing, William can change a student tutor's shifts and subjects on Manage Staff or in the planner (Khai's call, October 2026). Publishing again rebuilds student tutors from the planner and would replace those Manage Staff changes. So the review screen names every student tutor changed on Manage Staff since the last publish, and William decides before anything is replaced.
 - **How shifts and subjects carry over:** times become text like "09:15". Building names already match the public schedule. Subjects are grouped by subject area, one line each, written the way William types them ("MATH 20-25, 62"), under the subject-area names the public site already uses ("Mathematics", not "Math"). Otherwise the homepage would show two Math sections.

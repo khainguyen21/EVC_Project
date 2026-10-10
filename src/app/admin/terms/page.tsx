@@ -84,6 +84,9 @@ function Notice({
 export default function ManageTermsPage() {
   const { showToast } = useToast();
   const [terms, setTerms] = useState<AdminTerm[]>([]);
+  // The last term published from the Shift Planner: its student tutors are
+  // the ones on the public schedule. Null before the first publish.
+  const [publishedTermId, setPublishedTermId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   // Tracked separately from `terms`: a failed load must never be mistaken for
   // "there are no terms yet", which would arm the auto-activate rule below.
@@ -121,6 +124,7 @@ export default function ManageTermsPage() {
       })
       .then((data) => {
         setTerms(data.terms ?? []);
+        setPublishedTermId(data.publishedTermId ?? null);
         setLoading(false);
       })
       .catch((error) => {
@@ -141,6 +145,7 @@ export default function ManageTermsPage() {
   const isFirstTerm = !loading && !loadError && terms.length === 0;
 
   const activeTerm = terms.find((t) => t.isActive) ?? null;
+  const publishedTerm = terms.find((t) => t.id === publishedTermId) ?? null;
   const activeLifecycle =
     now && activeTerm ? getTermLifecycle(activeTerm, now.date) : null;
 
@@ -180,7 +185,7 @@ export default function ManageTermsPage() {
     }
   };
 
-  const handleSetActive = async (term: AdminTerm) => {
+  const activate = async (term: AdminTerm) => {
     try {
       const res = await fetch(`/api/terms/${term.id}`, {
         method: "PUT",
@@ -197,6 +202,24 @@ export default function ManageTermsPage() {
     } catch {
       showToast("Network error. Please try again.", "error");
     }
+  };
+
+  // Set Active changes the dates, not the tutors. Publishing does both, so
+  // say so when another term's tutors are the ones students see.
+  const handleSetActive = (term: AdminTerm) => {
+    if (!publishedTerm || publishedTerm.id === term.id) {
+      activate(term);
+      return;
+    }
+    setConfirmModal({
+      message: `The public schedule shows ${publishedTerm.name}'s tutors. Setting ${term.name} active changes only the homepage dates and closed days, not the tutors. To put up ${term.name}'s tutors, publish it from the Shift Planner instead, which also makes it active.`,
+      confirmLabel: "Set it active anyway",
+      icon: "📅",
+      onConfirm: () => {
+        setConfirmModal(null);
+        activate(term);
+      },
+    });
   };
 
   const handleDeleteTerm = (term: AdminTerm) => {
@@ -396,7 +419,8 @@ export default function ManageTermsPage() {
           </h1>
           <p style={{ color: "#64748b", fontSize: "1.1rem" }}>
             The active term sets the homepage dates and pauses &ldquo;Available
-            Now&rdquo; on closed days and between semesters.
+            Now&rdquo; on closed days and between semesters. Publishing a
+            term from the Shift Planner also makes it active.
           </p>
         </div>
 
@@ -439,8 +463,8 @@ export default function ManageTermsPage() {
         <Notice tone="danger" icon={<AlertTriangle size={20} />}>
           <strong>{activeTerm.name} ended on {formatTermDate(activeTerm.endDate)}.</strong>{" "}
           Students currently see &ldquo;Semester Over&rdquo; and live
-          availability is switched off. Add the next term and set it active to
-          turn the schedule back on.
+          availability is switched off. Publish the next term from the Shift
+          Planner, which makes it active, or set it active below.
         </Notice>
       )}
 
@@ -608,6 +632,12 @@ export default function ManageTermsPage() {
               />
               Make this the active term
             </label>
+            {newActive && publishedTerm && (
+              <p style={{ color: "#92400e", fontSize: "0.9rem", margin: "0 0 12px" }}>
+                The public schedule keeps {publishedTerm.name}&apos;s tutors until you
+                publish this term from the Shift Planner, which also makes it active.
+              </p>
+            )}
 
             <button
               type="submit"

@@ -29,7 +29,8 @@ export async function GET(request: Request) {
 }
 
 // Admin: copy a term's planner onto the public schedule, replacing every
-// student tutor there. Professors and staff are left alone.
+// student tutor there, and make the term active. Professors and staff are
+// left alone.
 export async function POST(request: Request) {
   try {
     const unauthorized = await requireAdmin();
