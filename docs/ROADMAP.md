@@ -21,6 +21,8 @@ Each section lists what is **decided**, what is **waiting on William**, and anyt
 
 Branch: `feature/shift-planner`
 
+**Shipped** in October 2026 as [PR #4](https://github.com/khainguyen21/EVC_Project/pull/4).
+
 William places approved tutors' shifts into buildings, one day at a time. It is based on layout B of the prototype ("Room board"), which William preferred.
 
 ### Decided
@@ -159,7 +161,7 @@ Two of his other requests are elsewhere: an email to William for each new submis
 
 All six are built, each with tests first. The `20261009000000_usual_hours_range` migration is on the test database, and all six were checked in the browser.
 
-Still to do: one pull request, with both migrations (`add_building_hours` and `usual_hours_range`) applied to the live database before it ships.
+Shipped in October 2026 as [PR #4](https://github.com/khainguyen21/EVC_Project/pull/4), after all four planner migrations were applied to the live database. Fixes found along the way went out on their own pull requests: admin fixes from an outside review ([PR #3](https://github.com/khainguyen21/EVC_Project/pull/3)) and missing spaces in two admin messages ([PR #5](https://github.com/khainguyen21/EVC_Project/pull/5)).
 
 ---
 
@@ -237,12 +239,39 @@ William prints the schedule to put on the wall and sends a PDF to the EVC websit
 
 ## 4. Publish to the public schedule
 
-Later, after the planner.
+Branch: `feature/publish`
 
-Copies William's planned shifts onto the public schedule.
+A Publish button on the shift planner copies William's planned shifts for the selected term onto the public schedule. Until then, nothing he plans reaches the public site, and he would have to type every shift again on Manage Staff.
 
-### Open questions
+### Decided
 
-- **Matching:** each submission has to be linked to the right tutor on the public site. Public tutor records have no student ID or email, so this needs a way to link them.
-- Publishing a new term's schedule removes all of last term's student tutors at once (William confirmed). It leaves staff and professor hours alone. Those don't come from the form, and William keeps entering them on Manage Staff.
+- **When:** the public schedule changes the moment William clicks Publish. He publishes the new term over winter break, so the old term stays up through finals.
+- **Rebuild, don't match:** Publish removes every student tutor from the public schedule and creates them again from the planner, one for each approved tutor with at least one shift. William already confirmed that a new term removes all of last term's student tutors at once. Rebuilding means no public tutor has to be matched to a submission, which settles the old matching question. Professors and staff are never touched. They don't come from the form, and William keeps entering them on Manage Staff.
+- **All or nothing:** Publish runs as one database transaction, so students never see half a schedule.
+- **Review first:** the button opens a review screen before anything changes. It shows:
+  - how many tutors and shifts will go live
+  - the student tutors it will remove from the public site, by name
+  - tutors left out: approved with no shifts, or subjects that couldn't be read (they would have no subject section to appear under)
+  - tutors whose availability changed since William placed them. They are published, with a warning.
+  - a warning when the term isn't the active one
+- **A copy to undo with:** Publish saves the student tutors it replaces, so a mistaken publish can be put back.
+- **Manage Staff still edits student tutors.** After publishing, William can change a student tutor's shifts and subjects on Manage Staff or in the planner (Khai's call, October 2026). Publishing again rebuilds student tutors from the planner and would replace those Manage Staff changes. So the review screen names every student tutor changed on Manage Staff since the last publish, and William decides before anything is replaced.
+- **How shifts and subjects carry over:** times become text like "09:15". Building names already match the public schedule. Subjects are grouped by subject area, one line each, written the way William types them ("MATH 20-25, 62"), under the subject-area names the public site already uses ("Mathematics", not "Math"). Otherwise the homepage would show two Math sections.
+- The planner shows when the term was last published, and whether anything changed since: shifts, subjects or names, since publishing again would change all three.
+
+### Waiting on William
+
+- **Which subjects to list** (not blocking): there are three options.
+  - every subject a tutor gave on the form
+  - only the subjects taught in the room they work in
+  - every subject, with a note on the card naming the room ("Works in the Math & Science Resource Center (MS-112). Ask for Ethnic Studies help there.")
+
+  It only matters for a tutor whose subjects are taught in more than one room. That is rare, since most tutors choose one. Publish starts with every subject, so a student looking for a rare subject can find the tutor on the site (see Also planned). The choice lives in one small step and is quick to change. A prototype of all three is on the `prototype/publish-subjects` branch: run the site and open `/?variant=A`, `B` or `C`.
+
+### Also planned
+
+From William's original workflow: when a student asks for a rare subject, such as Ethnic Studies or Criminology, William searches old emails for a tutor who can teach it, emails the student that tutor's hours, and adds a section to the schedule by hand.
+
+- **"Who can tutor ___?"** A subject search on the Tutor Availability page, across the term's submissions, including tutors with no shifts. The public course search already has the matching code.
+- **Every EVC department:** the course reader learns every EVC department code, from the list Khai recorded rather than guessed. Today it reads "Ethnic Studies" but not "Criminology", so a Criminology tutor is flagged "subjects need review".
 - Send the "your shifts are posted" email (see feature 2).

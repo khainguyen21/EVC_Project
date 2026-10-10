@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/client'
-import { touchScheduleTimestamp } from '@/lib/touchSettings'
+import { markEditedOnManageStaff, touchScheduleTimestamp } from '@/lib/touchSettings'
 import { requireAdmin } from '@/lib/session'
 import { toMinutes } from '@/utils/availability'
 
@@ -48,6 +48,7 @@ export async function POST(
       }
     });
 
+    await markEditedOnManageStaff(tutorId)
     await touchScheduleTimestamp()
     return NextResponse.json({ schedule: newSchedule }, { status: 201 });
   } catch (error) {

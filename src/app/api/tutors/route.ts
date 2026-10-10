@@ -88,6 +88,8 @@ export async function POST(request: Request) {
       data: {
         name: validation.data.name,
         type: validation.data.type,
+        // Publish's review screen names tutors added by hand since it last ran.
+        editedOnManageStaffAt: new Date(),
       },
     });
 

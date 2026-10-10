@@ -19,13 +19,17 @@ model User {
 }
 
 model Tutor {
-  id        Int        @id @default(autoincrement())
-  name      String
-  type      String     // "tutor" | "professor" | "staff"
-  subjects  Subject[]
-  schedules Schedule[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id                    Int        @id @default(autoincrement())
+  name                  String
+  type                  String // "tutor" | "professor" | "staff"
+  subjects              Subject[]
+  schedules             Schedule[]
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  // Last time William changed this tutor, their subjects or their shifts on
+  // Manage Staff. Publish rebuilds student tutors from the planner, so its
+  // review screen names any changed since the last publish.
+  editedOnManageStaffAt DateTime?
 }
 
 model Subject {
@@ -70,6 +74,7 @@ model Term {
   holidays         Holiday[]
   buildingHours    BuildingHours[]
   submissions      AvailabilitySubmission[]
+  publications     Publication[]
   createdAt        DateTime                 @default(now())
 }
 
@@ -141,6 +146,23 @@ model PlannedShift {
   end          Int
 
   @@index([submissionId])
+}
+
+// One Publish: a term's planner shifts copied onto the public schedule. The
+// latest one says when the term was last published.
+model Publication {
+  id        Int      @id @default(autoincrement())
+  term      Term     @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId    Int
+  createdAt DateTime @default(now())
+  // The student tutors it removed from the public schedule, kept so a
+  // mistaken publish can be put back.
+  replaced  Json
+  // The student tutors it created, so the planner can tell when its shifts
+  // have changed since.
+  published Json
+
+  @@index([termId])
 }
 
 // One row per public form submission attempt, for per-IP rate limiting. An
