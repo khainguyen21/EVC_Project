@@ -181,6 +181,18 @@ describe("findUnrecognizedSubjects", () => {
     expect(findUnrecognizedSubjects("Math 63, Math 63")).toEqual([]);
   });
 
+  it("reads a C-number after a department as that department's course", () => {
+    expect(findUnrecognizedSubjects("English C1000, C1001")).toEqual([]);
+    expect(findUnrecognizedSubjects("english c1000, c1001, ESL")).toEqual([]);
+    expect(
+      findUnrecognizedSubjects("English C1000, C1001, Psych C1000, 018, 092, Span 211"),
+    ).toEqual([]);
+  });
+
+  it("still flags a word with a number on the end", () => {
+    expect(findUnrecognizedSubjects("Math 71, Calc2")).toEqual(["Calc2"]);
+  });
+
   it("flags parts that name no known course", () => {
     expect(
       findUnrecognizedSubjects("COMSC 75, Intro to Python, COMS 76"),

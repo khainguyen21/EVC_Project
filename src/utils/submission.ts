@@ -151,7 +151,8 @@ export function findUnrecognizedSubjects(raw: string): string[] {
   for (let i = 0; i < parts.length; i++) {
     const soFar = new Set(parseCourseCodes(parts.slice(0, i + 1).join(", ")));
     const addedSomething = [...soFar].some((code) => !seen.has(code));
-    const onlyNumbers = parts[i].split(/\s+/).every((w) => /^\d/.test(w));
+    // "018", "21-25" or a C-number like "C1001", going with the department before.
+    const onlyNumbers = parts[i].split(/\s+/).every((w) => /^C?\d/i.test(w));
     // A repeat ("Math 63, Math 63") adds nothing new but still names a course.
     const standsAlone = parseCourseCodes(parts[i]).length > 0;
     const openLab = OPEN_LAB_PATTERN.test(parts[i]);
