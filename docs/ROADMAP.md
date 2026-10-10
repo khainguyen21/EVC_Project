@@ -21,9 +21,9 @@ Each section lists what is **decided**, what is **waiting on William**, and anyt
 | 2. Confirmation email | Not started. Waiting on Khai's Gmail setup and William's OK on the wording. Must be live by early December. |
 | 3. Print / Save as PDF | Not started |
 | 4. Publish | Live ([PR #7](https://github.com/khainguyen21/EVC_Project/pull/7), with follow-ups [#8](https://github.com/khainguyen21/EVC_Project/pull/8) and [#9](https://github.com/khainguyen21/EVC_Project/pull/9)) |
-| Every EVC department | Built and tested on `feature/every-department`, not merged yet (see feature 4, Also planned) |
+| Every EVC department | Live ([PR #12](https://github.com/khainguyen21/EVC_Project/pull/12); see feature 4, Also planned) |
 
-Next: merge every EVC department, then the confirmation email.
+Next: the confirmation email.
 
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
@@ -291,7 +291,7 @@ A Publish button on the shift planner copies William's planned shifts for the se
 From William's original workflow: when a student asks for a rare subject, such as Ethnic Studies or Criminology, William searches old emails for a tutor who can teach it, emails the student that tutor's hours, and adds a section to the schedule by hand.
 
 - **"Who can tutor ___?"** A subject search on the Tutor Availability page, across the term's submissions, including tutors with no shifts. The public course search already has the matching code.
-- **Every EVC department** (built October 2026, on `feature/every-department`): the course reader knows every department and course in EVC's catalog, from the list Khai recorded (`src/utils/departments.ts`). The one department left out is II (Individualized Instruction): II-210 is the tutoring course itself, and the "II" in "Physics II" is a numeral.
+- **Every EVC department** (live October 2026, [PR #12](https://github.com/khainguyen21/EVC_Project/pull/12)): the course reader knows every department and course in EVC's catalog, from the list Khai recorded (`src/utils/departments.ts`). The one department left out is II (Individualized Instruction): II-210 is the tutoring course itself, and the "II" in "Physics II" is a numeral.
   - **Codes follow the catalog** (MUSIC, ASTRO, ETH, SOC, PSYCH, ACCTG). The short forms tutors wrote before still read. COMS is now Communication Studies, so "COMS 75" no longer reads as a typo for COMSC.
   - **Course numbers keep the catalog's zeros** wherever people read them: "COMSC 075", "MATH 020-025", "CHEM 001A". Matching still ignores zeros, so a student who searches "math 71" finds "MATH 071".
   - **A course number not in the catalog gets a softer warning** (a typo like "COMSC 9999", or an old number like "English 1A" or "Math 63"). The form asks the tutor to check the number, and the inbox shows an amber "Course not in catalog" with the courses named. Unlike "Subjects need review", the tutor still counts on the planner and is still published. A range like "MATH 20-25" is fine as long as some of it is real. "PHYS 7" is fine because the catalog has 7A, 7B and 7C.
