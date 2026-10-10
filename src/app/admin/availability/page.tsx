@@ -21,6 +21,7 @@ import ConfirmModal from "@/components/admin/ConfirmModal";
 import AvailabilityForm from "@/components/availability/AvailabilityForm";
 import WeeklyGrid from "@/components/availability/WeeklyGrid";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
+import { readRememberedTerm, rememberTerm } from "@/lib/rememberedTerm";
 import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import { formatCourseCode } from "@/utils/courseCodes";
 import { pickDefaultTerm } from "@/utils/term";
@@ -114,7 +115,7 @@ export default function AvailabilityInboxPage() {
       .then(({ terms }) => {
         if (stale) return;
         setTerms(terms);
-        setTermId(pickDefaultTerm(terms)?.id ?? null);
+        setTermId(pickDefaultTerm(terms, readRememberedTerm())?.id ?? null);
         setLoadError(null);
         if (terms.length === 0) setLoading(false);
       })
@@ -341,6 +342,7 @@ export default function AvailabilityInboxPage() {
             value={termId ?? ""}
             onChange={(e) => {
               setTermId(Number(e.target.value));
+              rememberTerm(Number(e.target.value));
               setSubmissions([]);
               setLoading(true);
               setLoadError(null);
