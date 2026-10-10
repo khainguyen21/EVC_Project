@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import type { Submission } from "@/types";
-import { formatCourseCode, parseCourseCodes } from "@/utils/courseCodes";
+import { formatCourseCode, parseCourseCodes, unknownCourses } from "@/utils/courseCodes";
 import {
   WEEKDAYS,
   formHours,
@@ -120,6 +120,7 @@ export default function AvailabilityForm({
     () => findUnrecognizedSubjects(subjects),
     [subjects],
   );
+  const notInCatalog = useMemo(() => unknownCourses(subjects), [subjects]);
 
   const updateRow = (key: number, patch: Partial<Row>) => {
     clearError("availability");
@@ -322,7 +323,7 @@ export default function AvailabilityForm({
       <label className="avail-form__field">
         <span className="avail-form__label">Subjects you can tutor</span>
         <span className="avail-form__hint">
-          Course codes separated by commas, e.g. Math 63, COMSC 75, Chem 1A
+          Course codes separated by commas, e.g. Math 71, COMSC 75, Chem 1A
         </span>
         <input
           className="avail-form__input"
@@ -347,6 +348,13 @@ export default function AvailabilityForm({
             {unrecognized.map((u) => `"${u}"`).join(", ")}: it doesn&apos;t
             look like a course code we know. You can still submit, and William
             will check it.
+          </span>
+        )}
+        {notInCatalog.length > 0 && (
+          <span className="avail-form__warning">
+            {`Please check the course number: we couldn't find ${notInCatalog
+              .map((c) => `"${c}"`)
+              .join(", ")} in EVC's catalog. If it's an older course number, you can leave it.`}
           </span>
         )}
         {fieldError("subjects")}

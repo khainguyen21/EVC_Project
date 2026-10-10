@@ -13,6 +13,18 @@ The planner comes first because the Spring form link doesn't go out until around
 
 Each section lists what is **decided**, what is **waiting on William**, and anything **later**.
 
+## Where we are (October 10, 2026)
+
+| | Status |
+|---|---|
+| 1. Shift planner | Live ([PR #4](https://github.com/khainguyen21/EVC_Project/pull/4)) |
+| 2. Confirmation email | Not started. Waiting on Khai's Gmail setup and William's OK on the wording. Must be live by early December. |
+| 3. Print / Save as PDF | Not started |
+| 4. Publish | Live ([PR #7](https://github.com/khainguyen21/EVC_Project/pull/7), with follow-ups [#8](https://github.com/khainguyen21/EVC_Project/pull/8) and [#9](https://github.com/khainguyen21/EVC_Project/pull/9)) |
+| Every EVC department | Built and tested on `feature/every-department`, not merged yet (see feature 4, Also planned) |
+
+Next: merge every EVC department, then the confirmation email.
+
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
 ---
@@ -241,6 +253,8 @@ William prints the schedule to put on the wall and sends a PDF to the EVC websit
 
 Branch: `feature/publish`
 
+**Shipped** in October 2026 as [PR #7](https://github.com/khainguyen21/EVC_Project/pull/7). Two follow-ups: Publish makes the term active ([PR #8](https://github.com/khainguyen21/EVC_Project/pull/8)), and the planner and Tutor Availability page open on the term William last picked ([PR #9](https://github.com/khainguyen21/EVC_Project/pull/9)).
+
 A Publish button on the shift planner copies William's planned shifts for the selected term onto the public schedule. Until then, nothing he plans reaches the public site, and he would have to type every shift again on Manage Staff.
 
 ### Decided
@@ -268,11 +282,21 @@ A Publish button on the shift planner copies William's planned shifts for the se
   - every subject, with a note on the card naming the room ("Works in the Math & Science Resource Center (MS-112). Ask for Ethnic Studies help there.")
 
   It only matters for a tutor whose subjects are taught in more than one room. That is rare, since most tutors choose one. Publish starts with every subject, so a student looking for a rare subject can find the tutor on the site (see Also planned). The choice lives in one small step and is quick to change. A prototype of all three is on the `prototype/publish-subjects` branch: run the site and open `/?variant=A`, `B` or `C`.
+- **COMSC 021** (not blocking): William's Fall 2026 schedule lists it for one tutor, but EVC's catalog has no COMSC 021. A typo, or an old course?
+- **Criminology** (not blocking): EVC's catalog has no Criminology course. The nearest department is Administration of Justice (AJ). Should a tutor who writes "Criminology" count as an AJ tutor? Until then, William fixes that subject in the inbox.
 
 ### Also planned
 
 From William's original workflow: when a student asks for a rare subject, such as Ethnic Studies or Criminology, William searches old emails for a tutor who can teach it, emails the student that tutor's hours, and adds a section to the schedule by hand.
 
 - **"Who can tutor ___?"** A subject search on the Tutor Availability page, across the term's submissions, including tutors with no shifts. The public course search already has the matching code.
-- **Every EVC department:** the course reader learns every EVC department code, from the list Khai recorded rather than guessed. Today it reads "Ethnic Studies" but not "Criminology", so a Criminology tutor is flagged "subjects need review".
+- **Every EVC department** (built October 2026, on `feature/every-department`): the course reader knows every department and course in EVC's catalog, from the list Khai recorded (`src/utils/departments.ts`). The one department left out is II (Individualized Instruction): II-210 is the tutoring course itself, and the "II" in "Physics II" is a numeral.
+  - **Codes follow the catalog** (MUSIC, ASTRO, ETH, SOC, PSYCH, ACCTG). The short forms tutors wrote before still read. COMS is now Communication Studies, so "COMS 75" no longer reads as a typo for COMSC.
+  - **Course numbers keep the catalog's zeros** wherever people read them: "COMSC 075", "MATH 020-025", "CHEM 001A". Matching still ignores zeros, so a student who searches "math 71" finds "MATH 071".
+  - **A course number not in the catalog gets a softer warning** (a typo like "COMSC 9999", or an old number like "English 1A" or "Math 63"). The form asks the tutor to check the number, and the inbox shows an amber "Course not in catalog" with the courses named. Unlike "Subjects need review", the tutor still counts on the planner and is still published. A range like "MATH 20-25" is fine as long as some of it is real. "PHYS 7" is fine because the catalog has 7A, 7B and 7C.
+  - **A new department** is published under its catalog name, and goes to LE-237 on the planner, per the building table.
+  - **Manage Staff's Field box** lists every section the public schedule can have, the same names Publish uses.
+  - **Fixed along the way:** a slash standing alone ("Chem 1A / 1B") crashed the public search and the form; it now reads as "and". The reader no longer takes "Calc2", "72and" or "71/Calc" for course numbers, and asks William to check them instead. A number after a word it can't read no longer goes to the department before it: "English 1A, Mth 20" used to read the 20 as ENGL 20.
+  - **Upkeep:** EVC adds courses every year. A new course gets the softer warning until the list is updated, by pasting the new catalog list the same way.
+  - "Criminology" still shows "subjects need review", since EVC has no Criminology course (see Waiting on William).
 - Send the "your shifts are posted" email (see feature 2).

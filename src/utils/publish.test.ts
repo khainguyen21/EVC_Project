@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { hhmmToMinutes, type Building, type Weekday } from "./centerHours";
 import { parseCourseCodes } from "./courseCodes";
 import type { Shift } from "./planner";
-import { SUBJECT_AREAS, planPublish, type PublishSubmission } from "./publish";
+import { SUBJECT_AREAS, WEBSITE_SECTIONS, planPublish, type PublishSubmission } from "./publish";
 
 function submission(
   id: number,
@@ -65,8 +65,8 @@ describe("planPublish", () => {
     expect(plan.tutors[0].subjects).toHaveLength(2);
     expect(plan.tutors[0].subjects).toEqual(
       expect.arrayContaining([
-        { name: "MATH 71-72, STAT C1000", field: "Mathematics" },
-        { name: "CHEM 1A", field: "Chemistry" },
+        { name: "MATH 071-072, STAT C1000", field: "Mathematics" },
+        { name: "CHEM 001A", field: "Chemistry" },
       ]),
     );
   });
@@ -87,7 +87,7 @@ describe("planPublish", () => {
     );
 
     expect(plan.tutors[0].subjects).toEqual(
-      expect.arrayContaining([{ name: "Statistics, MATH 71", field: "Mathematics" }]),
+      expect.arrayContaining([{ name: "Statistics, MATH 071", field: "Mathematics" }]),
     );
   });
 
@@ -105,6 +105,35 @@ describe("planPublish", () => {
       const searchable = plan.tutors[0].subjects.flatMap((s) => parseCourseCodes(s.name));
       expect(searchable, department).toContain(`${department}-*`);
     }
+  });
+
+  it("puts a department the website has no section for yet under its catalog name", () => {
+    const plan = planPublish(
+      [submission(1, "Alex Rivera", "Anthropology 62, AJ 110")],
+      [shift(1, "LE-237", "Monday", "09:00", "12:00")],
+    );
+
+    expect(plan.tutors[0].subjects).toEqual(
+      expect.arrayContaining([
+        { name: "ANTH 062", field: "Anthropology" },
+        { name: "AJ 110", field: "Administration of Justice" },
+      ]),
+    );
+  });
+
+  it("still publishes a course that isn't in EVC's catalog, as the tutor wrote it", () => {
+    const plan = planPublish(
+      [submission(1, "Alex Rivera", "COMSC 9999, English 1A")],
+      [shift(1, "MS-112", "Monday", "09:00", "12:00")],
+    );
+
+    expect(plan.needsReview).toEqual([]);
+    expect(plan.tutors[0].subjects).toEqual(
+      expect.arrayContaining([
+        { name: "COMSC 9999", field: "Computer Science" },
+        { name: "ENGL 001A", field: "English" },
+      ]),
+    );
   });
 
   it("lists Open Computer Lab under its own name", () => {
@@ -158,5 +187,35 @@ describe("planPublish", () => {
     );
 
     expect(plan).toEqual({ tutors: [], noShifts: [], needsReview: [], availabilityChanged: [] });
+  });
+});
+
+describe("WEBSITE_SECTIONS", () => {
+  it("offers every section Publish can put a tutor in", () => {
+    for (const section of [...Object.values(SUBJECT_AREAS), "Open Computer Lab"]) {
+      expect(WEBSITE_SECTIONS).toContain(section);
+    }
+  });
+
+  it("keeps every field Manage Staff offered before", () => {
+    for (const field of [
+      "Accounting", "Art", "Astronomy", "Biology", "Business", "Chemistry", "Computer Science",
+      "English", "ESL", "Ethnic Studies", "History", "Mathematics", "Music", "Physics",
+      "Psychology", "Sociology", "Spanish", "Vietnamese",
+    ]) {
+      expect(WEBSITE_SECTIONS).toContain(field);
+    }
+  });
+
+  it("offers no name that would start a second section for the same subject", () => {
+    // Stats and BIS share a section with Math and Business; ESL is "ESL" on the live site.
+    for (const name of ["Statistics", "Business Information Systems", "English As a Second Language", "Math"]) {
+      expect(WEBSITE_SECTIONS).not.toContain(name);
+    }
+  });
+
+  it("lists each section once, in alphabetical order", () => {
+    expect(new Set(WEBSITE_SECTIONS).size).toBe(WEBSITE_SECTIONS.length);
+    expect([...WEBSITE_SECTIONS].sort((a, b) => a.localeCompare(b))).toEqual(WEBSITE_SECTIONS);
   });
 });

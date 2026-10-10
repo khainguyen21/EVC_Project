@@ -181,10 +181,14 @@ describe("findUnrecognizedSubjects", () => {
     expect(findUnrecognizedSubjects("Math 63, Math 63")).toEqual([]);
   });
 
+  it("flags numbers that follow a word it can't read, not only the word", () => {
+    expect(findUnrecognizedSubjects("English 1A, Mth 20, 21")).toEqual(["Mth 20", "21"]);
+  });
+
   it("flags parts that name no known course", () => {
     expect(
-      findUnrecognizedSubjects("COMSC 75, Intro to Python, COMS 76"),
-    ).toEqual(["Intro to Python", "COMS 76"]);
+      findUnrecognizedSubjects("COMSC 75, Intro to Python, COMPSC 76"),
+    ).toEqual(["Intro to Python", "COMPSC 76"]);
   });
 
   it.each([
@@ -225,7 +229,24 @@ describe("submissionFlags", () => {
   });
 
   it("has no flags for a clean submission", () => {
-    expect(submissionFlags({ units: 6, subjectsRaw: "Math 63" })).toEqual([]);
+    expect(submissionFlags({ units: 6, subjectsRaw: "Math 71" })).toEqual([]);
+  });
+
+  it("notes a course that isn't in EVC's catalog, without calling the subjects unreadable", () => {
+    expect(submissionFlags({ units: 6, subjectsRaw: "COMSC 9999" })).toEqual([
+      "courses-not-in-catalog",
+    ]);
+    expect(submissionFlags({ units: 6, subjectsRaw: "English 1A, Math 63" })).toEqual([
+      "courses-not-in-catalog",
+    ]);
+  });
+
+  it("gives every flag that applies, in the same order", () => {
+    expect(submissionFlags({ units: 3, subjectsRaw: "Mth 71, Math 8000" })).toEqual([
+      "under-units",
+      "subjects-need-review",
+      "courses-not-in-catalog",
+    ]);
   });
 });
 

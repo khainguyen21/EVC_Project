@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hhmmToMinutes, type Building, type BuildingHours, type Weekday } from "./centerHours";
+import { parseCourseCodes } from "./courseCodes";
 import type { AvailabilityRow } from "./submission";
 import { FALL_2026_HOURS as hours } from "./testFixtures";
 import {
@@ -58,6 +59,22 @@ describe("buildingsFor", () => {
       "SQ-231",
     ]);
   });
+
+  it.each([
+    ["Astronomy", "MS-112"],
+    ["Chemistry", "MS-112"],
+    ["Computer Science", "MS-112"],
+    ["Engineering", "MS-112"],
+    ["Math", "MS-112"],
+    ["Stats", "MS-112"],
+    ["Physics", "MS-112"],
+    ["Biology", "SQ-231"],
+    ["Music", "VPA-109/111"],
+    ["English", "LE-237"],
+    ["Anthropology", "LE-237"],
+  ])("puts %s in %s, as the roadmap's building table does", (subject, building) => {
+    expect(buildingsFor(parseCourseCodes(subject))).toEqual([building]);
+  });
 });
 
 describe("tutorCourses", () => {
@@ -69,6 +86,12 @@ describe("tutorCourses", () => {
   it("gives a tutor whose subjects name no course no building", () => {
     const courses = tutorCourses({ subjectCodes: [], subjectsRaw: "Calculus and anatomy" });
     expect(buildingsFor(courses)).toEqual([]);
+  });
+
+  it("still counts a tutor whose course isn't in EVC's catalog, a softer warning", () => {
+    const courses = tutorCourses({ subjectCodes: parseCourseCodes("COMSC 9999"), subjectsRaw: "COMSC 9999" });
+    expect(courses).toEqual(["COMSC-9999"]);
+    expect(buildingsFor(courses)).toEqual(["MS-112"]);
   });
 
   it("counts nothing until William fixes subjects that need review", () => {
@@ -328,7 +351,7 @@ describe("shiftForDrop", () => {
 
   it("makes nothing in a building that is closed that day", () => {
     const noVpaMondays: BuildingHours = { ...hours, "VPA-109/111": {} };
-    const music = tutor(7, ["MUS-1"], [free("Monday", "09:00", "17:00")]);
+    const music = tutor(7, ["MUSIC-1"], [free("Monday", "09:00", "17:00")]);
     expect(shiftForDrop(music, [], noVpaMondays, "VPA-109/111", "Monday", at("12:00"))).toBeNull();
   });
 

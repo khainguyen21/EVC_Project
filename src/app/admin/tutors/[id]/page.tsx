@@ -22,6 +22,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { formatTime } from "@/utils/formatTime";
+import { WEBSITE_SECTIONS } from "@/utils/publish";
 
 type TutorSubject = { id: number; name: string; field: string };
 type TutorSchedule = {
@@ -781,24 +782,9 @@ export default function EditTutorPage() {
                                 }}
                               />
                               <datalist id="ai-field-options">
-                                <option value="Accounting" />
-                                <option value="Art" />
-                                <option value="Astronomy" />
-                                <option value="Biology" />
-                                <option value="Business" />
-                                <option value="Chemistry" />
-                                <option value="Computer Science" />
-                                <option value="English" />
-                                <option value="ESL" />
-                                <option value="Ethnic Studies" />
-                                <option value="History" />
-                                <option value="Mathematics" />
-                                <option value="Music" />
-                                <option value="Physics" />
-                                <option value="Psychology" />
-                                <option value="Sociology" />
-                                <option value="Spanish" />
-                                <option value="Vietnamese" />
+                                {WEBSITE_SECTIONS.map((section) => (
+                                  <option key={section} value={section} />
+                                ))}
                               </datalist>
                               <button
                                 onClick={() =>
@@ -1303,23 +1289,9 @@ export default function EditTutorPage() {
                     onBlur={(e) => (e.target.style.borderColor = "#cbd5e1")}
                   />
                   <datalist id="field-options">
-                    <option value="Accounting" />
-                    <option value="Art" />
-                    <option value="Astronomy" />
-                    <option value="Biology" />
-                    <option value="Business" />
-                    <option value="Chemistry" />
-                    <option value="Computer Science" />
-                    <option value="English" />
-                    <option value="Ethnic Studies" />
-                    <option value="History" />
-                    <option value="Mathematics" />
-                    <option value="Music" />
-                    <option value="Physics" />
-                    <option value="Psychology" />
-                    <option value="Sociology" />
-                    <option value="Spanish" />
-                    <option value="Vietnamese" />
+                    {WEBSITE_SECTIONS.map((section) => (
+                      <option key={section} value={section} />
+                    ))}
                   </datalist>
                 </div>
                 <div
