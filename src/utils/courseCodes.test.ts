@@ -554,3 +554,22 @@ describe("the course reader, with odd input", () => {
     expect(unknownCourses("MATH-020-022")).toEqual([]);
   });
 });
+
+describe("the course reader, with a slash on its own", () => {
+  it("reads a slash standing alone as and, instead of crashing", () => {
+    expect(parseCourseCodes("Chem 1A / 1B")).toEqual(["CHEM-1A", "CHEM-1B"]);
+    expect(parseCourseCodes("Math 66 / 67")).toEqual(["MATH-66", "MATH-67"]);
+    expect(parseCourseCodes("Math /")).toEqual(["MATH-*"]);
+    expect(parseCourseCodes("/")).toEqual([]);
+    expect(parseCourseCodes("Phys 7A //// 7B")).toEqual(["PHYS-7A", "PHYS-7B"]);
+  });
+
+  it("doesn't flag the slash as a word it can't read", () => {
+    expect(unreadWords("Chem 1A / 1B")).toEqual([]);
+  });
+
+  it("lets the public search take a slash", () => {
+    expect(() => parseQuery("chem 1a / 1b")).not.toThrow();
+    expect(() => parseQuery("/")).not.toThrow();
+  });
+});
