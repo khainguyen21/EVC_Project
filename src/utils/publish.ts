@@ -54,13 +54,12 @@ export interface PublishPlan {
 }
 
 /**
- * Where the live schedule already names a section its own way. Stats sits
- * with Math there, and BIS with Business.
+ * Where the live schedule already names a section its own way. BIS sits with
+ * Business there. Stats used to sit with Math; it has its own section now.
  */
 const LIVE_SECTION_NAMES: Record<string, string> = {
   BIS: "Business",
   ESL: "ESL",
-  STAT: "Mathematics",
 };
 
 /**
@@ -85,13 +84,23 @@ export const WEBSITE_SECTIONS: string[] = [
 ].sort((a, b) => a.localeCompare(b));
 
 /**
+ * The Field box's list: the sections on the public schedule now come first,
+ * so William sees the few he uses before scrolling, then every other one.
+ */
+export function fieldSuggestions(inUse: string[]): string[] {
+  const used = [...new Set(inUse.map((f) => f.trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+  return [...used, ...WEBSITE_SECTIONS.filter((section) => !used.includes(section))];
+}
+
+/**
  * A whole department's name on a subject line, where the subject area's name
- * would read as its sibling: "Mathematics" means any Math course to students
- * and to the public search, not any Stats one.
+ * would read as its sibling: "Business" means any Business course to students
+ * and to the public search, not any BIS one.
  */
 const WHOLE_DEPARTMENT_NAMES: Record<string, string> = {
   BIS: "BIS",
-  STAT: "Statistics",
 };
 
 /** One line per subject area, shortened the way William types them. */
