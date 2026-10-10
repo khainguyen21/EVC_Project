@@ -11,6 +11,7 @@ import WeekSummary from "@/components/planner/WeekSummary";
 import PublishDialog from "@/components/planner/PublishDialog";
 import { hoursText, usualHoursText } from "@/components/planner/format";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
+import { readRememberedTerm, rememberTerm } from "@/lib/rememberedTerm";
 import { WEEKDAYS, type Weekday } from "@/utils/centerHours";
 import {
   freeTimes,
@@ -104,7 +105,7 @@ export default function ShiftPlannerPage() {
       .then(({ terms }) => {
         if (stale) return;
         setTerms(terms);
-        setTermId(pickDefaultTerm(terms)?.id ?? null);
+        setTermId(pickDefaultTerm(terms, readRememberedTerm())?.id ?? null);
         if (terms.length === 0) setLoading(false);
       })
       .catch((error) => {
@@ -407,6 +408,7 @@ export default function ShiftPlannerPage() {
                 setData(null);
                 setHistory([]);
                 setTermId(Number(e.target.value));
+                rememberTerm(Number(e.target.value));
               }}
               aria-label="Term"
               style={{

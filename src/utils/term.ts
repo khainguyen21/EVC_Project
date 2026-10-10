@@ -70,11 +70,16 @@ export function formatTermDate(isoDate: string): string {
 }
 
 /**
- * The term the admin inbox and shift planner open on: the one whose form is
- * open, else the active one, else the newest.
+ * The term the admin inbox and shift planner open on: the one William last
+ * picked (see rememberedTerm), else the one whose form is open, else the
+ * active one, else the newest.
  */
-export function pickDefaultTerm(terms: AdminTerm[]): AdminTerm | undefined {
+export function pickDefaultTerm(
+  terms: AdminTerm[],
+  lastPickedId?: number | null,
+): AdminTerm | undefined {
   return (
+    terms.find((t) => t.id === lastPickedId) ??
     terms.find((t) => t.availabilityCode) ??
     terms.find((t) => t.isActive) ??
     terms[0]
