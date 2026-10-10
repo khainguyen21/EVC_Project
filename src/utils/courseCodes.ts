@@ -71,7 +71,7 @@ const PREFIX_ALIASES: Record<string, string> = {
  * Words that don't change which courses a subject list names: "any Math",
  * "all levels", "Chem 1A & 1B".
  */
-const FILLER_WORDS = new Set(["ANY", "ALL", "AND", "&", "CLASS", "CLASSES", "COURSE", "COURSES", "LEVEL", "LEVELS"]);
+const FILLER_WORDS = new Set(["ANY", "ALL", "AND", "&", "/", "CLASS", "CLASSES", "COURSE", "COURSES", "LEVEL", "LEVELS"]);
 
 /** Longest alias key in words, so multi-word names are matched before single. */
 const MAX_ALIAS_WORDS = 2;
@@ -112,6 +112,7 @@ function expandNumbers(chunk: string): string[] {
 
   if (token.includes("/")) {
     const parts = token.split("/").filter(Boolean);
+    if (parts.length === 0) return [];
     const first = normalizeNumber(parts[0]);
     if (!first) return [];
     const digits = /^(\d+)/.exec(first)?.[1] ?? "";
