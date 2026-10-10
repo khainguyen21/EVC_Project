@@ -97,6 +97,7 @@ William places approved tutors' shifts into buildings, one day at a time. It is 
 - The form offers the same times every weekday: from the week's earliest opening to its latest closing (8 am–8 pm in Fall 2026), even on a day when every building closes earlier. William wants each tutor's full availability, not only the hours that fit a building that day (he asked for this after trying it). "All day" means that whole span. The planner still counts coverage only while a building is open.
 - Tutor shifts can start when a building opens, so MS shifts can start at 8 am.
 - Hovering the coverage strip lists the courses covered at that time.
+- Shifts that overlap in a building stack like a calendar app: a later shift sits on top of an earlier one, indented, so the earlier one's name still shows. Clicking a shift brings it to the front so a covered one can be read. Clicking anywhere else, switching days, or any change to the shifts (including Undo) puts the stack back in order. It used to come to the front on hover, but then a long shift covered the shorter ones on top of it as soon as the mouse crossed it, and they could no longer be reached (Khai, 2026-10-10).
 - Only the student tutors William places count. Staff and professor hours don't count toward coverage (William confirmed), and they are not shown in the first version.
 - These are warnings. The planner never blocks William.
 

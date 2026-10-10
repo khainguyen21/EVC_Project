@@ -154,6 +154,17 @@ export default function RoomBoard({
   onChange,
   onRefuse,
 }: Props) {
+  // The shift last clicked, drawn over the shifts stacked on it until another
+  // click, another day, or any change to the shifts (an edit or Undo), so a
+  // shift just placed or moved never ends up hidden under it. Not on hover: a
+  // long shift would cover the ones on top of it as soon as the mouse crossed
+  // it, and they could no longer be reached.
+  const [clicked, setClicked] = useState<{ id: string; day: Weekday; shifts: Shift[] } | null>(
+    null,
+  );
+  if (clicked && (clicked.day !== day || clicked.shifts !== shifts)) setClicked(null);
+  const front = clicked?.id ?? null;
+  const setFront = (id: string | null) => setClicked(id === null ? null : { id, day, shifts });
   // Time runs from the first building opening to the last one closing.
   const span = dayHours(hours, day);
   if (!span) {
@@ -236,6 +247,8 @@ export default function RoomBoard({
 
   return (
     <div
+      // A click anywhere but on a shift puts the stack back in order.
+      onClick={() => setFront(null)}
       style={{
         display: "grid",
         gridTemplateColumns: `52px repeat(${BUILDINGS.length}, minmax(150px, 1fr))`,
@@ -244,7 +257,6 @@ export default function RoomBoard({
       }}
     >
       {/*
-        The shift under the mouse comes to the front, so a covered one can be read.
         Shifts sharing a column get too narrow for a one-line name and the full
         time, so there the name wraps between words (cutting off a word that still
         doesn't fit), the time is shorter, lines are tighter so an hour holds three,
@@ -252,7 +264,6 @@ export default function RoomBoard({
       */}
       <style>{`
         .planner-shift { container-type: inline-size; }
-        .planner-shift:hover { z-index: 1000 !important; }
         .planner-shift-card { padding: 3px 18px 3px 8px; }
         .planner-shift-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .planner-shift-time { white-space: nowrap; }
@@ -323,6 +334,8 @@ export default function RoomBoard({
           today={today.filter((s) => s.building === b)}
           draggingTutor={draggingTutor}
           lit={lit.includes(b)}
+          front={front}
+          setFront={setFront}
           beginDrag={beginDrag}
           endDrag={endDrag}
           onDrop={(e) => drop(b, e)}
@@ -348,6 +361,8 @@ function BuildingColumn({
   today,
   draggingTutor,
   lit,
+  front,
+  setFront,
   beginDrag,
   endDrag,
   onDrop,
@@ -367,6 +382,8 @@ function BuildingColumn({
   today: Shift[];
   draggingTutor: PlannerTutor | undefined;
   lit: boolean;
+  front: string | null;
+  setFront: (id: string | null) => void;
   beginDrag: (tutorId: number) => void;
   endDrag: () => void;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -538,7 +555,7 @@ function BuildingColumn({
                 height: y(s.end) - y(s.start) - 2,
                 left,
                 width,
-                zIndex: z,
+                zIndex: s.id === front ? 1000 : z,
                 // Let drops land on the column underneath while dragging.
                 pointerEvents: draggingTutor ? "none" : undefined,
               }}
@@ -555,6 +572,12 @@ function BuildingColumn({
                   beginDrag(s.tutorId);
                 }}
                 onDragEnd={endDrag}
+                // Only the card itself: the edges and × let the click through,
+                // which puts the stack back in order.
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFront(s.id);
+                }}
                 title={[`${name}, ${timeRange(s.start, s.end)}`, ...warnings.map((w) => WARNING_TEXT[w])].join(
                   "\n",
                 )}
@@ -569,8 +592,11 @@ function BuildingColumn({
                   fontSize: "0.74rem",
                   overflow: "hidden",
                   cursor: "grab",
-                  // A white edge keeps stacked shifts apart.
-                  boxShadow: "0 0 0 1px white, 0 2px 4px rgba(0,0,0,0.2)",
+                  // A white edge keeps stacked shifts apart; the clicked one is lifted.
+                  boxShadow:
+                    s.id === front
+                      ? "0 0 0 2px white, 0 4px 12px rgba(0,0,0,0.4)"
+                      : "0 0 0 1px white, 0 2px 4px rgba(0,0,0,0.2)",
                 }}
               >
                 <div className="planner-shift-name" style={{ fontWeight: 700 }}>
