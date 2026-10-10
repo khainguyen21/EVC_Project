@@ -439,6 +439,8 @@ export default function ShiftPlannerPage() {
             setReviewing(false);
             showToast(`Published: ${tutors} ${tutors === 1 ? "tutor is" : "tutors are"} on the public schedule.`);
             setPublishVersion((n) => n + 1);
+            // Publishing made this term the active one.
+            setTerms((ts) => ts.map((t) => ({ ...t, isActive: t.id === term.id })));
           }}
         />
       )}

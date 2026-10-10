@@ -17,7 +17,8 @@ const createTermSchema = z
     path: ["endDate"],
   });
 
-// Admin: every term, newest first.
+// Admin: every term, newest first, and the last term published from the
+// planner, whose student tutors are the ones on the public schedule.
 export async function GET() {
   try {
     const session = await getSession();
@@ -25,10 +26,16 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const terms = await prisma.term.findMany({
-      include: { ...TERM_INCLUDE, _count: { select: { submissions: true } } },
-      orderBy: { startDate: "desc" },
-    });
+    const [terms, lastPublication] = await Promise.all([
+      prisma.term.findMany({
+        include: { ...TERM_INCLUDE, _count: { select: { submissions: true } } },
+        orderBy: { startDate: "desc" },
+      }),
+      prisma.publication.findFirst({
+        orderBy: { createdAt: "desc" },
+        select: { termId: true },
+      }),
+    ]);
 
     // Admin-only fields ride alongside the public shape (see AdminTerm).
     const adminTerms: AdminTerm[] = terms.map((term) => ({
@@ -37,7 +44,10 @@ export async function GET() {
       submissionCount: term._count.submissions,
     }));
 
-    return NextResponse.json({ terms: adminTerms });
+    return NextResponse.json({
+      terms: adminTerms,
+      publishedTermId: lastPublication?.termId ?? null,
+    });
   } catch (error) {
     console.error("[GET /api/terms]", error);
     return NextResponse.json(

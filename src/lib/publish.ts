@@ -63,7 +63,8 @@ export class NothingToPublishError extends Error {}
 /**
  * Replaces every student tutor on the public schedule with the term's plan,
  * in one transaction so students never see half a schedule. Professors and
- * staff are left alone. The replaced tutors are kept on the Publication.
+ * staff are left alone. The replaced tutors are kept on the Publication, and
+ * the term becomes the active one.
  *
  * A fixed handful of queries however many tutors there are: the site and the
  * database are in different regions, so a few queries per tutor would be slow.
@@ -124,6 +125,14 @@ export async function publishTerm(termId: number) {
       update: { scheduleLastUpdated: publication.createdAt },
       create: { id: 1, scheduleLastUpdated: publication.createdAt },
     });
+
+    // Students now see this term's tutors, so the homepage dates and closed
+    // days should be this term's too. William never publishes a term early.
+    await tx.term.updateMany({
+      where: { isActive: true, id: { not: termId } },
+      data: { isActive: false },
+    });
+    await tx.term.update({ where: { id: termId }, data: { isActive: true } });
 
     return {
       publishedAt: publication.createdAt.toISOString(),

@@ -106,19 +106,12 @@ export default function PublishDialog({
               go live as soon as you click Publish. Professors and staff stay as they are.
             </p>
 
-            {/* Publishing goes live at once whichever term is active. */}
-            {activeTerm === null ? (
-              <Note tone="warning">
-                No term is active, so the homepage shows no term dates and ignores closed days.
-                Make a term active on Terms &amp; Holidays.
+            {activeTerm?.id !== termId && (
+              <Note tone="plain">
+                Publishing also makes {termName} the active term
+                {activeTerm ? ` in place of ${activeTerm.name}` : ""}, so the homepage shows its
+                dates and closed days.
               </Note>
-            ) : (
-              activeTerm.id !== termId && (
-                <Note tone="warning">
-                  {activeTerm.name} is still the active term. Students will see {termName}&apos;s
-                  shifts right away.
-                </Note>
-              )
             )}
 
             <Section
