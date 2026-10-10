@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCourseCodes, shortenCourseCodes, unreadWords } from "./courseCodes";
+import { parseCourseCodes, parseQuery, shortenCourseCodes, unreadWords } from "./courseCodes";
 
 describe("parseCourseCodes", () => {
   it("reads a department hyphenated to its number", () => {
@@ -134,5 +134,24 @@ describe("shortenCourseCodes", () => {
     const codes = parseCourseCodes(subjects);
     const shortened = shortenCourseCodes(codes).join(", ");
     expect(parseCourseCodes(shortened).sort()).toEqual([...codes].sort());
+  });
+});
+
+describe("the course reader, with a slash on its own", () => {
+  it("reads a slash standing alone as and, instead of crashing", () => {
+    expect(parseCourseCodes("Chem 1A / 1B")).toEqual(["CHEM-1A", "CHEM-1B"]);
+    expect(parseCourseCodes("Math 66 / 67")).toEqual(["MATH-66", "MATH-67"]);
+    expect(parseCourseCodes("Math /")).toEqual(["MATH-*"]);
+    expect(parseCourseCodes("/")).toEqual([]);
+    expect(parseCourseCodes("Phys 7A //// 7B")).toEqual(["PHYS-7A", "PHYS-7B"]);
+  });
+
+  it("doesn't flag the slash as a word it can't read", () => {
+    expect(unreadWords("Chem 1A / 1B")).toEqual([]);
+  });
+
+  it("lets the public search take a slash", () => {
+    expect(() => parseQuery("chem 1a / 1b")).not.toThrow();
+    expect(() => parseQuery("/")).not.toThrow();
   });
 });
