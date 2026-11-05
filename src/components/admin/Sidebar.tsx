@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Inbox,
   LayoutGrid,
+  Printer,
 } from "lucide-react";
 import { SUBMISSIONS_CHANGED } from "@/lib/submissionEvents";
 
@@ -40,6 +41,7 @@ export default function Sidebar() {
       badge: pending,
     },
     { name: "Shift Planner", href: "/admin/planner", icon: LayoutGrid },
+    { name: "Print Schedule", href: "/admin/print", icon: Printer },
     { name: "Terms & Holidays", href: "/admin/terms", icon: CalendarDays },
   ];
 

@@ -1,6 +1,6 @@
 import { logout } from '@/app/actions/auth'
 import Link from 'next/link'
-import { LogOut, ArrowRight, ShieldCheck, AlertTriangle, CalendarDays } from 'lucide-react'
+import { LogOut, ArrowRight, ShieldCheck, AlertTriangle, CalendarDays, Printer } from 'lucide-react'
 import { getActiveTermSafe } from '@/lib/activeTerm'
 import { getCampusNow } from '@/utils/availability'
 import { formatTermDate, getTermLifecycle } from '@/utils/term'
@@ -119,6 +119,27 @@ export default async function AdminDashboardPage() {
           </div>
           <Link href="/admin/tutors" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: 'white', color: '#059669', borderRadius: '12px', fontWeight: '600', textDecoration: 'none', width: 'fit-content', transition: 'all 0.2s' }}>
             Manage Staff
+            <ArrowRight size={18} />
+          </Link>
+        </div>
+
+        {/* Print Card */}
+        <div style={{ padding: "32px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "24px", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.05)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Printer size={24} />
+              </div>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+                Print Schedule
+              </h3>
+            </div>
+            <p style={{ color: "#475569", lineHeight: "1.6", marginBottom: "24px" }}>
+              Print the schedule for the wall, or save it as a PDF for the EVC website team.
+            </p>
+          </div>
+          <Link href="/admin/print" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: '#10b981', color: 'white', borderRadius: '12px', fontWeight: '600', textDecoration: 'none', width: 'fit-content', transition: 'all 0.2s' }}>
+            Print Schedule
             <ArrowRight size={18} />
           </Link>
         </div>

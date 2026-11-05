@@ -13,17 +13,17 @@ The planner comes first because the Spring form link doesn't go out until around
 
 Each section lists what is **decided**, what is **waiting on William**, and anything **later**.
 
-## Where we are (October 10, 2026)
+## Where we are (November 5, 2026)
 
 | | Status |
 |---|---|
 | 1. Shift planner | Live ([PR #4](https://github.com/khainguyen21/EVC_Project/pull/4)) |
 | 2. Confirmation email | Not started. Waiting on Khai's Gmail setup and William's OK on the wording. Must be live by early December. |
-| 3. Print / Save as PDF | Not started |
+| 3. Print / Save as PDF | Built and tested on `feature/print`, not merged yet |
 | 4. Publish | Live ([PR #7](https://github.com/khainguyen21/EVC_Project/pull/7), with follow-ups [#8](https://github.com/khainguyen21/EVC_Project/pull/8) and [#9](https://github.com/khainguyen21/EVC_Project/pull/9)) |
 | Every EVC department | Live ([PR #12](https://github.com/khainguyen21/EVC_Project/pull/12); see feature 4, Also planned) |
 
-Next: the confirmation email.
+Next: merge Print, then the confirmation email, which must be live by early December.
 
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
@@ -215,13 +215,13 @@ A second email, "your shifts are posted", sent with Publish (feature 4).
 
 ## 3. Print / Save as PDF
 
-Branch: `feature/print-schedule`
+Branch: `feature/print`
 
 William prints the schedule to put on the wall and sends a PDF to the EVC website team.
 
 ### Decided
 
-- The button is admin only, on the dashboard.
+- The button is admin only, on the dashboard and in the admin sidebar.
 - It opens the browser's print dialog, which has "Save as PDF" built in. Nothing extra to install.
 - The design copies William's Fall 2026 document (Khai has the Word file and the PDF; they have tutor names, so they stay out of this public repo):
   - Title: "<Term> Math and Science (STEM) Faculty/Staff/Tutor Tutoring Schedule".
@@ -242,11 +242,20 @@ William prints the schedule to put on the wall and sends a PDF to the EVC websit
 
 - A tutor in two buildings shows only their shifts in the ticked buildings.
 - Professors and staff come from Manage Staff, so the print reads the public schedule, not the planner. That means it works today, before the planner or Publish.
+- **Where it follows the site, not the Word file** (Khai, October 10, 2026):
+  - Statistics is its own section, as on the public schedule. William's document puts Stats tutors under Math.
+  - The math section is "Mathematics". Each professor is listed only under their own subjects. William's document calls it "Math and Science" and lists every MS-112 professor there.
+  - Professors, staff and student tutors are each in alphabetical order. William's document has no fixed order.
+  - The contact line at the end is typed on the print page and remembered on William's computer, so no name or email is in the code.
+  - Headings name the room the way William's document does: "Math and Science Resource Center-MSRC, MS-112 of MS3" and "Biology Skills Lab – BSL, SQ-231 of Sequoia". LE-237 and VPA-109/111 show just the room until William names them.
+  - A shift isn't tied to one course, so a tutor appears once in each subject, with all of that subject's courses and all their shifts. William's document splits one Biology tutor into two entries with different hours.
+- **Wording copied from William's document:** students "Mon/Wed 12:00-6:00pm (in MS-112)", professors "Mondays/Wednesdays 11:00am-1:00pm", staff "MTWTh 9am-6pm, Fri 9am-5pm". Days with the same hours are joined, and two shifts on one day share a line.
 
 ### Waiting on William
 
 - Do LE and VPA tutors go on a separate schedule for the website team, and does William make it? (Not blocking: the building checkboxes cover either answer.)
 - Are the titles above right?
+- Full names for the LE-237 and VPA-109/111 rooms, like "Math and Science Resource Center-MSRC, MS-112 of MS3". (Not blocking: the room number shows until then.)
 
 ---
 
