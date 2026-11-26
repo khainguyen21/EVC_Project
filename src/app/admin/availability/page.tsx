@@ -26,18 +26,16 @@ import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import { formatCourseCode, unknownCourses } from "@/utils/courseCodes";
 import { pickDefaultTerm } from "@/utils/term";
 import type { BuildingHours } from "@/utils/centerHours";
-import type { SubmissionInput, SubmissionStatus } from "@/utils/submission";
+import {
+  SUBMISSION_FLAG_LABELS,
+  type SubmissionInput,
+  type SubmissionStatus,
+} from "@/utils/submission";
 
 const STATUS_STYLES: Record<SubmissionStatus, { bg: string; color: string; label: string }> = {
   pending: { bg: "#fffbeb", color: "#b45309", label: "Pending" },
   approved: { bg: "#ecfdf5", color: "#059669", label: "Approved" },
   declined: { bg: "#f1f5f9", color: "#475569", label: "Declined" },
-};
-
-const FLAG_LABELS: Record<Submission["flags"][number], string> = {
-  "under-units": "Under 6 units",
-  "subjects-need-review": "Subjects need review",
-  "courses-not-in-catalog": "Course not in catalog",
 };
 
 /** The softer flag is amber: the tutor still counts on the planner and is published. */
@@ -536,7 +534,7 @@ export default function AvailabilityInboxPage() {
                             )}
                             {s.flags.map((f) => (
                               <span key={f} style={pill(...FLAG_COLORS[f])}>
-                                {FLAG_LABELS[f]}
+                                {SUBMISSION_FLAG_LABELS[f]}
                               </span>
                             ))}
                           </div>

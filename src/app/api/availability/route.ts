@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { prisma } from "@/lib/client";
+import { sendSubmissionAlert } from "@/lib/mailer";
 import { allowSubmissionAttempt } from "@/lib/rateLimit";
 import { toBuildingHours } from "@/utils/centerHours";
 import {
+  submissionFlags,
   submissionSchema,
   toResubmissionData,
   toSubmissionData,
@@ -65,12 +67,29 @@ export async function POST(request: Request) {
       select: { _count: { select: { shifts: true } } },
     });
 
+    const hadShifts = (existing?._count.shifts ?? 0) > 0;
+
     // Same student, same term: the new submission replaces the old one.
     await prisma.availabilitySubmission.upsert({
       where: { termId_studentId: key },
       create: { ...key, ...toSubmissionData(input, hours) },
-      update: toResubmissionData(input, hours, new Date(), (existing?._count.shifts ?? 0) > 0),
+      update: toResubmissionData(input, hours, new Date(), hadShifts),
     });
+
+    // Emails William once the tutor already has their answer, so Gmail being
+    // slow or down never delays or fails the submission.
+    after(() =>
+      sendSubmissionAlert({
+        name: input.name,
+        email: input.email,
+        termName: term.name,
+        resubmitted: existing !== null,
+        hadShifts,
+        subjects: input.subjects,
+        units: input.units,
+        flags: submissionFlags({ units: input.units, subjectsRaw: input.subjects }),
+      }),
+    );
 
     return NextResponse.json({ ok: true, resubmitted: existing !== null });
   } catch (error) {

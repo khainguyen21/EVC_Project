@@ -13,17 +13,17 @@ The planner comes first because the Spring form link doesn't go out until around
 
 Each section lists what is **decided**, what is **waiting on William**, and anything **later**.
 
-## Where we are (November 5, 2026)
+## Where we are (November 25, 2026)
 
 | | Status |
 |---|---|
 | 1. Shift planner | Live ([PR #4](https://github.com/khainguyen21/EVC_Project/pull/4)) |
-| 2. Confirmation email | Not started. Waiting on Khai's Gmail setup and William's OK on the wording. Must be live by early December. |
-| 3. Print / Save as PDF | Built and tested on `feature/print`, not merged yet |
+| 2. Confirmation email | William's alert built and tested on `feature/confirmation-email`, not merged yet. The tutor receipt is waiting on William. |
+| 3. Print / Save as PDF | Live ([PR #15](https://github.com/khainguyen21/EVC_Project/pull/15)) |
 | 4. Publish | Live ([PR #7](https://github.com/khainguyen21/EVC_Project/pull/7), with follow-ups [#8](https://github.com/khainguyen21/EVC_Project/pull/8) and [#9](https://github.com/khainguyen21/EVC_Project/pull/9)) |
 | Every EVC department | Live ([PR #12](https://github.com/khainguyen21/EVC_Project/pull/12); see feature 4, Also planned) |
 
-Next: merge Print, then the confirmation email, which must be live by early December.
+Next: merge William's alert, which must be live before the Spring form link goes out in early December.
 
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
@@ -195,17 +195,34 @@ Branch: `feature/confirmation-email`
 - **Sender:** a new Gmail account just for the site, sending through Gmail with an app password. Replies go to William's evc.edu address. William approved this and says replies reaching evc.edu are very important. So the Gmail account also forwards everything it receives to his evc.edu address, and a test reply is checked before launch.
 - **If sending fails,** the submission is still saved.
 - **William gets an email too,** one for each submission or resubmission, sent to his evc.edu address from the same Gmail account. It names the tutor, says whether it is new or updated, and links to the inbox. He doesn't check the dashboard out of habit, so he asked for this after trying the planner (October 2026). It replaces the earlier "no email notifications" decision for the availability form. It never includes his usual hours.
+- **William's alert comes first** (decided November 2026). It is the must-have: William wants it in his Outlook inbox with a link to the dashboard. The tutor receipt is optional, because the form's thank-you screen already shows a copy of what they sent and how to fix a mistake. Forwarding the Gmail account to evc.edu is now optional too.
+
+### Built: William's alert
+
+On `feature/confirmation-email` (`src/lib/mailer.ts`, `src/utils/submissionAlert.ts`).
+
+- **Subject:** "New availability: *name* (*term*)", or "Updated availability: ..." for a resubmission.
+- **Body,** plain text: who sent it and for which term, their subjects and units, any flags in the inbox's own words (such as "Under 6 units"), and a link to Tutor Availability on the live site. A resubmission from a tutor who already has planner shifts says to check those shifts.
+- **Reply-To** is the tutor, so William can answer them straight from Outlook.
+- **Never includes** the student ID or William's usual hours.
+- **Sent after** the tutor sees their thank-you screen, so Gmail being slow or down never delays or fails a submission. A failure is logged.
+- **Only the live site sends.** Running locally, the email is printed in the terminal instead, so test submissions never reach William.
+- **Settings:** `GMAIL_USER`, `GMAIL_APP_PASSWORD` and `ALERT_EMAIL` (who gets the alert), in `.env` and in Vercel. See `.env.example`.
 - **Accepted risk:** someone could type another person's email, who would then get a receipt. The 50-per-hour limit per network keeps this small.
 
 ### Waiting on William
 
-- Approve the final wording before it goes live. (He approved the Gmail sender and replies going to evc.edu.)
+- Do tutors need their own receipt email, or is the thank-you screen enough?
+- If they do, approve its wording. (He approved the Gmail sender and replies going to evc.edu.)
+- Check his junk folder for the first alert and mark it "Not junk".
 
 ### Setup (Khai)
 
 Done (October 2026): the Gmail account `evc.tutor.schedule@gmail.com` exists, with the name "EVC Tutoring".
 
-Still to do: turn on 2-step verification, create an app password, and add it to the Vercel settings. Set the account to forward all mail to William's evc.edu address. There will be a step-by-step guide when we get there.
+Done (November 2026): 2-step verification, an app password, and the three settings above in `.env` and in Vercel.
+
+Optional: forward the account's mail to William's evc.edu address, so a reply sent to it isn't missed.
 
 ### Later
 
@@ -216,6 +233,8 @@ A second email, "your shifts are posted", sent with Publish (feature 4).
 ## 3. Print / Save as PDF
 
 Branch: `feature/print`
+
+**Shipped** in November 2026 as [PR #15](https://github.com/khainguyen21/EVC_Project/pull/15).
 
 William prints the schedule to put on the wall and sends a PDF to the EVC website team.
 
