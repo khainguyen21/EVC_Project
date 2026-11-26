@@ -18,12 +18,14 @@ Each section lists what is **decided**, what is **waiting on William**, and anyt
 | | Status |
 |---|---|
 | 1. Shift planner | Live ([PR #4](https://github.com/khainguyen21/EVC_Project/pull/4)) |
-| 2. Confirmation email | William's alert built and tested on `feature/confirmation-email`, not merged yet. The tutor receipt is waiting on William. |
+| 2. Confirmation email | William's alert is live ([PR #16](https://github.com/khainguyen21/EVC_Project/pull/16)). The tutor receipt is waiting on William. |
 | 3. Print / Save as PDF | Live ([PR #15](https://github.com/khainguyen21/EVC_Project/pull/15)) |
 | 4. Publish | Live ([PR #7](https://github.com/khainguyen21/EVC_Project/pull/7), with follow-ups [#8](https://github.com/khainguyen21/EVC_Project/pull/8) and [#9](https://github.com/khainguyen21/EVC_Project/pull/9)) |
 | Every EVC department | Live ([PR #12](https://github.com/khainguyen21/EVC_Project/pull/12); see feature 4, Also planned) |
 
-Next: merge William's alert, which must be live before the Spring form link goes out in early December.
+The public schedule's campus signs design is live too ([PR #17](https://github.com/khainguyen21/EVC_Project/pull/17)).
+
+Next: the "Who can tutor ___?" subject search (see feature 4, Also planned). It is the only planned feature not waiting on William.
 
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
@@ -199,7 +201,7 @@ Branch: `feature/confirmation-email`
 
 ### Built: William's alert
 
-On `feature/confirmation-email` (`src/lib/mailer.ts`, `src/utils/submissionAlert.ts`).
+**Shipped** in November 2026 as [PR #16](https://github.com/khainguyen21/EVC_Project/pull/16). On `feature/confirmation-email` (`src/lib/mailer.ts`, `src/utils/submissionAlert.ts`).
 
 - **Subject:** "New availability: *name* (*term*)", or "Updated availability: ..." for a resubmission.
 - **Body,** plain text: who sent it and for which term, their subjects and units, any flags in the inbox's own words (such as "Under 6 units"), and a link to Tutor Availability on the live site. A resubmission from a tutor who already has planner shifts says to check those shifts.
@@ -268,6 +270,7 @@ William prints the schedule to put on the wall and sends a PDF to the EVC websit
   - The contact line at the end is typed on the print page and remembered on William's computer, so no name or email is in the code.
   - Headings name the room the way William's document does: "Math and Science Resource Center-MSRC, MS-112 of MS3" and "Biology Skills Lab – BSL, SQ-231 of Sequoia". LE-237 and VPA-109/111 show just the room until William names them.
   - A shift isn't tied to one course, so a tutor appears once in each subject, with all of that subject's courses and all their shifts. William's document splits one Biology tutor into two entries with different hours.
+- **Online tutoring comes first** (William, November 25, 2026): under the title, "Online Tutoring with NetTutor" with the same six steps as the public schedule's online tutoring box, and the video address written out, since a printed link can't be clicked. The steps live in one place (`src/components/NetTutorSteps.tsx`), so the site and the printout can't drift apart. It prints for every choice of buildings, since NetTutor covers all subjects.
 - **Wording copied from William's document:** students "Mon/Wed 12:00-6:00pm (in MS-112)", professors "Mondays/Wednesdays 11:00am-1:00pm", staff "MTWTh 9am-6pm, Fri 9am-5pm". Days with the same hours are joined, and two shifts on one day share a line.
 
 ### Waiting on William
