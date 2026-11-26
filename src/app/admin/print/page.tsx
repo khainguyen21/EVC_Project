@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Printer } from "lucide-react";
+import { NETTUTOR_VIDEO_URL, NetTutorStepItems } from "@/components/NetTutorSteps";
 import type { Tutor } from "@/types";
 import {
   buildPrintSchedule,
@@ -249,6 +250,7 @@ export default function PrintSchedulePage() {
           >
             {title}
           </h1>
+          <PrintedOnlineTutoring />
           {sections.map((section) => (
             <PrintedSection key={section.field} section={section} />
           ))}
@@ -260,6 +262,32 @@ export default function PrintSchedulePage() {
         </article>
       )}
     </>
+  );
+}
+
+/**
+ * Online tutoring at the top, before the rooms (William, 2026-11-25), with the
+ * same steps as the public schedule. The video address is written out, since
+ * a printed link can't be clicked.
+ */
+function PrintedOnlineTutoring() {
+  const shortUrl = NETTUTOR_VIDEO_URL.replace(/^https:\/\//, "");
+  return (
+    <section style={{ marginTop: "16pt", breakInside: "avoid" }}>
+      <h2 style={{ fontSize: "14pt", fontWeight: 700, marginBottom: "6pt" }}>
+        Online Tutoring with NetTutor
+      </h2>
+      <p style={{ fontSize: "11pt", marginBottom: "6pt" }}>
+        EVC students can access <strong>NetTutor</strong> for all subjects by logging into
+        their Canvas course:
+      </p>
+      <ol style={{ fontSize: "11pt", paddingLeft: "32pt", listStyle: "decimal" }}>
+        <NetTutorStepItems />
+      </ol>
+      <p style={{ fontSize: "11pt", marginTop: "6pt" }}>
+        Video tutorial: <a href={NETTUTOR_VIDEO_URL} style={{ color: "inherit" }}>{shortUrl}</a>
+      </p>
+    </section>
   );
 }
 
