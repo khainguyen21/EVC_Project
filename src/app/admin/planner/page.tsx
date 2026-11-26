@@ -9,7 +9,12 @@ import RoomBoard, { startCardDrag } from "@/components/planner/RoomBoard";
 import TutorCard from "@/components/planner/TutorCard";
 import WeekSummary from "@/components/planner/WeekSummary";
 import PublishDialog from "@/components/planner/PublishDialog";
-import { hoursText, usualHoursText } from "@/components/planner/format";
+import {
+  hoursText,
+  publishStatusLine,
+  termOptionLabel,
+  usualHoursText,
+} from "@/components/planner/format";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
 import { readRememberedTerm, rememberTerm } from "@/lib/rememberedTerm";
 import { WEEKDAYS, type Weekday } from "@/utils/centerHours";
@@ -56,6 +61,8 @@ interface PlannerData {
 export default function ShiftPlannerPage() {
   const { showToast } = useToast();
   const [terms, setTerms] = useState<AdminTerm[]>([]);
+  // The term last published, whose tutors students see now. Null before the first publish.
+  const [currentTermId, setCurrentTermId] = useState<number | null>(null);
   const [termId, setTermId] = useState<number | null>(null);
   const [data, setData] = useState<PlannerData | null>(null);
   // The term `data` belongs to: the old term's data stays up while a new one loads.
@@ -101,10 +108,11 @@ export default function ShiftPlannerPage() {
 
   useEffect(() => {
     let stale = false;
-    adminFetch<{ terms: AdminTerm[] }>("/api/terms")
-      .then(({ terms }) => {
+    adminFetch<{ terms: AdminTerm[]; publishedTermId: number | null }>("/api/terms")
+      .then(({ terms, publishedTermId }) => {
         if (stale) return;
         setTerms(terms);
+        setCurrentTermId(publishedTermId);
         setTermId(pickDefaultTerm(terms, readRememberedTerm())?.id ?? null);
         if (terms.length === 0) setLoading(false);
       })
@@ -294,6 +302,10 @@ export default function ShiftPlannerPage() {
   const lastPublished = publishStatus?.lastPublished ?? null;
   const changedSincePublished =
     plan !== null && lastPublished !== null && !samePublicRows(plan.tutors, lastPublished.tutors);
+  const statusLine = publishStatusLine(
+    term !== null && term.id === currentTermId,
+    lastPublished?.at ?? null,
+  );
   const activeTerm = terms.find((t) => t.isActive);
 
   // Free that day, or already placed that day even if no longer free.
@@ -361,23 +373,25 @@ export default function ShiftPlannerPage() {
           {term && plan && publishStatus && (
             <>
               <span style={{ fontSize: "0.85rem", color: "#64748b", textAlign: "right", whiteSpace: "nowrap" }}>
-                {lastPublished ? (
-                  <>
-                    Published{" "}
-                    {new Date(lastPublished.at).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                    {changedSincePublished && (
-                      <span style={{ display: "block", color: "#b45309", fontWeight: 700 }}>
-                        Changes not published yet
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  "Not published yet"
+                <span
+                  style={
+                    statusLine.current
+                      ? { color: "#047857", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }
+                      : undefined
+                  }
+                >
+                  {statusLine.current && (
+                    <span
+                      aria-hidden="true"
+                      style={{ width: 8, height: 8, borderRadius: "50%", background: "#059669" }}
+                    />
+                  )}
+                  {statusLine.text}
+                </span>
+                {changedSincePublished && (
+                  <span style={{ display: "block", color: "#b45309", fontWeight: 700 }}>
+                    Changes not published yet
+                  </span>
                 )}
               </span>
               <button
@@ -421,7 +435,7 @@ export default function ShiftPlannerPage() {
             >
               {terms.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name}
+                  {termOptionLabel(t.name, t.id, currentTermId)}
                 </option>
               ))}
             </select>
@@ -441,8 +455,9 @@ export default function ShiftPlannerPage() {
             setReviewing(false);
             showToast(`Published: ${tutors} ${tutors === 1 ? "tutor is" : "tutors are"} on the public schedule.`);
             setPublishVersion((n) => n + 1);
-            // Publishing made this term the active one.
+            // Publishing made this term the active one, and the current one.
             setTerms((ts) => ts.map((t) => ({ ...t, isActive: t.id === term.id })));
+            setCurrentTermId(term.id);
           }}
         />
       )}

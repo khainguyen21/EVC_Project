@@ -44,6 +44,37 @@ export function hoursText(minutes: number): string {
   return `${+(minutes / 60).toFixed(2)} h`;
 }
 
+/** "Nov 25, 3:10 PM", in William's own time zone. */
+export function publishedAtText(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/**
+ * A term in the planner's term menu. The current term is the one last
+ * published, whose tutors students see now. Before the first publish no term
+ * is current, so the menu shows plain names.
+ */
+export function termOptionLabel(name: string, termId: number, currentTermId: number | null): string {
+  if (currentTermId === null) return name;
+  return termId === currentTermId ? `${name} · Current` : `${name} · not current`;
+}
+
+/** The line beside Publish: is this term the one students see, and since when. */
+export function publishStatusLine(
+  isCurrent: boolean,
+  lastPublishedAt: string | null,
+): { text: string; current: boolean } {
+  if (lastPublishedAt === null) return { text: "Not published yet", current: false };
+  return isCurrent
+    ? { text: `Current · published ${publishedAtText(lastPublishedAt)}`, current: true }
+    : { text: `Not current · last published ${publishedAtText(lastPublishedAt)}`, current: false };
+}
+
 /** "MATH 20-25, 62" lines, with Open Computer Lab spelled out. */
 export function courseLines(courses: string[]): string[] {
   const lines = shortenCourseCodes(courses.filter((c) => c !== OPEN_LAB));
