@@ -1,0 +1,1135 @@
+/* ==========================================
+   Public schedule page ("Campus signs")
+
+   The page borrows the language of campus and road signs: one green guide
+   sign at the top, and every room code drawn as a small plate in its
+   building's color, so students can tell at a glance where to walk.
+   Everything else stays quiet: white page, plain rows, hairline rules.
+
+   A CSS module so none of this can reach the other public pages or admin.
+   ========================================== */
+
+.page {
+  --ink: #1b2620;
+  --muted: #55625b;
+  --rule: #dce3df;
+  --rule-strong: #b9c4be;
+  --wash: #f1f4f2;
+  --surface: #ffffff;
+  /* Road-sign guide green, close to EVC's own. The sign keeps it in dark
+     mode, the way real signs look the same at night. */
+  --guide: #00674b;
+  /* Green for text and markers on the page itself; brighter in dark mode,
+     where --guide is too dark to read. */
+  --green-ink: #00674b;
+  --now-bg: #e6f2ec;
+  --soon-bg: #fff3dc;
+  --soon-ink: #7a4b00;
+  --focus: #00674b;
+
+  min-height: 100vh;
+  background: var(--surface);
+  color: var(--ink);
+  font-family:
+    var(--font-overpass), system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+:global([data-theme="dark"]) .page {
+  --ink: #e6ede8;
+  --muted: #a2b0a8;
+  --rule: #2b3732;
+  --rule-strong: #43524b;
+  --wash: #1a2420;
+  --surface: #111915;
+  --green-ink: #5fd3a6;
+  --now-bg: #16261f;
+  --soon-bg: #2a2112;
+  --soon-ink: #f2c46b;
+  --focus: #5fd3a6;
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 16px 16px 0;
+}
+
+@media (min-width: 640px) {
+  .inner {
+    padding: 24px 24px 0;
+  }
+}
+
+.page a:focus-visible,
+.page button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================
+   Sign plates (room codes)
+   A colored edge, a white keyline just inside it, then the colored field:
+   the same build as a highway route shield.
+   ========================================== */
+
+.plate {
+  --plate: #4b5751;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.22em 0.55em 0.1em;
+  border: 2px solid var(--plate);
+  border-radius: 5px;
+  background: var(--plate);
+  box-shadow: inset 0 0 0 1.5px #ffffff;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+/* White text on each of these is at least 5.3:1. */
+.plate[data-tone="le"] {
+  --plate: #3b3a9c;
+}
+
+.plate[data-tone="ms"] {
+  --plate: #00648c;
+}
+
+.plate[data-tone="sq"] {
+  --plate: #2b7a2e;
+}
+
+.plate[data-tone="vpa"] {
+  --plate: #a3245e;
+}
+
+a.plate:hover {
+  filter: brightness(1.15);
+}
+
+.plateLarge {
+  padding: 0.28em 0.6em 0.14em;
+  border-width: 3px;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 2px #ffffff;
+  font-size: 1rem;
+}
+
+/* ==========================================
+   The sign
+   ========================================== */
+
+.sign {
+  padding: 6px;
+  border-radius: 18px;
+  background: var(--guide);
+  color: #ffffff;
+}
+
+.signFrame {
+  padding: 18px 16px 20px;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 13px;
+}
+
+@media (min-width: 640px) {
+  .signFrame {
+    padding: 24px 32px 28px;
+  }
+}
+
+.signTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logo {
+  width: auto;
+  height: 52px;
+  filter: brightness(0) invert(1);
+}
+
+@media (min-width: 640px) {
+  .logo {
+    height: 68px;
+  }
+}
+
+.themeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.themeToggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.page .themeToggle:focus-visible,
+.page .room:focus-visible {
+  outline-color: #ffffff;
+}
+
+.title {
+  margin-top: 16px;
+  font-size: clamp(2.25rem, 1.5rem + 3.2vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  max-width: 36em;
+  margin-top: 10px;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.lede strong {
+  font-weight: 700;
+}
+
+/* A plain rule, like the divider between panels of one guide sign. */
+.signHeading {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 2px solid rgba(255, 255, 255, 0.92);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.rooms {
+  display: grid;
+  gap: 4px 24px;
+  margin: 8px -10px 0;
+  list-style: none;
+}
+
+@media (min-width: 860px) {
+  .rooms {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* The plate column is fixed so the four codes line up like a sign's list. */
+.room {
+  display: grid;
+  grid-template-columns: 7.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.room:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.room .plate {
+  justify-self: start;
+}
+
+.roomText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.roomPlace {
+  font-weight: 700;
+}
+
+.roomBuilding {
+  font-size: 0.875rem;
+  opacity: 0.88;
+}
+
+.roomDirections {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.room:hover .roomDirectionsText {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Phones keep just the arrow; the word stays for screen readers. */
+@media (max-width: 480px) {
+  .room {
+    grid-template-columns: 7rem minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .room .plateLarge {
+    font-size: 0.875rem;
+  }
+
+  .roomDirectionsText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* ==========================================
+   Open now / closed notice
+   ========================================== */
+
+.openNow {
+  margin-top: 28px;
+  padding: 14px 16px 4px;
+  border: 2px solid var(--green-ink);
+  border-radius: 14px;
+}
+
+@media (min-width: 640px) {
+  .openNow {
+    padding: 16px 24px 8px;
+  }
+}
+
+.openNowHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 6px;
+}
+
+.openNowTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+/* The one piece of motion on the page: it marks the only live information. */
+.liveDot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green-ink);
+  animation: livePulse 2s ease-out infinite;
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green-ink) 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+.openNowCount {
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.openEntry {
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
+}
+
+/* The status line above already separates entries. */
+.openEntry .tutor {
+  padding-top: 6px;
+  border-top: 0;
+}
+
+.openStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  color: var(--green-ink);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.openStatusSoon {
+  color: var(--soon-ink);
+}
+
+.notice {
+  margin-top: 28px;
+  padding: 14px 16px;
+  border: 2px solid var(--soon-ink);
+  border-radius: 14px;
+  background: var(--soon-bg);
+}
+
+@media (min-width: 640px) {
+  .notice {
+    padding: 16px 24px;
+  }
+}
+
+.noticeTitle {
+  color: var(--soon-ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.noticeText {
+  margin-top: 2px;
+}
+
+/* ==========================================
+   Filter bar
+   Sticky positioning and the phone hide-on-scroll live on #filter-section in
+   globals.css; this only draws the bar.
+   ========================================== */
+
+.updated {
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 8px;
+  padding: 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  /* Lifts the bar off the list while it is pinned over it. */
+  box-shadow: 0 12px 24px -20px rgba(0, 0, 0, 0.55);
+}
+
+.filterRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Search gets the larger share: it is the primary path, the dropdown is the
+   fallback for students who do not know their course code. */
+.filterGroupSearch {
+  flex: 2 1 240px;
+}
+
+.filterGroupBrowse {
+  flex: 1 1 170px;
+}
+
+.filterLabel {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search,
+.select {
+  width: 100%;
+  height: 44px;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  /* Stay at 16px: iOS Safari zooms the page on focus below that. */
+  font-size: 16px;
+}
+
+.search {
+  /* Left pad clears the magnifier, right pad clears the clear button. */
+  padding: 2px 40px 0 40px;
+}
+
+.select {
+  padding: 2px 10px 0;
+  cursor: pointer;
+}
+
+.search::placeholder {
+  color: var(--muted);
+}
+
+.page .search:focus,
+.page .select:focus-visible {
+  border-color: var(--focus);
+  outline: 3px solid color-mix(in srgb, var(--focus) 28%, transparent);
+  outline-offset: 0;
+}
+
+/* The native control duplicates the custom clear button below. */
+.search::-webkit-search-cancel-button {
+  display: none;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 13px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.searchClear {
+  position: absolute;
+  right: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: var(--wash);
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.searchClear:hover {
+  background: var(--rule-strong);
+  color: var(--ink);
+}
+
+/* Days are one control, so they are drawn joined, like a segmented switch. */
+.days {
+  display: flex;
+}
+
+.day {
+  position: relative;
+  height: 40px;
+  margin-left: -1.5px;
+  padding: 2px 14px 0;
+  border: 1.5px solid var(--rule-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.day:first-child {
+  margin-left: 0;
+  border-radius: 8px 0 0 8px;
+}
+
+.day:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.day:hover {
+  background: var(--wash);
+}
+
+.dayActive,
+.dayActive:hover {
+  z-index: 1;
+  border-color: var(--guide);
+  background: var(--guide);
+  color: #ffffff;
+}
+
+.page .day:focus-visible {
+  z-index: 2;
+}
+
+.dayShort {
+  display: none;
+}
+
+.filterFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+
+.count {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.clear {
+  height: 32px;
+  padding: 2px 12px 0;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.clear:hover {
+  background: var(--wash);
+}
+
+/* The bar is sticky, so every row costs screen for the whole scroll. Below
+   this width search and browse stack, which is the only extra row added. */
+@media (max-width: 640px) {
+  .filterRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Once the row is a column, flex-basis sizes HEIGHT, so the 240px and 170px
+     above would become row heights. Size to content instead. */
+  .filterGroupSearch,
+  .filterGroupBrowse {
+    flex: 0 0 auto;
+  }
+
+  .search,
+  .select {
+    height: 42px;
+  }
+
+  .day {
+    flex: 1 1 0;
+    height: 38px;
+    padding: 2px 4px 0;
+  }
+
+  .days {
+    width: 100%;
+  }
+
+  .dayFull {
+    display: none;
+  }
+
+  .dayShort {
+    display: inline;
+  }
+}
+
+/* Wide screens: everything on one line, so the pinned bar costs one row. */
+@media (min-width: 1040px) {
+  .filter {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+  }
+
+  /* The placeholder, "All subjects" and the day names say what each control
+     is, so the labels are hidden visually but still read by screen readers. */
+  .filterLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .filterRow {
+    flex: 1 1 auto;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .filterGroupSearch {
+    flex: 1 1 220px;
+  }
+
+  .filterGroupBrowse {
+    flex: 0 1 200px;
+    min-width: 150px;
+  }
+
+  .filterGroupDays {
+    flex: 0 0 auto;
+  }
+
+  .dayFull {
+    display: none;
+  }
+
+  .dayShort {
+    display: inline;
+  }
+
+  .day {
+    padding: 2px 12px 0;
+  }
+
+  .filterFooter {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    padding: 0 0 0 12px;
+    border-top: none;
+    border-left: 1px solid var(--rule);
+  }
+
+  .count {
+    white-space: nowrap;
+  }
+
+  .countQuery {
+    display: none;
+  }
+}
+
+/* ==========================================
+   Subjects and tutors
+   ========================================== */
+
+.results {
+  transition: opacity 150ms ease;
+}
+
+/* A brief dip when a filter changes, so the student sees the list react. */
+.resultsFiltering {
+  opacity: 0.35;
+}
+
+.subject {
+  margin-top: 40px;
+  container: subject / inline-size;
+}
+
+/* Each subject gets a small street sign, built like the big sign at the top
+   (green field, white keyline just inside the edge). The tutors under it stay
+   plain ink, so the sign reads as the place and the names as the people
+   listed there. The inset shadows draw the keyline without an extra element. */
+.subjectHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px 9px;
+  border-radius: 12px;
+  background: var(--guide);
+  box-shadow:
+    inset 0 0 0 4px var(--guide),
+    inset 0 0 0 6px rgba(255, 255, 255, 0.92);
+  color: #ffffff;
+}
+
+.subjectTitle {
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+.subjectCount {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.tutorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  column-gap: 40px;
+  margin-top: 4px;
+}
+
+/* The sign already marks the top, so the first row in each column needs no
+   rule of its own. */
+.tutorGrid > .tutor:first-child {
+  border-top: 0;
+}
+
+/* Two columns fit once the section is 720px wide (2 x 340px + 40px gap).
+   Measured on the section itself, so a scrollbar can't throw it off. */
+@container subject (min-width: 720px) {
+  .tutorGrid > .tutor:nth-child(2) {
+    border-top: 0;
+  }
+}
+
+.tutor {
+  padding: 14px 0 16px;
+  border-top: 1px solid var(--rule);
+}
+
+.tutorName {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Role nameplates. Same build as the room plates (edge, keyline, field) but
+   in ink, so they read as people rather than places. Dark mode flips ink and
+   surface, which turns the faculty plate light-on-dark into dark-on-light. */
+.facultyPlate,
+.staffPlate {
+  display: inline-flex;
+  max-width: 100%;
+  margin-bottom: 4px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  line-height: 1.25;
+  vertical-align: top;
+}
+
+.facultyPlate {
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 3px 9px;
+  background: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--surface);
+  color: var(--surface);
+}
+
+/* An ID badge: a solid "Staff" tab, then the name on the plain card. */
+.staffPlate {
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.staffTab {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px 2px 8px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.staffName {
+  min-width: 0;
+  padding: 4px 10px 2px;
+}
+
+/* Overpass sits low in its line box; nudge icons up to the letters. */
+.plateIcon {
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.tutorCourses {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.slots {
+  display: grid;
+  gap: 2px;
+  margin: 8px -8px 0;
+  list-style: none;
+}
+
+.slot {
+  display: grid;
+  grid-template-columns: 6.25rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.slotDay {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.slotTime {
+  font-variant-numeric: tabular-nums;
+}
+
+.slotDimmed {
+  opacity: 0.38;
+}
+
+.slotNow {
+  background: var(--now-bg);
+}
+
+.nowTag {
+  color: var(--green-ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* Keeps "9:30 AM – 11:30 AM" on one line on a 375px phone, even inside the
+   bordered Open now box. Narrower phones wrap the time, which still reads. */
+@media (max-width: 480px) {
+  .openNow {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .slot {
+    grid-template-columns: 5.75rem minmax(0, 1fr) auto;
+    gap: 8px;
+    font-size: 0.9375rem;
+  }
+}
+
+.slotDayShort {
+  display: none;
+}
+
+@media (max-width: 400px) {
+  .slot {
+    grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  }
+
+  .slotDayFull {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .slotDayShort {
+    display: inline;
+  }
+}
+
+/* ==========================================
+   Loading, error and no-results
+   ========================================== */
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.statusIcon {
+  color: var(--rule-strong);
+}
+
+.statusTitle {
+  color: var(--ink);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.statusTitle strong {
+  color: var(--green-ink);
+}
+
+.statusHint {
+  max-width: 32em;
+  font-size: 0.9375rem;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--rule);
+  border-top-color: var(--guide);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   NetTutor (online tutoring, under the sign)
+   ========================================== */
+
+.nettutor {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 2px solid var(--rule-strong);
+  border-radius: 14px;
+  background: var(--wash);
+}
+
+@media (min-width: 640px) {
+  .nettutor {
+    padding: 16px 24px;
+  }
+}
+
+.nettutorHead {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.nettutorIcon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--green-ink);
+}
+
+.nettutorTitle {
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.nettutorLede {
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.nettutorLede strong {
+  color: var(--ink);
+}
+
+.nettutorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+
+.nettutorToggle,
+.videoLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px 8px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.nettutorToggle {
+  border: 2px solid var(--green-ink);
+  background: var(--surface);
+  color: var(--green-ink);
+}
+
+.nettutorToggle:hover {
+  background: var(--now-bg);
+}
+
+.nettutorToggle svg {
+  transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.videoLink {
+  border: 2px solid var(--guide);
+  background: var(--guide);
+  color: #ffffff;
+}
+
+.videoLink:hover {
+  filter: brightness(1.12);
+}
+
+/* The steps really are a sequence, so they keep their numbers. */
+.steps {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-left: 1.5rem;
+  line-height: 1.55;
+}
+
+.steps[hidden] {
+  display: none;
+}
+
+.steps li::marker {
+  color: var(--green-ink);
+  font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liveDot,
+  .spinner {
+    animation: none;
+  }
+
+  .results,
+  .nettutorToggle svg {
+    transition: none;
+  }
+}

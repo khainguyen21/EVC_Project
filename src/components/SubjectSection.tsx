@@ -4,6 +4,7 @@ import {
   sortTutorsByType,
 } from "@/utils/subjectMapping";
 import TutorCard from "./TutorCard";
+import styles from "./SchedulePage.module.css";
 
 interface Props {
   fieldName: string;
@@ -15,9 +16,14 @@ interface Props {
 const SubjectSection = ({ fieldName, tutors, selectedDay, now }: Props) => {
   const sortedTutors = sortTutorsByType(tutors);
   return (
-    <section className="subject">
-      <div className="subject__title">{fieldName}</div>
-      <div className="subject__cards">
+    <section className={styles.subject}>
+      <div className={styles.subjectHead}>
+        <h2 className={styles.subjectTitle}>{fieldName}</h2>
+        <span className={styles.subjectCount}>
+          {tutors.length} {tutors.length === 1 ? "tutor" : "tutors"}
+        </span>
+      </div>
+      <div className={styles.tutorGrid}>
         {sortedTutors.map((tutor) => {
           // Native strict filtering by Database column, zero guesswork!
           const displaySubjects = tutor.subjects

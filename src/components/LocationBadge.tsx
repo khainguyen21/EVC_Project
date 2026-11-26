@@ -1,66 +1,75 @@
 import type { Location } from "../types";
+import styles from "./SchedulePage.module.css";
+
+export interface Room {
+  code: Location;
+  /** What students call the room. */
+  place: string;
+  building: string;
+  /** Plate color, matched by data-tone in SchedulePage.module.css. */
+  tone: "le" | "ms" | "sq" | "vpa";
+  mapLink: string;
+}
+
+/** The drop-in rooms, in the order the sign at the top of the page lists them. */
+export const ROOMS: Room[] = [
+  {
+    code: "LE-237",
+    place: "Campus Tutoring",
+    building: "Library Building",
+    tone: "le",
+    mapLink:
+      "https://www.google.com/maps/dir/?api=1&destination=37.301583,-121.765167",
+  },
+  {
+    code: "MS-112",
+    place: "Math & Science Resource Center",
+    building: "MS3 Building",
+    tone: "ms",
+    mapLink:
+      "https://www.google.com/maps/dir/?api=1&destination=37.300333,-121.764194",
+  },
+  {
+    code: "SQ-231",
+    place: "Biology Lab",
+    building: "Sequoia Building",
+    tone: "sq",
+    mapLink:
+      "https://www.google.com/maps/dir/?api=1&destination=37.300694,-121.761333",
+  },
+  {
+    code: "VPA-109/111",
+    place: "Music",
+    building: "Visual & Performing Arts Building",
+    tone: "vpa",
+    mapLink:
+      "https://www.google.com/maps/dir/?api=1&destination=37.300413,-121.761227",
+  },
+];
 
 interface Props {
   location: Location;
 }
 
+/** A room code as a sign plate that opens directions in Google Maps. */
 const LocationBadge = ({ location }: Props) => {
-  const getClassName = (loc: Location) => {
-    switch (loc) {
-      case "LE-237":
-        return "location-text--library";
-      case "MS-112":
-        return "location-text--msrc";
-      case "SQ-231":
-        return "location-text--bio";
-      case "VPA-109/111":
-        return "location-text--music";
-      default:
-        return "";
-    }
-  };
-
-  const getMapLink = (loc: Location) => {
-    switch (loc) {
-      case "LE-237":
-        return "https://www.google.com/maps/dir/?api=1&destination=37.301583,-121.765167";
-      case "MS-112":
-        return "https://www.google.com/maps/dir/?api=1&destination=37.300333,-121.764194";
-      case "SQ-231":
-        return "https://www.google.com/maps/dir/?api=1&destination=37.300694,-121.761333";
-      case "VPA-109/111":
-        return "https://www.google.com/maps/dir/?api=1&destination=37.300413,-121.761227";
-      default:
-        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`;
-    }
-  };
-
-  const getFullName = (loc: Location) => {
-    switch (loc) {
-      case "LE-237":
-        return "LE-237 Campus Tutoring (Library Building)";
-      case "MS-112":
-        return "MS-112 Math & Science Resource Center";
-      case "SQ-231":
-        return "SQ-231 Biology Lab (Sequoia Building)";
-      case "VPA-109/111":
-        return "VPA-109/111 Music (Visual & Performing Arts Building)";
-      default:
-        return loc;
-    }
-  };
-
-  const mapLink = getMapLink(location);
-  const fullName = getFullName(location);
+  const room = ROOMS.find((r) => r.code === location);
+  // A room missing from ROOMS still gets a map search, in a neutral plate.
+  const mapLink =
+    room?.mapLink ??
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+  const fullName = room
+    ? `${room.code} ${room.place} (${room.building})`
+    : location;
 
   return (
-    <a 
+    <a
       href={mapLink}
       target="_blank"
       rel="noopener noreferrer"
-      className={`schedule-item__location ${getClassName(location)}`}
+      className={styles.plate}
+      data-tone={room?.tone}
       title={`Get directions to ${fullName}`}
-      style={{ textDecoration: 'none', cursor: 'pointer' }}
     >
       {location}
     </a>
