@@ -1,44 +1,40 @@
-import Link from "next/link";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import type { Metadata } from "next";
+import PublicPage from "@/components/PublicPage";
 import TutoringRules from "@/components/TutoringRules";
-import ScrollToTop from "@/components/ScrollToTop";
 import { getActiveTermSafe } from "@/lib/activeTerm";
+import styles from "@/components/PublicPage.module.css";
 
 // See src/app/page.tsx: keeps the term heading from freezing at build time.
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Tutoring Rules | EVC Tutor Schedule",
+};
 
 const TutoringRulesPage = async () => {
   // Read server-side so the heading never flashes a placeholder term name.
   const term = await getActiveTermSafe();
 
   return (
-    <div className="container">
-      <Header />
-      <main>
-        <div style={{ marginBottom: "20px" }}>
-          <Link
-            href="/"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              color: "var(--accent-green)",
-              fontWeight: 600,
-              textDecoration: "none",
-              fontSize: "0.95rem",
-            }}
-          >
-            ← Back to Schedule
-          </Link>
-        </div>
-
-        <TutoringRules term={term} />
-      </main>
-
-      <ScrollToTop />
-      <Footer />
-    </div>
+    <PublicPage
+      title={
+        <>
+          General information &amp; MSRC{" "}
+          <span className={styles.nowrap}>(Room MS-112)</span> rules
+        </>
+      }
+      lede={
+        <>
+          The <strong>MATH and SCIENCE RESOURCE CENTER (MSRC)</strong> provides
+          tutoring and student learning resources to support all EVC Astronomy,
+          Biology, Chemistry, Computer Science, Math, and Physics courses.
+          Tutoring is offered free on a drop-in, open-lab basis to registered
+          EVC students.
+        </>
+      }
+    >
+      <TutoringRules term={term} />
+    </PublicPage>
   );
 };
 

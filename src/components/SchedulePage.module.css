@@ -183,7 +183,14 @@ a.plate:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
+/* On the other public pages the logo leads back to the schedule. */
+.logoLink {
+  display: inline-flex;
+  border-radius: 6px;
+}
+
 .page .themeToggle:focus-visible,
+.page .logoLink:focus-visible,
 .page .room:focus-visible {
   outline-color: #ffffff;
 }
