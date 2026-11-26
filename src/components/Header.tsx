@@ -1,29 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useTheme } from "@/hooks/useTheme";
 
 const Header = () => {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    if (savedTheme && savedTheme !== theme) {
-      document.documentElement.setAttribute("data-theme", savedTheme);
-      // Deferred update avoids calling setState synchronously in the effect body
-      Promise.resolve().then(() => setTheme(savedTheme));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Toggle theme function
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-    // Save theme to localStorage
-    localStorage.setItem("theme", newTheme);
-  };
+  const [theme, toggleTheme] = useTheme();
 
   return (
     <header className="header">

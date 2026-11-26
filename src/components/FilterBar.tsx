@@ -1,6 +1,7 @@
 "use client";
 
 import type { Day } from "@/types";
+import styles from "./SchedulePage.module.css";
 
 interface Props {
   searchQuery: string;
@@ -37,16 +38,16 @@ const FilterBar = ({
   };
 
   return (
-    <section className="filter">
-      <div className="filter__row">
+    <section className={styles.filter}>
+      <div className={styles.filterRow}>
         {/* Primary: the student who already knows their course code. */}
-        <div className="filter__group filter__group--search">
-          <label className="filter__label" htmlFor="course-search">
+        <div className={`${styles.filterGroup} ${styles.filterGroupSearch}`}>
+          <label className={styles.filterLabel} htmlFor="course-search">
             Search your course
           </label>
-          <div className="filter__search-wrap">
+          <div className={styles.searchWrap}>
             <svg
-              className="filter__search-icon"
+              className={styles.searchIcon}
               width="18"
               height="18"
               viewBox="0 0 24 24"
@@ -62,7 +63,7 @@ const FilterBar = ({
             <input
               id="course-search"
               type="search"
-              className="filter__search"
+              className={styles.search}
               // The placeholder is the only place students learn what to type,
               // and on desktop the label is hidden, so it names the task too.
               placeholder="Search courses, e.g. CHEM 30A"
@@ -79,7 +80,7 @@ const FilterBar = ({
             {searchQuery !== "" && (
               <button
                 type="button"
-                className="filter__search-clear"
+                className={styles.searchClear}
                 onClick={() => onSearchChange("")}
                 aria-label="Clear search"
               >
@@ -91,17 +92,17 @@ const FilterBar = ({
 
         {/* Secondary: the student browsing to see what is on offer. Backed by
             the curated field column, so it finds entries the parser misses. */}
-        <div className="filter__group filter__group--browse">
-          <label className="filter__label" htmlFor="course-filter">
+        <div className={`${styles.filterGroup} ${styles.filterGroupBrowse}`}>
+          <label className={styles.filterLabel} htmlFor="course-filter">
             Or browse by subject
           </label>
           <select
             id="course-filter"
-            className="filter__select"
+            className={styles.select}
             value={selectedCourse}
             onChange={(e) => onCourseChange(e.target.value)}
           >
-            <option value="">All Courses</option>
+            <option value="">All subjects</option>
             {subjects.map((subject) => (
               <option key={subject} value={subject}>
                 {subject}
@@ -111,12 +112,12 @@ const FilterBar = ({
         </div>
       </div>
 
-      <div className="filter__group filter__group--days">
-        <span className="filter__label" id="day-filter-label">
+      <div className={`${styles.filterGroup} ${styles.filterGroupDays}`}>
+        <span className={styles.filterLabel} id="day-filter-label">
           When are you coming to campus?
         </span>
         <div
-          className="day-pills"
+          className={styles.days}
           role="group"
           aria-labelledby="day-filter-label"
         >
@@ -124,17 +125,19 @@ const FilterBar = ({
             <button
               key={day}
               type="button"
-              className={`day-pill ${selectedDay === day ? "day-pill--active" : ""}`}
+              className={[styles.day, selectedDay === day && styles.dayActive]
+                .filter(Boolean)
+                .join(" ")}
               onClick={() => onDayChange(day as Day)}
               aria-pressed={selectedDay === day}
               // Shown text shortens on phones; the name stays full for
               // screen readers either way.
               aria-label={day === "" ? "Any day" : day}
             >
-              <span className="day-pill__full">
-                {day === "" ? "Any Day" : day}
+              <span className={styles.dayFull}>
+                {day === "" ? "Any day" : day}
               </span>
-              <span className="day-pill__short">
+              <span className={styles.dayShort}>
                 {day === "" ? "Any" : day.slice(0, 3)}
               </span>
             </button>
@@ -143,14 +146,14 @@ const FilterBar = ({
       </div>
 
       {hasFilters && (
-        <div className="filter__footer">
-          <span className="filter__count" aria-live="polite">
+        <div className={styles.filterFooter}>
+          <span className={styles.count} aria-live="polite">
             {resultCount === 0
               ? "No tutors match"
               : `${resultCount} tutor${resultCount === 1 ? "" : "s"}`}
             {/* Dropped on desktop, where the query sits right beside it. */}
             {trimmedQuery !== "" && (
-              <span className="filter__count-query">
+              <span className={styles.countQuery}>
                 {` for “${trimmedQuery}”`}
               </span>
             )}
@@ -158,10 +161,10 @@ const FilterBar = ({
           <button
             type="button"
             onClick={handleClearAll}
-            className="filter__clear-button"
+            className={styles.clear}
             aria-label="Clear all filters"
           >
-            Clear Filters
+            Clear filters
           </button>
         </div>
       )}
