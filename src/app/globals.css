@@ -133,6 +133,11 @@ body {
    travel inside its parent's box, and #filter-section is exactly as tall as the
    bar. Its parent (#schedule-section) spans the whole tutor list, so the bar
    stays pinned for the entire scroll. */
+/* Focused by the arrow tab only to keep focus in place; it isn't a control. */
+#filter-section:focus {
+  outline: none;
+}
+
 #filter-section {
   position: sticky;
   top: 4px;
@@ -141,8 +146,9 @@ body {
 }
 
 /* Phones only: useHideOnScroll tucks the pinned bar away while the student
-   scrolls down through tutors and brings it back on the first scroll up. The
-   extra 24px clears the bar's shadow and bottom margin so nothing peeks out. */
+   scrolls down through tutors; the arrow tab (.filterTab in
+   SchedulePage.module.css) brings it back. The extra 24px clears the bar's
+   shadow and bottom margin so nothing peeks out. */
 @media (max-width: 640px) {
   #filter-section.filter-section--hidden {
     transform: translateY(calc(-100% - 24px));

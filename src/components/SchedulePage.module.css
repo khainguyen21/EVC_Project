@@ -738,6 +738,54 @@ a.plate:hover {
   }
 }
 
+/* The pull tab that brings the phone filter bar back once it has tucked
+   away. Built like the sign (green field, white keyline). Off screen and out
+   of the tab order until .filterTabShown; never shown on wider screens. */
+.filterTab {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .filterTab {
+    position: fixed;
+    top: 6px;
+    left: 50%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    background: var(--guide);
+    box-shadow:
+      inset 0 0 0 3px var(--guide),
+      inset 0 0 0 4.5px rgba(255, 255, 255, 0.92),
+      0 8px 18px -8px rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    cursor: pointer;
+    visibility: hidden;
+    transform: translate(-50%, calc(-100% - 12px));
+    transition:
+      transform 0.25s ease,
+      visibility 0s linear 0.25s;
+  }
+
+  .filterTabShown {
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition:
+      transform 0.25s ease,
+      visibility 0s;
+  }
+
+  .page .filterTab:focus-visible {
+    outline-offset: 3px;
+  }
+}
+
 /* ==========================================
    Subjects and tutors
    ========================================== */
@@ -1136,7 +1184,9 @@ a.plate:hover {
   }
 
   .results,
-  .nettutorToggle svg {
+  .nettutorToggle svg,
+  .filterTab,
+  .filterTabShown {
     transition: none;
   }
 }

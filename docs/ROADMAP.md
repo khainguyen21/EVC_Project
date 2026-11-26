@@ -35,6 +35,8 @@ Next: the Spring form link goes out around December. Before it does, check the l
 
 To fix later (found by us in November 2026, not asked for by William): if the tutor list fails to load, Admin → Manage Staff shows an empty list instead of an error, so it looks as if every tutor is gone. The public schedule had the same problem; fix it the same way (check the answer and show an error).
 
+Built on `feature/filter-button` (November 26, 2026, Khai's idea, not William's): on phones the schedule's filter bar still tucks away when scrolling down, but scrolling up no longer brings it back. A small green arrow tab at the top does. Dragging the list with a finger closes the keyboard, so a search box left selected can't keep the bar pinned. Also fixed: after picking a subject, the bar never tucked away, because the dropdown kept focus and counted as typing.
+
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
 ---
