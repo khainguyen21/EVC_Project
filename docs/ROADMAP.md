@@ -31,7 +31,7 @@ The public schedule's campus signs design is live too ([PR #17](https://github.c
 
 Next: the Spring form link goes out around December. Before it does, check the live admin: the Spring term, its building hours, and the form link. Everything else planned is waiting on William.
 
-To fix later (found by us in November 2026, not asked for by William): if the tutor list fails to load, Admin → Manage Staff shows an empty list instead of an error, so it looks as if every tutor is gone. The public schedule had the same problem; fix it the same way (check the answer and show an error).
+Fixed (found by us in November 2026, not asked for by William): if the tutor list fails to load, Admin → Manage Staff now says "The staff list didn't load" with a Try again button, instead of an empty list that looked as if every tutor was gone. Delete All won't run until the list loads. It uses the same check as the public schedule.
 
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 

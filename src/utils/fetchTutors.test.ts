@@ -35,6 +35,29 @@ describe("fetchTutors", () => {
     expect(asked).toBe("/api/tutors");
   });
 
+  it("asks the address it is given (Manage Staff sorts by newest)", async () => {
+    let asked = "";
+    await fetchTutors(async (url) => {
+      asked = String(url);
+      return new Response(JSON.stringify({ tutors: [] }));
+    }, "/api/tutors?sort=recent");
+    expect(asked).toBe("/api/tutors?sort=recent");
+  });
+
+  it("names the address it asked when it fails", async () => {
+    const fetchImpl = answer(JSON.stringify({ error: "Failed to fetch tutors" }), 500);
+    await expect(fetchTutors(fetchImpl, "/api/tutors?sort=recent")).rejects.toThrow(
+      "/api/tutors?sort=recent answered 500",
+    );
+  });
+
+  it("fails the same way for Manage Staff's address", async () => {
+    const url = "/api/tutors?sort=recent";
+    await expect(fetchTutors(answer("{}", 200), url)).rejects.toThrow("no tutor list");
+    await expect(fetchTutors(answer("<html>", 503, "text/html"), url)).rejects.toThrow("503");
+    await expect(fetchTutors(answer(JSON.stringify({ tutors: [] }), 500), url)).rejects.toThrow();
+  });
+
   it("fails when the route reports a database error (500 JSON)", async () => {
     const fetchImpl = answer(JSON.stringify({ error: "Failed to fetch tutors" }), 500);
     await expect(fetchTutors(fetchImpl)).rejects.toThrow("500");
