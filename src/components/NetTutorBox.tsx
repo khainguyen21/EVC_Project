@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ChevronDown, Laptop, PlayCircle } from "lucide-react";
 import styles from "@/components/SchedulePage.module.css";
-import { NETTUTOR_VIDEO_URL, NetTutorStepItems } from "@/components/NetTutorSteps";
 
 /**
  * Online tutoring, right under the sign so students who can't come to campus
@@ -44,7 +43,7 @@ const NetTutorBox = () => {
           />
         </button>
         <a
-          href={NETTUTOR_VIDEO_URL}
+          href="https://youtu.be/VlrPU34FzuY"
           target="_blank"
           rel="noopener noreferrer"
           className={styles.videoLink}
@@ -55,7 +54,29 @@ const NetTutorBox = () => {
       </div>
 
       <ol id="nettutor-steps" className={styles.steps} hidden={!open}>
-        <NetTutorStepItems />
+        <li>Log into the Canvas course you need tutoring for</li>
+        <li>
+          Open <strong>Pisces/NetTutor Online Tutoring</strong> on the Canvas
+          left-hand navigation
+        </li>
+        <li>
+          Open NetTutor to see all subjects tutored, then click on your subject
+          (e.g., Math Statistics) to see the drop-in schedule in the upper
+          right-hand corner
+        </li>
+        <li>
+          During drop-in hours: meet with a tutor live, schedule an appointment,
+          OR drop off a question for feedback
+        </li>
+        <li>
+          When meeting with a live tutor, follow their instructions to receive
+          tutoring through the Drawing Canvas and/or video chat
+        </li>
+        <li>
+          For writing help, use the <strong>Writing and Paper Center</strong>{" "}
+          option at the bottom of the Subjects page to drop off papers for
+          feedback
+        </li>
       </ol>
     </section>
   );

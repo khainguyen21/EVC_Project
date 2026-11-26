@@ -3,7 +3,10 @@ import {
   buildPrintSchedule,
   formatRange,
   printLocations,
+  printHeading,
   printTitle,
+  campusLocations,
+  termDateRange,
   type PrintTutor,
 } from "./printSchedule";
 
@@ -410,5 +413,98 @@ describe("printTitle", () => {
 
   it("leaves the term out when no term is active", () => {
     expect(printTitle(null, ["SQ-231"])).toBe("Biology Tutoring Schedule");
+  });
+});
+
+describe("printHeading", () => {
+  it("uses the website team's title when every kind of room is mixed", () => {
+    expect(printHeading("Fall 2026", ALL)).toBe("EVC Campus Tutoring Drop-In schedule, Fall 2026");
+    expect(printHeading("Fall 2026", ["MS-112", "LE-237"])).toBe(
+      "EVC Campus Tutoring Drop-In schedule, Fall 2026",
+    );
+  });
+
+  it("keeps William's own titles for one building or MS + SQ", () => {
+    expect(printHeading("Fall 2026", MS_SQ)).toBe(printTitle("Fall 2026", MS_SQ));
+    expect(printHeading("Fall 2026", ["SQ-231"])).toBe("Fall 2026 Biology Tutoring Schedule");
+  });
+
+  it("leaves the term out when no term is active", () => {
+    expect(printHeading(null, ALL)).toBe("EVC Campus Tutoring Drop-In schedule");
+  });
+});
+
+describe("termDateRange", () => {
+  it("writes a term inside one year like the website team does", () => {
+    expect(termDateRange("2026-08-31", "2026-12-10")).toEqual({
+      from: { date: "August 31", suffix: "st", year: null },
+      to: { date: "December 10", suffix: "th", year: 2026 },
+    });
+  });
+
+  it("gives both years when a term crosses New Year", () => {
+    expect(termDateRange("2026-12-14", "2027-01-22")).toEqual({
+      from: { date: "December 14", suffix: "th", year: 2026 },
+      to: { date: "January 22", suffix: "nd", year: 2027 },
+    });
+  });
+
+  it("uses st, nd, rd and th like English does, including 11th to 13th", () => {
+    const suffix = (day: number) =>
+      termDateRange(`2026-01-${String(day).padStart(2, "0")}`, "2026-02-01")!.from.suffix;
+    const expected: Record<number, string> = {
+      1: "st", 2: "nd", 3: "rd", 4: "th", 10: "th", 11: "th", 12: "th", 13: "th",
+      14: "th", 20: "th", 21: "st", 22: "nd", 23: "rd", 24: "th", 30: "th", 31: "st",
+    };
+    for (const [day, want] of Object.entries(expected)) expect(suffix(Number(day))).toBe(want);
+  });
+
+  it("gives up rather than print a wrong date", () => {
+    expect(termDateRange(null, "2026-12-10")).toBeNull();
+    expect(termDateRange("2026-08-31", undefined)).toBeNull();
+    expect(termDateRange("", "2026-12-10")).toBeNull();
+    expect(termDateRange("2026-13-01", "2026-12-10")).toBeNull();
+    expect(termDateRange("2026-02-30", "2026-12-10")).toBeNull();
+    expect(termDateRange("2026-08-00", "2026-12-10")).toBeNull();
+    expect(termDateRange("Aug 31", "2026-12-10")).toBeNull();
+    expect(termDateRange("2026-08-31T00:00:00.000Z", "2026-12-10")).toBeNull();
+  });
+
+  it("reads every real day of a leap year and an ordinary year", () => {
+    for (const year of [2027, 2028]) {
+      const day = new Date(Date.UTC(year, 0, 1));
+      while (day.getUTCFullYear() === year) {
+        const iso = day.toISOString().slice(0, 10);
+        const range = termDateRange(iso, `${year}-12-31`);
+        expect(range, iso).not.toBeNull();
+        expect(range!.from.date.endsWith(` ${day.getUTCDate()}`), iso).toBe(true);
+        day.setUTCDate(day.getUTCDate() + 1);
+      }
+    }
+  });
+});
+
+describe("campusLocations", () => {
+  it("names the rooms the way the website team's schedule does, in its order", () => {
+    expect(campusLocations(["MS-112", "SQ-231", "LE-237"])).toBe(
+      "Campus Tutoring in LE-237 (Library building), the Math and Science Resource Center (MSRC) in MS-112 (MS3 building), and the Biology Lab in SQ-231 (Sequoia building)",
+    );
+  });
+
+  it("joins one or two rooms without a list comma", () => {
+    expect(campusLocations(["SQ-231"])).toBe("the Biology Lab in SQ-231 (Sequoia building)");
+    expect(campusLocations(MS_SQ)).toBe(
+      "the Math and Science Resource Center (MSRC) in MS-112 (MS3 building) and the Biology Lab in SQ-231 (Sequoia building)",
+    );
+  });
+
+  it("prints a room it has no name for as itself, after the named ones", () => {
+    expect(campusLocations(["VPA-109/111", "LE-237"])).toBe(
+      "Campus Tutoring in LE-237 (Library building) and VPA-109/111",
+    );
+  });
+
+  it("is empty when nothing is ticked", () => {
+    expect(campusLocations([])).toBe("");
   });
 });
