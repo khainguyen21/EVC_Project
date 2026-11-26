@@ -13,7 +13,7 @@ The planner comes first because the Spring form link doesn't go out until around
 
 Each section lists what is **decided**, what is **waiting on William**, and anything **later**.
 
-## Where we are (November 25, 2026)
+## Where we are (November 26, 2026)
 
 | | Status |
 |---|---|
@@ -22,10 +22,16 @@ Each section lists what is **decided**, what is **waiting on William**, and anyt
 | 3. Print / Save as PDF | Live ([PR #15](https://github.com/khainguyen21/EVC_Project/pull/15)) |
 | 4. Publish | Live ([PR #7](https://github.com/khainguyen21/EVC_Project/pull/7), with follow-ups [#8](https://github.com/khainguyen21/EVC_Project/pull/8) and [#9](https://github.com/khainguyen21/EVC_Project/pull/9)) |
 | Every EVC department | Live ([PR #12](https://github.com/khainguyen21/EVC_Project/pull/12); see feature 4, Also planned) |
+| "Who can tutor ___?" search | Live ([PR #20](https://github.com/khainguyen21/EVC_Project/pull/20); see feature 4, Also planned) |
 
-The public schedule's campus signs design is live too ([PR #17](https://github.com/khainguyen21/EVC_Project/pull/17)).
+The public schedule's campus signs design is live too ([PR #17](https://github.com/khainguyen21/EVC_Project/pull/17)). So are:
+- the online tutoring steps at the top of the printed schedule ([PR #19](https://github.com/khainguyen21/EVC_Project/pull/19)), restyled to match the EVC website team's schedule ([PR #22](https://github.com/khainguyen21/EVC_Project/pull/22))
+- the shift planner's "current term" label ([PR #18](https://github.com/khainguyen21/EVC_Project/pull/18))
+- RLS turned on for the last two database tables, SiteSettings and Prisma's migrations table ([PR #21](https://github.com/khainguyen21/EVC_Project/pull/21))
 
-Next: the "Who can tutor ___?" subject search (see feature 4, Also planned). It is the only planned feature not waiting on William.
+Next: the Spring form link goes out around December. Before it does, check the live admin: the Spring term, its building hours, and the form link. Everything else planned is waiting on William.
+
+To fix later (found by us in November 2026, not asked for by William): if the tutor list fails to load, Admin → Manage Staff shows an empty list instead of an error, so it looks as if every tutor is gone. The public schedule had the same problem; fix it the same way (check the answer and show an error).
 
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
@@ -236,7 +242,7 @@ A second email, "your shifts are posted", sent with Publish (feature 4).
 
 Branch: `feature/print`
 
-**Shipped** in November 2026 as [PR #15](https://github.com/khainguyen21/EVC_Project/pull/15).
+**Shipped** in November 2026 as [PR #15](https://github.com/khainguyen21/EVC_Project/pull/15). The online tutoring steps at the top came later, in [PR #19](https://github.com/khainguyen21/EVC_Project/pull/19) and [PR #22](https://github.com/khainguyen21/EVC_Project/pull/22) (see Decided).
 
 William prints the schedule to put on the wall and sends a PDF to the EVC website team.
 
@@ -270,7 +276,7 @@ William prints the schedule to put on the wall and sends a PDF to the EVC websit
   - The contact line at the end is typed on the print page and remembered on William's computer, so no name or email is in the code.
   - Headings name the room the way William's document does: "Math and Science Resource Center-MSRC, MS-112 of MS3" and "Biology Skills Lab – BSL, SQ-231 of Sequoia". LE-237 and VPA-109/111 show just the room until William names them.
   - A shift isn't tied to one course, so a tutor appears once in each subject, with all of that subject's courses and all their shifts. William's document splits one Biology tutor into two entries with different hours.
-- **Online tutoring comes first** (William, November 25, 2026): the top of the sheet copies the EVC website team's schedule (Khai, November 26, 2026): a green italic title ("EVC Campus Tutoring Drop-In schedule, Fall 2026 –" for a mix of buildings; William's own titles for MS + SQ or one building), the green drop-in note with the term's start and end dates, then in blue "1. On Campus tutors are located in …" naming only the ticked buildings, and "2. NetTutor Online Tutoring (all subjects)" with the website team's seven steps in small black bullets. The video address is written out, since a printed link can't be clicked. These words are the website team's, so they can differ from the public schedule's online tutoring box. The subject sections keep William's style for now.
+- **Online tutoring comes first** (William, November 25, 2026): the top of the sheet copies the EVC website team's schedule (Khai, November 26, 2026): a green italic title ("EVC Campus Tutoring Drop-In schedule, Fall 2026 –" for a mix of buildings; William's own titles for MS + SQ or one building), the green drop-in note with the term's start and end dates, then in blue "1. On Campus tutors are located in …" naming only the ticked buildings, and "2. NetTutor Online Tutoring (all subjects)" with the website team's seven steps in small black bullets. The video address is written out, since a printed link can't be clicked. These words are the website team's, so they can differ from the public schedule's online tutoring box. The subject sections keep William's style for now. Shipped in November 2026 as [PR #19](https://github.com/khainguyen21/EVC_Project/pull/19), and restyled to match the website team's schedule in [PR #22](https://github.com/khainguyen21/EVC_Project/pull/22).
 - **Wording copied from William's document:** students "Mon/Wed 12:00-6:00pm (in MS-112)", professors "Mondays/Wednesdays 11:00am-1:00pm", staff "MTWTh 9am-6pm, Fri 9am-5pm". Days with the same hours are joined, and two shifts on one day share a line.
 
 ### Waiting on William
@@ -321,7 +327,7 @@ A Publish button on the shift planner copies William's planned shifts for the se
 
 From William's original workflow: when a student asks for a rare subject, such as Ethnic Studies or Criminology, William searches old emails for a tutor who can teach it, emails the student that tutor's hours, and adds a section to the schedule by hand.
 
-- **"Who can tutor ___?"** (built November 2026 on `feature/subject-search`): a search box on Tutor Availability, above the status buttons. It searches the chosen term's submissions, including tutors with no shifts, and the status buttons count only the matches.
+- **"Who can tutor ___?"** (live November 2026, [PR #20](https://github.com/khainguyen21/EVC_Project/pull/20)): a search box on Tutor Availability, above the status buttons. It searches the chosen term's submissions, including tutors with no shifts, and the status buttons count only the matches.
   - **A course or department** ("math 71", "Ethnic Studies", "stats") is matched like the public schedule's search: "MATH071" finds Math 71, "ETH 1" doesn't find ETH 10, and a tutor who wrote "Any math" counts for every math course.
   - **Anything else** ("Criminology", "calc", a tutor's name) is matched against the words the tutor wrote and their name.
   - **The search stays** when William changes the term, so he can ask the same question of an earlier term. Escape clears it.
