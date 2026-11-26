@@ -171,6 +171,13 @@ export function findUnrecognizedSubjects(raw: string): string[] {
  */
 export type SubmissionFlag = "under-units" | "subjects-need-review" | "courses-not-in-catalog";
 
+/** The words the inbox and William's email alert both use for each flag. */
+export const SUBMISSION_FLAG_LABELS: Record<SubmissionFlag, string> = {
+  "under-units": "Under 6 units",
+  "subjects-need-review": "Subjects need review",
+  "courses-not-in-catalog": "Course not in catalog",
+};
+
 export function submissionFlags(s: {
   units: number;
   subjectsRaw: string;
