@@ -9,6 +9,7 @@ import {
 import { useCampusNow } from "@/hooks/useCampusNow";
 import { getCampusStatus } from "@/utils/term";
 import { matchesQuery, parseCourseCodes, parseQuery } from "@/utils/courseCodes";
+import { fetchTutors } from "@/utils/fetchTutors";
 
 /**
  * Everything the public schedule page knows, minus how it looks: the tutor
@@ -36,10 +37,10 @@ export function useSchedule(term: Term | null) {
 
   // Fetch data on component mount
   useEffect(() => {
-    fetch("/api/tutors")
-      .then((response) => response.json())
-      .then((data) => {
-        setTutors(data.tutors ?? []); // ✅ safe fallback — prevents crash if DB is down
+    // A failed load shows the error, never "No tutors found".
+    fetchTutors()
+      .then((list) => {
+        setTutors(list);
         setLoading(false);
       })
       .catch((err) => {
