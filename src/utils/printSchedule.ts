@@ -235,3 +235,83 @@ export function printTitle(term: string | null, locations: string[]): string {
           : "Tutoring Schedule";
   return term ? `${term} ${title}` : title;
 }
+
+/**
+ * The green title at the top of the sheet. A mix of rooms William has no
+ * title for (every building, say) gets the EVC website team's title; his own
+ * titles (MS + SQ, or one building) stay as they are.
+ */
+export function printHeading(term: string | null, locations: string[]): string {
+  if (printTitle(null, locations) !== "Tutoring Schedule") return printTitle(term, locations);
+  const title = "EVC Campus Tutoring Drop-In schedule";
+  return term ? `${title}, ${term}` : title;
+}
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+export interface PrintedDate {
+  /** "August 31" */
+  date: string;
+  /** "st", printed raised like Word does. */
+  suffix: string;
+  /** Left off the start date when both dates share a year. */
+  year: number | null;
+}
+
+function readDate(iso: string | null | undefined): { year: number; month: number; day: number } | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso ?? "");
+  if (!match) return null;
+  const [year, month, day] = match.slice(1).map(Number);
+  // Date.UTC rolls Feb 30 over to March; a real date comes back unchanged.
+  const check = new Date(Date.UTC(year, month - 1, day));
+  if (check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
+  return { year, month, day };
+}
+
+function ordinal(day: number): string {
+  if (day % 100 >= 11 && day % 100 <= 13) return "th";
+  return ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[day % 10] ?? "th";
+}
+
+/**
+ * The term's dates as the website team writes them: "August 31st - December
+ * 10th, 2026", or with both years when the term crosses New Year. Term dates
+ * arrive as "2026-08-31"; anything else gives null, so the sentence leaves
+ * the dates out instead of printing a wrong one.
+ */
+export function termDateRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+): { from: PrintedDate; to: PrintedDate } | null {
+  const from = readDate(start);
+  const to = readDate(end);
+  if (!from || !to) return null;
+  const print = (d: { year: number; month: number; day: number }, year: number | null) => ({
+    date: `${MONTHS[d.month - 1]} ${d.day}`,
+    suffix: ordinal(d.day),
+    year,
+  });
+  return {
+    from: print(from, from.year === to.year ? null : from.year),
+    to: print(to, to.year),
+  };
+}
+
+// From the EVC website team's schedule, in its order. VPA has no name there.
+const CAMPUS_ROOMS: [string, string][] = [
+  ["LE-237", "Campus Tutoring in LE-237 (Library building)"],
+  ["MS-112", "the Math and Science Resource Center (MSRC) in MS-112 (MS3 building)"],
+  ["SQ-231", "the Biology Lab in SQ-231 (Sequoia building)"],
+];
+
+/** The ticked rooms for "On Campus tutors are located in ___". */
+export function campusLocations(locations: string[]): string {
+  const named = CAMPUS_ROOMS.filter(([room]) => locations.includes(room)).map(([, name]) => name);
+  const known = new Set(CAMPUS_ROOMS.map(([room]) => room));
+  const parts = [...named, ...locations.filter((room) => !known.has(room))];
+  if (parts.length <= 2) return parts.join(" and ");
+  return `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+}

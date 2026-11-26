@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Printer } from "lucide-react";
-import { NETTUTOR_VIDEO_URL, NetTutorStepItems } from "@/components/NetTutorSteps";
-import type { Tutor } from "@/types";
+import type { Term, Tutor } from "@/types";
 import {
   buildPrintSchedule,
+  campusLocations,
+  printHeading,
   printLocations,
   printTitle,
+  termDateRange,
+  type PrintedDate,
   type PrintPerson,
   type PrintSection,
 } from "@/utils/printSchedule";
@@ -36,6 +39,10 @@ const labelStyle: React.CSSProperties = {
 // The colors of William's Word document: green for the MSRC, blue for Biology.
 const GREEN = "#00b050";
 const BLUE = "#5b9bd5";
+// The colors of the EVC website team's schedule, used for the top part.
+const INTRO_GREEN = "#70ad47";
+const INTRO_BLUE = "#4472c4";
+const NETTUTOR_VIDEO_URL = "https://youtu.be/VlrPU34FzuY";
 
 // Printing shows only the sheet: no sidebar, no controls, no page padding.
 const PRINT_CSS = `
@@ -59,7 +66,7 @@ const PRINT_CSS = `
 
 export default function PrintSchedulePage() {
   const [tutors, setTutors] = useState<Tutor[] | null>(null);
-  const [termName, setTermName] = useState<string | null>(null);
+  const [term, setTerm] = useState<Pick<Term, "name" | "startDate" | "endDate"> | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [ticked, setTicked] = useState<string[]>([]);
   const [contact, setContact] = useState("");
@@ -76,7 +83,7 @@ export default function PrintSchedulePage() {
       .then(([{ tutors }, { term }]) => {
         if (stale) return;
         setTutors(tutors);
-        setTermName(term?.name ?? null);
+        setTerm(term ?? null);
         setTicked(readPrintBuildings());
         setContact(readContactLine());
       })
@@ -92,6 +99,7 @@ export default function PrintSchedulePage() {
   // A remembered room that's no longer on the schedule would change the title.
   const chosen = locations.filter((l) => ticked.includes(l));
   const sections = tutors ? buildPrintSchedule(tutors, chosen) : [];
+  const termName = term?.name ?? null;
   const title = printTitle(termName, chosen);
 
   // Chrome names the saved PDF after the page title.
@@ -238,19 +246,11 @@ export default function PrintSchedulePage() {
             lineHeight: 1.3,
           }}
         >
-          <h1
-            style={{
-              fontFamily: '"Times New Roman", Times, serif',
-              fontSize: "16pt",
-              fontWeight: 700,
-              textAlign: "center",
-              margin: "0 auto 8pt",
-              maxWidth: "6in",
-            }}
-          >
-            {title}
-          </h1>
-          <PrintedOnlineTutoring />
+          <PrintedIntro
+            heading={printHeading(termName, chosen)}
+            dates={termDateRange(term?.startDate, term?.endDate)}
+            rooms={campusLocations(chosen)}
+          />
           {sections.map((section) => (
             <PrintedSection key={section.field} section={section} />
           ))}
@@ -266,28 +266,115 @@ export default function PrintSchedulePage() {
 }
 
 /**
- * Online tutoring at the top, before the rooms (William, 2026-11-25), with the
- * same steps as the public schedule. The video address is written out, since
- * a printed link can't be clicked.
+ * The top of the sheet, copied from the EVC website team's schedule: a green
+ * title and drop-in note, then "1." where the rooms are and "2." NetTutor, in
+ * their words (William asked for online tutoring first, 2026-11-25). The
+ * video address is written out, since a printed link can't be clicked.
  */
-function PrintedOnlineTutoring() {
-  const shortUrl = NETTUTOR_VIDEO_URL.replace(/^https:\/\//, "");
+function PrintedIntro({
+  heading,
+  dates,
+  rooms,
+}: {
+  heading: string;
+  dates: { from: PrintedDate; to: PrintedDate } | null;
+  rooms: string;
+}) {
+  const bullet: React.CSSProperties = { marginBottom: "1pt" };
   return (
-    <section style={{ marginTop: "16pt", breakInside: "avoid" }}>
-      <h2 style={{ fontSize: "14pt", fontWeight: 700, marginBottom: "6pt" }}>
-        Online Tutoring with NetTutor
-      </h2>
-      <p style={{ fontSize: "11pt", marginBottom: "6pt" }}>
-        EVC students can access <strong>NetTutor</strong> for all subjects by logging into
-        their Canvas course:
+    <section style={{ breakInside: "avoid" }}>
+      <h1
+        style={{
+          color: INTRO_GREEN,
+          fontSize: "16pt",
+          fontWeight: 700,
+          fontStyle: "italic",
+          lineHeight: 1.2,
+        }}
+      >
+        {heading} –
+      </h1>
+      <p style={{ color: INTRO_GREEN, fontSize: "14pt", lineHeight: 1.35 }}>
+        Students can access our EVC tutoring team during the below drop-in days and times
+        {dates && (
+          <>
+            {" "}
+            from{" "}
+            <strong>
+              <PrintedDay date={dates.from} /> - <PrintedDay date={dates.to} />
+            </strong>
+          </>
+        )}
+        . Tutors are available for drop-in tutoring on a first come, first served basis.{" "}
+        <strong>Please note location next to name and schedule.</strong>
       </p>
-      <ol style={{ fontSize: "11pt", paddingLeft: "32pt", listStyle: "decimal" }}>
-        <NetTutorStepItems />
+      <ol
+        style={{
+          color: INTRO_BLUE,
+          fontSize: "14pt",
+          lineHeight: 1.35,
+          paddingLeft: "40pt",
+          marginTop: "12pt",
+          listStyle: "decimal",
+        }}
+      >
+        <li style={{ marginBottom: "10pt" }}>
+          On Campus tutors are located in {rooms} unless otherwise noted.
+        </li>
+        <li>
+          <em>NetTutor</em> Online Tutoring (all subjects)
+        </li>
       </ol>
-      <p style={{ fontSize: "11pt", marginTop: "6pt" }}>
-        Video tutorial: <a href={NETTUTOR_VIDEO_URL} style={{ color: "inherit" }}>{shortUrl}</a>
-      </p>
+      <ul
+        style={{
+          color: "#000",
+          fontSize: "10pt",
+          paddingLeft: "22pt",
+          marginTop: "2pt",
+          listStyle: "disc",
+        }}
+      >
+        <li style={bullet}>
+          EVC students can also access NetTutor by logging into the Canvas course they need
+          tutoring for.
+        </li>
+        <li style={bullet}>Open Pisces/NetTutor Online Tutoring on the Canvas left hand navigation.</li>
+        <li style={bullet}>
+          Open NetTutor to see all subjects tutored. Then click on the subject (Math Statistics,
+          for example) to see the drop-in schedule for that subject in the upper right-hand corner.
+        </li>
+        <li style={bullet}>
+          During drop-in hours for the subject, meet with a tutor live, schedule an appointment
+          with a tutor, OR Drop off a Question for feedback.
+        </li>
+        <li style={bullet}>
+          When meeting with a live tutor, follow the tutor&rsquo;s instructions to receive tutoring
+          through the Drawing Canvas and/or video chat.
+        </li>
+        <li style={bullet}>
+          Please also note the{" "}
+          <strong>Writing and Paper Center (Drop Off Papers Here) option</strong> located at the
+          bottom of the <em>Subjects</em> page if you wish to drop off a paper for feedback.
+        </li>
+        <li style={bullet}>
+          Watch the brief NetTutor YouTube link (click on CC for captions):{" "}
+          <a href={NETTUTOR_VIDEO_URL} style={{ color: INTRO_BLUE, textDecoration: "underline" }}>
+            {NETTUTOR_VIDEO_URL}
+          </a>
+        </li>
+      </ul>
     </section>
+  );
+}
+
+/** "August 31st" with the "st" raised, or "December 10th, 2026". */
+function PrintedDay({ date }: { date: PrintedDate }) {
+  return (
+    <>
+      {date.date}
+      <sup style={{ fontSize: "0.6em" }}>{date.suffix}</sup>
+      {date.year !== null && `, ${date.year}`}
+    </>
   );
 }
 
