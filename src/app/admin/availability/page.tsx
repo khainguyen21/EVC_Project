@@ -12,6 +12,7 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import { readRememberedTerm, rememberTerm } from "@/lib/rememberedTerm";
 import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import { formatCourseCode, unknownCourses } from "@/utils/courseCodes";
 import { pickDefaultTerm } from "@/utils/term";
+import { searchSubmissions } from "@/utils/submissionSearch";
 import type { BuildingHours } from "@/utils/centerHours";
 import {
   SUBMISSION_FLAG_LABELS,
@@ -106,6 +108,7 @@ export default function AvailabilityInboxPage() {
   const [submissionsVersion, setSubmissionsVersion] = useState(0);
 
   const [statusFilter, setStatusFilter] = useState<SubmissionStatus | "all">("all");
+  const [query, setQuery] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -174,16 +177,21 @@ export default function AvailabilityInboxPage() {
 
   const term = terms.find((t) => t.id === termId) ?? null;
 
+  // "Who can tutor ___?": kept when the term changes, so William can ask the
+  // same question of an earlier term.
+  const matched = useMemo(() => searchSubmissions(submissions, query), [submissions, query]);
+  const searching = query.trim() !== "";
+
   const counts = useMemo(() => {
-    const c = { all: submissions.length, pending: 0, approved: 0, declined: 0 };
-    for (const s of submissions) c[s.status]++;
+    const c = { all: matched.length, pending: 0, approved: 0, declined: 0 };
+    for (const s of matched) c[s.status]++;
     return c;
-  }, [submissions]);
+  }, [matched]);
 
   const visible =
     statusFilter === "all"
-      ? submissions
-      : submissions.filter((s) => s.status === statusFilter);
+      ? matched
+      : matched.filter((s) => s.status === statusFilter);
 
   const afterChange = (message: string) => {
     reloadSubmissions();
@@ -457,6 +465,54 @@ export default function AvailabilityInboxPage() {
         />
       ) : (
         <>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              flexWrap: "wrap",
+              marginBottom: "16px",
+            }}
+          >
+            <div style={{ position: "relative", flex: "1 1 280px", maxWidth: "440px" }}>
+              <Search
+                size={18}
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#94a3b8",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Who can tutor? Search by subject, course or name"
+                placeholder="Who can tutor…? Try Ethnic Studies or math 71"
+                style={{
+                  width: "100%",
+                  padding: "10px 14px 10px 40px",
+                  border: "2px solid #e2e8f0",
+                  borderRadius: "12px",
+                  fontSize: "1rem",
+                  color: "#0f172a",
+                  background: "white",
+                }}
+              />
+            </div>
+            {/* Read out as William types, so the count isn't only in the buttons. */}
+            <span role="status" style={{ color: "#64748b", fontSize: "0.9rem" }}>
+              {searching &&
+                (matched.length === 0
+                  ? `Nobody listed “${query.trim()}” for ${term.name}.`
+                  : `${matched.length} of ${submissions.length} tutors, with or without shifts.`)}
+            </span>
+          </div>
+
           <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
             {(["all", "pending", "approved", "declined"] as const).map((f) => (
               <button
@@ -580,7 +636,11 @@ export default function AvailabilityInboxPage() {
                 {visible.length === 0 && (
                   <tr>
                     <td colSpan={6} style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>
-                      Nothing with this status.
+                      {searching
+                        ? matched.length === 0
+                          ? "No one matches this search. Check the spelling, or try the department, like “Chemistry”."
+                          : "No one matching this search has this status."
+                        : "Nothing with this status."}
                     </td>
                   </tr>
                 )}
