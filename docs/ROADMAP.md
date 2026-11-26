@@ -318,7 +318,11 @@ A Publish button on the shift planner copies William's planned shifts for the se
 
 From William's original workflow: when a student asks for a rare subject, such as Ethnic Studies or Criminology, William searches old emails for a tutor who can teach it, emails the student that tutor's hours, and adds a section to the schedule by hand.
 
-- **"Who can tutor ___?"** A subject search on the Tutor Availability page, across the term's submissions, including tutors with no shifts. The public course search already has the matching code.
+- **"Who can tutor ___?"** (built November 2026 on `feature/subject-search`): a search box on Tutor Availability, above the status buttons. It searches the chosen term's submissions, including tutors with no shifts, and the status buttons count only the matches.
+  - **A course or department** ("math 71", "Ethnic Studies", "stats") is matched like the public schedule's search: "MATH071" finds Math 71, "ETH 1" doesn't find ETH 10, and a tutor who wrote "Any math" counts for every math course.
+  - **Anything else** ("Criminology", "calc", a tutor's name) is matched against the words the tutor wrote and their name.
+  - **The search stays** when William changes the term, so he can ask the same question of an earlier term. Escape clears it.
+  - **Where it came from:** Khai's idea, from William's original workflow above. William hasn't asked for it, so show it to him during the winter pilot and ask whether it helps.
 - **Every EVC department** (live October 2026, [PR #12](https://github.com/khainguyen21/EVC_Project/pull/12)): the course reader knows every department and course in EVC's catalog, from the list Khai recorded (`src/utils/departments.ts`). The one department left out is II (Individualized Instruction): II-210 is the tutoring course itself, and the "II" in "Physics II" is a numeral.
   - **Codes follow the catalog** (MUSIC, ASTRO, ETH, SOC, PSYCH, ACCTG). The short forms tutors wrote before still read. COMS is now Communication Studies, so "COMS 75" no longer reads as a typo for COMSC.
   - **Course numbers keep the catalog's zeros** wherever people read them: "COMSC 075", "MATH 020-025", "CHEM 001A". Matching still ignores zeros, so a student who searches "math 71" finds "MATH 071".
