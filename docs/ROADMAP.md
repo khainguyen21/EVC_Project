@@ -37,6 +37,8 @@ Fixed (found by us in November 2026, not asked for by William): if the tutor lis
 
 Built on `feature/filter-button` (November 26, 2026, Khai's idea, not William's): on phones the schedule's filter bar still tucks away when scrolling down, but scrolling up no longer brings it back. A small green arrow tab at the top does. Dragging the list with a finger closes the keyboard, so a search box left selected can't keep the bar pinned. Also fixed: after picking a subject, the bar never tucked away, because the dropdown kept focus and counted as typing.
 
+Idea for later: make the admin pages easier to follow (see [Admin cleanup](#admin-cleanup-idea)).
+
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
 ---
@@ -347,3 +349,35 @@ From William's original workflow: when a student asks for a rare subject, such a
   - **Upkeep:** EVC adds courses every year. A new course gets the softer warning until the list is updated, by pasting the new catalog list the same way.
   - "Criminology" still shows "subjects need review", since EVC has no Criminology course (see Waiting on William).
 - Send the "your shifts are posted" email (see feature 2).
+
+---
+
+## Admin cleanup (idea)
+
+Khai's idea, November 26, 2026. William hasn't asked for it, so ask him which admin page confuses him most before building. Not started.
+
+### The problem
+
+Each page explains itself, but the admin as a whole doesn't show the order of the work. Each term William goes: set up the term → send the form link → read the replies → plan shifts and Publish → print.
+
+- **The Dashboard doesn't help.** Its "System Status" card always says the system is running normally, and its big "Quick Action" button goes to Manage Staff, which is no longer where the work starts.
+- **The sidebar isn't in the order of the work.** Terms & Holidays is last, but setting up the term is the first step.
+- **The form link is hidden.** Its Copy Link button is inside Terms & Holidays, and nothing points there.
+- **Manage Staff is no longer a main step.** Since Publish, shifts come from the planner. Manage Staff is now for fixing one tutor's details.
+
+### Suggested fix
+
+Don't redesign every page. Change two things:
+
+- **Sidebar in the order of the work.** An "Each term" group with numbered steps (1 Terms & Holidays, 2 Tutor Availability, 3 Shift Planner, 4 Print Schedule), then Manage Staff on its own under "Anytime". Page names stay the same, so William isn't lost.
+- **Dashboard as a checklist for the current term.** Each step shows real numbers and links to its page, for example:
+  1. Set up the term: are the dates and building hours set? → Terms & Holidays
+  2. Send the form link: a Copy link button right there, and how many tutors have replied → Tutor Availability
+  3. Plan shifts: how many tutors have shifts, and whether it is published → Shift Planner
+  4. Print or save the PDF → Print Schedule
+
+  The term alert (term ended or not started) stays at the top.
+
+### When
+
+Best before the Spring form link goes out (around December), since the checklist helps most then. A throwaway prototype first is an option, so Khai can click around before deciding.
