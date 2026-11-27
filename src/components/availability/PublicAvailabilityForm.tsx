@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import AvailabilityForm from "./AvailabilityForm";
+import sign from "@/components/SchedulePage.module.css";
+import styles from "@/components/PublicPage.module.css";
 import { formatHour, type BuildingHours } from "@/utils/centerHours";
 import {
   resolveAvailability,
@@ -46,11 +48,16 @@ export default function PublicAvailabilityForm({ code, termName, hours }: Props)
     const { input, resubmitted } = receipt;
     return (
       <div>
-        <div className="info-section__highlight">
-          <h3 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <CheckCircle2 size={22} /> Thanks, {input.name.split(" ")[0]}!
-          </h3>
-          <p>
+        <div className={styles.callout} role="status">
+          <h2 className={styles.boxTitle}>
+            <CheckCircle2
+              className={styles.boxTitleIcon}
+              size={24}
+              aria-hidden="true"
+            />
+            Thanks, {input.name.split(" ")[0]}!
+          </h2>
+          <p className={styles.boxText}>
             {resubmitted
               ? `Your ${termName} availability has been updated. This replaces what you sent before.`
               : `William has your ${termName} availability.`}{" "}
@@ -59,33 +66,32 @@ export default function PublicAvailabilityForm({ code, termName, hours }: Props)
           </p>
         </div>
 
-        <h3 style={{ color: "var(--primary-color)", margin: "20px 0 12px 0" }}>
-          What you sent
-        </h3>
-        <ul className="info-section__list">
-          <li className="info-section__list-item">
-            <strong>Student ID:</strong> {input.studentId}
-          </li>
-          <li className="info-section__list-item">
-            <strong>Subjects:</strong> {input.subjects}
-          </li>
-          <li className="info-section__list-item">
-            <strong>Availability:</strong>{" "}
-            {resolveAvailability(input.availability, hours)
-              .map(
-                (r) =>
-                  `${r.day} ${formatHour(r.start)}–${formatHour(r.end)}${r.allDay ? " (all day)" : ""}`,
-              )
-              .join("; ")}
-          </li>
-          <li className="info-section__list-item">
-            <strong>Units:</strong> {input.units}
-          </li>
-          <li className="info-section__list-item">
-            <strong>II 90 training:</strong>{" "}
-            {input.trainingDone ? "Done" : "Not yet"}
-          </li>
-        </ul>
+        <section className={styles.section} aria-labelledby="sent-title">
+          <div className={sign.subjectHead}>
+            <h2 id="sent-title" className={sign.subjectTitle}>
+              What you sent
+            </h2>
+          </div>
+          <dl className={styles.details}>
+            <dt>Student ID</dt>
+            <dd>{input.studentId}</dd>
+            <dt>Subjects</dt>
+            <dd>{input.subjects}</dd>
+            <dt>Availability</dt>
+            <dd>
+              {/* One day per line reads faster than one long run. */}
+              {resolveAvailability(input.availability, hours).map((r, i) => (
+                <div key={i}>
+                  {`${r.day} ${formatHour(r.start)}–${formatHour(r.end)}${r.allDay ? " (all day)" : ""}`}
+                </div>
+              ))}
+            </dd>
+            <dt>Units</dt>
+            <dd>{input.units}</dd>
+            <dt>II 90 training</dt>
+            <dd>{input.trainingDone ? "Done" : "Not yet"}</dd>
+          </dl>
+        </section>
       </div>
     );
   }

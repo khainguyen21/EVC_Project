@@ -1,0 +1,570 @@
+/* ==========================================
+   The other public pages (tutor availability form, become a tutor, tutoring
+   rules), drawn in the schedule's "campus signs" look.
+
+   The colors, the page and the green sign come from SchedulePage.module.css
+   (PublicPage puts its .page class on the wrapper), so the tokens below such
+   as --ink and --guide are the schedule's own. This file only adds what these
+   pages need on top: section signs, checked lists, boxes and the form.
+   ========================================== */
+
+/* Short pages (the closed form) keep the footer at the bottom of the screen. */
+.frame {
+  display: flex;
+  flex-direction: column;
+}
+
+.grow {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+/* These titles are longer than the schedule's, so the sign letters are a
+   size smaller. */
+.title {
+  font-size: clamp(1.875rem, 1.35rem + 2.2vw, 2.625rem);
+  line-height: 1.08;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 6px 0;
+  color: var(--green-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.main {
+  padding-bottom: 8px;
+}
+
+.main a:not([class]) {
+  color: var(--green-ink);
+  font-weight: 700;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================
+   Sections
+   Each opens with the same small green street sign as a subject on the
+   schedule (SchedulePage's .subjectHead).
+   ========================================== */
+
+.section {
+  margin-top: 32px;
+  container: section / inline-size;
+}
+
+.sectionBody {
+  margin-top: 12px;
+  line-height: 1.6;
+}
+
+.sectionBody p + p {
+  margin-top: 10px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Two sections side by side on wide screens (tutoring rules). */
+.columns {
+  display: grid;
+  gap: 0 40px;
+}
+
+@media (min-width: 860px) {
+  .columns {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+/* ==========================================
+   Checked rows (benefits, requirements, registration)
+   Plain rows with hairline rules, like the tutor rows on the schedule.
+   ========================================== */
+
+.checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  column-gap: 40px;
+  margin-top: 4px;
+  list-style: none;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+  line-height: 1.5;
+}
+
+/* The sign already marks the top of the list. */
+.checks > .check:first-child {
+  border-top: 0;
+}
+
+@container section (min-width: 720px) {
+  .checks > .check:nth-child(2) {
+    border-top: 0;
+  }
+}
+
+/* Inside a half-width column the list is always one column. */
+.columns .checks {
+  grid-template-columns: 1fr;
+}
+
+.columns .checks > .check:nth-child(2) {
+  border-top: 1px solid var(--rule);
+}
+
+/* Overpass sits low in its line box; nudge icons down to the letters. */
+.checkIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--green-ink);
+}
+
+/* ==========================================
+   Hours (tutoring rules)
+   ========================================== */
+
+.hours {
+  margin-top: 4px;
+  list-style: none;
+}
+
+.hoursRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 16px;
+  padding: 11px 0 10px;
+  border-top: 1px solid var(--rule);
+}
+
+.hoursRow:first-child {
+  border-top: 0;
+}
+
+.hoursDay {
+  font-weight: 700;
+}
+
+.hoursTime {
+  font-variant-numeric: tabular-nums;
+}
+
+.hoursClosed {
+  color: var(--muted);
+}
+
+/* ==========================================
+   Numbered lists (dos and don'ts). Same green numbers as the NetTutor steps.
+   ========================================== */
+
+.numbered {
+  display: grid;
+  gap: 10px;
+  padding-left: 1.6rem;
+  line-height: 1.55;
+}
+
+.numbered li {
+  padding-left: 2px;
+}
+
+.numbered li::marker {
+  color: var(--green-ink);
+  font-weight: 800;
+}
+
+/* ==========================================
+   Boxes
+   .callout: the one thing to notice (pay, a sent form). Green outline, like
+   "Open now" on the schedule.
+   .box: background reading (mission, contact). Gray, like the NetTutor box.
+   ========================================== */
+
+.callout,
+.box {
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
+@media (min-width: 640px) {
+  .callout,
+  .box {
+    padding: 16px 24px;
+  }
+}
+
+.callout {
+  border: 2px solid var(--green-ink);
+}
+
+.box {
+  border: 2px solid var(--rule-strong);
+  background: var(--wash);
+}
+
+.boxTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.boxTitleIcon {
+  flex-shrink: 0;
+  margin-top: -2px;
+  color: var(--green-ink);
+}
+
+.boxText {
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+.boxText + .boxText {
+  margin-top: 10px;
+}
+
+/* "What you sent" after the form goes: label on the left, answer on the right. */
+.details {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) minmax(0, 1fr);
+  margin-top: 4px;
+}
+
+.details dt,
+.details dd {
+  padding: 11px 0 10px;
+  border-top: 1px solid var(--rule);
+}
+
+.details dt {
+  padding-right: 16px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.details dd {
+  overflow-wrap: anywhere;
+}
+
+.details dt:first-of-type,
+.details dt:first-of-type + dd {
+  border-top: 0;
+}
+
+@media (max-width: 480px) {
+  .details {
+    grid-template-columns: 1fr;
+  }
+
+  .details dt {
+    padding-bottom: 0;
+  }
+
+  .details dd {
+    padding-top: 2px;
+    border-top: 0;
+  }
+}
+
+/* ==========================================
+   The availability form, public page only
+   AvailabilityForm is shared with the admin inbox and draws itself with the
+   avail-form classes in globals.css. Scoping these under .form restyles the
+   tutors' copy and leaves William's untouched.
+   ========================================== */
+
+.form {
+  margin-top: 28px;
+}
+
+.form :global(.avail-form) {
+  gap: 26px;
+}
+
+.form :global(.avail-form__grid) {
+  gap: 20px;
+}
+
+.form :global(.avail-form__label) {
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.form :global(.avail-form__hint) {
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.form :global(.avail-form__input),
+.form :global(.avail-form__select),
+.form :global(.avail-form__textarea) {
+  min-height: 44px;
+  padding: 10px 12px 8px;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  /* Stay at 16px: iOS Safari zooms the page on focus below that. */
+  font-size: 16px;
+}
+
+.form :global(.avail-form__select) {
+  cursor: pointer;
+}
+
+.form :global(.avail-form__textarea) {
+  min-height: 88px;
+  line-height: 1.5;
+}
+
+.form :global(.avail-form__input::placeholder),
+.form :global(.avail-form__textarea::placeholder) {
+  color: var(--muted);
+}
+
+.form :global(.avail-form__input:focus),
+.form :global(.avail-form__select:focus-visible),
+.form :global(.avail-form__textarea:focus) {
+  border-color: var(--focus);
+  outline: 3px solid color-mix(in srgb, var(--focus) 28%, transparent);
+  outline-offset: 0;
+}
+
+.form :global(.avail-form__input:disabled) {
+  background: var(--wash);
+  color: var(--muted);
+}
+
+.form :global(.avail-form__radios) {
+  gap: 24px;
+  padding: 4px 0;
+}
+
+.form :global(.avail-form__radios label),
+.form :global(.avail-form__check) {
+  min-height: 32px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.form input[type="radio"],
+.form input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--guide);
+}
+
+:global([data-theme="dark"]) .form input[type="radio"],
+:global([data-theme="dark"]) .form input[type="checkbox"] {
+  accent-color: var(--green-ink);
+}
+
+/* Recognized course codes: small ink plates, like the role nameplates. */
+.form :global(.avail-form__chips) {
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.form :global(.avail-form__chip) {
+  padding: 3px 8px 1px;
+  border: 1.5px solid var(--ink);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.form :global(.avail-form__rows) {
+  gap: 8px;
+}
+
+.form :global(.avail-form__row) {
+  padding: 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+  background: var(--wash);
+}
+
+.form :global(.avail-form__icon-btn) {
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.form :global(.avail-form__icon-btn:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.form :global(.avail-form__icon-btn:hover:not(:disabled)) {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+/* Same buttons as on the schedule: outlined green (the NetTutor "Show the
+   steps" button) for the side action, solid sign green for the main one. */
+.form :global(.avail-form__add-row),
+.form :global(.avail-form__submit),
+.form :global(.avail-confirm__back) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px 8px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form :global(.avail-form__add-row) {
+  border: 2px solid var(--green-ink);
+  background: var(--surface);
+  color: var(--green-ink);
+}
+
+.form :global(.avail-form__add-row:hover) {
+  background: var(--now-bg);
+}
+
+.form :global(.avail-form__submit) {
+  min-height: 48px;
+  padding: 12px 24px 10px;
+  border: 2px solid var(--guide);
+  background: var(--guide);
+  box-shadow: none;
+  color: #ffffff;
+  font-size: 1.0625rem;
+}
+
+.form :global(.avail-form__submit:hover:not(:disabled)) {
+  filter: brightness(1.12);
+}
+
+.form :global(.avail-confirm__back) {
+  border: 1.5px solid var(--rule-strong);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.form :global(.avail-confirm__back:hover) {
+  background: var(--wash);
+}
+
+/* Messages. Red is the form's own color for "this needs fixing"; amber is the
+   schedule's "soon" color, used here for "please double-check". */
+.form {
+  --error: #b42318;
+  --error-bg: #fdeceb;
+}
+
+:global([data-theme="dark"]) .form {
+  --error: #ff9b8f;
+  --error-bg: #2e1715;
+}
+
+.form :global(.avail-form__error),
+:global([data-theme="dark"]) .form :global(.avail-form__error) {
+  color: var(--error);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.form :global(.avail-form__warning),
+:global([data-theme="dark"]) .form :global(.avail-form__warning) {
+  padding: 8px 12px 6px;
+  border: 1.5px solid color-mix(in srgb, var(--soon-ink) 40%, transparent);
+  border-radius: 8px;
+  background: var(--soon-bg);
+  color: var(--soon-ink);
+  font-size: 0.9375rem;
+}
+
+.form :global(.avail-form__banner),
+:global([data-theme="dark"]) .form :global(.avail-form__banner) {
+  padding: 12px 16px 10px;
+  border: 2px solid var(--error);
+  border-radius: 10px;
+  background: var(--error-bg);
+  color: var(--error);
+  font-weight: 700;
+}
+
+.form :global(.avail-form__chip),
+:global([data-theme="dark"]) .form :global(.avail-form__chip) {
+  color: var(--ink);
+  background: transparent;
+}
+
+/* The "Is your student ID right?" check before sending. */
+.form :global(.avail-confirm) {
+  padding: 24px;
+  border: 2px solid var(--rule-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.5);
+}
+
+.form :global(.avail-confirm::backdrop) {
+  background: rgba(17, 25, 21, 0.6);
+}
+
+.form :global(.avail-confirm__title) {
+  color: var(--ink);
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.form :global(.avail-confirm__text) {
+  color: var(--muted);
+}
+
+.form :global(.avail-confirm__details) {
+  border-radius: 10px;
+  background: var(--wash);
+}
+
+.form :global(.avail-confirm__details dt) {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.box > .boxText:first-child {
+  margin-top: 0;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

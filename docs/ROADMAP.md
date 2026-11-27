@@ -29,6 +29,8 @@ The public schedule's campus signs design is live too ([PR #17](https://github.c
 - the shift planner's "current term" label ([PR #18](https://github.com/khainguyen21/EVC_Project/pull/18))
 - RLS turned on for the last two database tables, SiteSettings and Prisma's migrations table ([PR #21](https://github.com/khainguyen21/EVC_Project/pull/21))
 
+Built on `feature/form-restyle` (November 26, 2026, not merged yet): the tutor availability form, Become a tutor and Tutoring rules pages now use the schedule's campus signs look (green sign at the top, green section signs, the same font and buttons). William's admin copy of the form is unchanged. Our idea, not William's: every public page's footer links to "Tutoring rules & hours" and "Become a tutor", since nothing else on the site led to them. Merge before the Spring link goes out.
+
 Next: the Spring form link goes out around December. Before it does, check the live admin: the Spring term, its building hours, and the form link. Everything else planned is waiting on William.
 
 To fix later (found by us in November 2026, not asked for by William): if the tutor list fails to load, Admin → Manage Staff shows an empty list instead of an error, so it looks as if every tutor is gone. The public schedule had the same problem; fix it the same way (check the answer and show an error).

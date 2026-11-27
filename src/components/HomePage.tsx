@@ -1,9 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import Image from "next/image";
-import { Overpass } from "next/font/google";
-import { Moon, Navigation, SearchX, Sun, TriangleAlert } from "lucide-react";
+import { Navigation, SearchX, TriangleAlert } from "lucide-react";
 import { type Term } from "@/types";
 import FilterBar from "@/components/FilterBar";
 import SubjectSection from "@/components/SubjectSection";
@@ -11,20 +9,13 @@ import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import AvailableNowSection from "@/components/AvailableNowSection";
 import NetTutorBox from "@/components/NetTutorBox";
+import SignTop from "@/components/SignTop";
+import { overpass } from "@/components/fonts";
 import { ROOMS } from "@/components/LocationBadge";
 import { useHideOnScroll } from "@/hooks/useHideOnScroll";
 import { useSchedule } from "@/hooks/useSchedule";
-import { useTheme } from "@/hooks/useTheme";
 import { formatTermDate } from "@/utils/term";
 import styles from "@/components/SchedulePage.module.css";
-
-// Overpass is drawn from Highway Gothic, the lettering on US road signs, which
-// is the look the page's sign and room plates borrow.
-const overpass = Overpass({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-overpass",
-});
 
 interface Props {
   /** Read on the server so the banner dates are in the first paint. */
@@ -57,7 +48,6 @@ const HomePage = ({ term }: Props) => {
   const filterBarRef = useRef<HTMLDivElement>(null);
   const filterAnchorRef = useRef<HTMLDivElement>(null);
   const filterBarHidden = useHideOnScroll(filterBarRef, filterAnchorRef);
-  const [theme, toggleTheme] = useTheme();
 
   return (
     <div className={`${overpass.variable} ${styles.page}`}>
@@ -65,28 +55,7 @@ const HomePage = ({ term }: Props) => {
         <header className={styles.hero}>
           <div className={styles.sign}>
             <div className={styles.signFrame}>
-              <div className={styles.signTop}>
-                <Image
-                  src="/img/EVClogo.png"
-                  alt="Evergreen Valley College logo"
-                  className={styles.logo}
-                  width={400}
-                  height={300}
-                />
-                <button
-                  type="button"
-                  className={styles.themeToggle}
-                  onClick={toggleTheme}
-                  aria-label="Toggle theme"
-                >
-                  {theme === "light" ? (
-                    <Moon size={16} aria-hidden="true" />
-                  ) : (
-                    <Sun size={16} aria-hidden="true" />
-                  )}
-                  {theme === "light" ? "Dark" : "Light"}
-                </button>
-              </div>
+              <SignTop />
 
               <h1 className={styles.title}>EVC Tutor Schedule</h1>
               <p className={styles.lede}>
