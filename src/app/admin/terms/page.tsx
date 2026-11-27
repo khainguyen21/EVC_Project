@@ -8,6 +8,7 @@ import BuildingHoursEditor from "@/components/admin/BuildingHoursEditor";
 import { formatTermDate, getTermLifecycle } from "@/utils/term";
 import { useCampusNow } from "@/hooks/useCampusNow";
 import { adminFetch, errorMessage } from "@/lib/adminFetch";
+import { rememberTerm } from "@/lib/rememberedTerm";
 import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import {
   AlertTriangle,
@@ -167,6 +168,10 @@ export default function ManageTermsPage() {
       });
 
       if (res.ok) {
+        // Tutor Availability and the Shift Planner open on the term just
+        // added, since that's the one he's about to work on.
+        const created: { term?: { id?: unknown } } | null = await res.json().catch(() => null);
+        if (typeof created?.term?.id === "number") rememberTerm(created.term.id);
         setIsAdding(false);
         setNewName("");
         setNewStart("");
