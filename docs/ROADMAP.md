@@ -33,7 +33,7 @@ Built on `feature/form-restyle` (November 26, 2026, not merged yet): the tutor a
 
 Next: the Spring form link goes out around December. Before it does, check the live admin: the Spring term, its building hours, and the form link. Everything else planned is waiting on William.
 
-To fix later (found by us in November 2026, not asked for by William): if the tutor list fails to load, Admin → Manage Staff shows an empty list instead of an error, so it looks as if every tutor is gone. The public schedule had the same problem; fix it the same way (check the answer and show an error).
+Fixed (found by us in November 2026, not asked for by William): if the tutor list fails to load, Admin → Manage Staff now says "The staff list didn't load" with a Try again button, instead of an empty list that looked as if every tutor was gone. Delete All won't run until the list loads. It uses the same check as the public schedule.
 
 Built on `feature/filter-button` (November 26, 2026, Khai's idea, not William's): on phones the schedule's filter bar still tucks away when scrolling down, but scrolling up no longer brings it back. A small green arrow tab at the top does. Dragging the list with a finger closes the keyboard, so a search box left selected can't keep the bar pinned. Also fixed: after picking a subject, the bar never tucked away, because the dropdown kept focus and counted as typing.
 

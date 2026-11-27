@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { type Tutor } from "@/types";
 import Link from "next/link";
 import { useToast } from "@/components/admin/ToastProvider";
+import { fetchTutors } from "@/utils/fetchTutors";
 import ConfirmModal from "@/components/admin/ConfirmModal";
 import {
   Users,
@@ -14,6 +15,7 @@ import {
   Briefcase,
   UserSquare2,
   Search,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function ManageTutorsPage() {
@@ -36,21 +38,32 @@ export default function ManageTutorsPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchTutors = () => {
-    fetch("/api/tutors?sort=recent")
-      .then((response) => response.json())
-      .then((data) => {
-        setTutors(data.tutors || []);
-        setLoading(false);
+  // A failed load must not look like an empty directory: William would think
+  // every tutor had been deleted. The old list is dropped too, since after an
+  // add or delete it is out of date.
+  const [loadError, setLoadError] = useState(false);
+
+  const loadTutors = () => {
+    fetchTutors(fetch, "/api/tutors?sort=recent")
+      .then((list) => {
+        setTutors(list);
+        setLoadError(false);
       })
       .catch((error) => {
         console.error("Error fetching tutors:", error);
-        setLoading(false);
-      });
+        setTutors([]);
+        setLoadError(true);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  const retryLoad = () => {
+    setLoading(true);
+    loadTutors();
   };
 
   useEffect(() => {
-    fetchTutors();
+    loadTutors();
   }, []);
 
   const handleAddTutor = async (e: React.FormEvent) => {
@@ -68,7 +81,7 @@ export default function ManageTutorsPage() {
         setIsAdding(false);
         setNewName("");
         setNewType("tutor");
-        fetchTutors();
+        loadTutors();
         showToast("Staff member added successfully!", "success");
       } else {
         const errorData = await res.json();
@@ -82,6 +95,13 @@ export default function ManageTutorsPage() {
   };
 
   const handleDeleteAll = () => {
+    if (loadError) {
+      showToast(
+        "The staff list didn't load, so nothing was deleted. Try loading it again first.",
+        "error",
+      );
+      return;
+    }
     if (tutors.length === 0) {
       showToast("There are no staff members to delete.", "error");
       return;
@@ -94,7 +114,7 @@ export default function ManageTutorsPage() {
           const res = await fetch("/api/tutors", { method: "DELETE" });
           if (res.ok) {
             const { deleted } = await res.json();
-            fetchTutors();
+            loadTutors();
             showToast(
               `All ${deleted} staff member${deleted > 1 ? "s" : ""} deleted.`,
               "success",
@@ -119,7 +139,7 @@ export default function ManageTutorsPage() {
         try {
           const res = await fetch(`/api/tutors/${id}`, { method: "DELETE" });
           if (res.ok) {
-            fetchTutors();
+            loadTutors();
             showToast("Staff member deleted.", "success");
           } else {
             const errorData = await res.json();
@@ -469,6 +489,63 @@ export default function ManageTutorsPage() {
             />
             <br />
             Loading directory...
+          </div>
+        ) : loadError ? (
+          <div
+            role="alert"
+            style={{
+              padding: "64px 32px",
+              textAlign: "center",
+              color: "#64748b",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                width: "64px",
+                height: "64px",
+                borderRadius: "16px",
+                background: "#fef2f2",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#ef4444",
+              }}
+            >
+              <AlertTriangle size={32} />
+            </div>
+            <p
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                color: "#0f172a",
+                margin: 0,
+              }}
+            >
+              The staff list didn&apos;t load.
+            </p>
+            <p style={{ margin: 0, maxWidth: "420px" }}>
+              This is a problem loading the list. It doesn&apos;t mean your
+              staff were deleted. Try again, or check back in a few minutes.
+            </p>
+            <button
+              onClick={retryLoad}
+              style={{
+                marginTop: "8px",
+                padding: "10px 20px",
+                backgroundColor: "#0f172a",
+                color: "white",
+                fontWeight: 600,
+                borderRadius: "10px",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Try again
+            </button>
           </div>
         ) : filteredTutors.length === 0 ? (
           <div
