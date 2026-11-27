@@ -37,7 +37,7 @@ Fixed ([PR #28](https://github.com/khainguyen21/EVC_Project/pull/28), found by u
 
 Live ([PR #27](https://github.com/khainguyen21/EVC_Project/pull/27), November 26, 2026, Khai's idea, not William's): on phones the schedule's filter bar still tucks away when scrolling down, but scrolling up no longer brings it back. A small green arrow tab at the top does. Dragging the list with a finger closes the keyboard, so a search box left selected can't keep the bar pinned. Also fixed: after picking a subject, the bar never tucked away, because the dropdown kept focus and counted as typing.
 
-Idea for later: make the admin pages easier to follow (see [Admin cleanup](#admin-cleanup-idea)).
+Built, not merged yet (`feature/admin-checklist`, Khai's idea, not William's): the admin sidebar in the order of the work, and the Dashboard as a checklist for the term (see [Admin cleanup](#admin-cleanup-idea)). Step 3 says to publish a new term only after the running term ends, so the old schedule stays up through finals.
 
 > This repo is public. Keep private details out of it, such as the weekly hours William aims to give each tutor. Those belong in admin settings stored in the database.
 
@@ -354,7 +354,7 @@ From William's original workflow: when a student asks for a rare subject, such a
 
 ## Admin cleanup (idea)
 
-Khai's idea, November 26, 2026. William hasn't asked for it, so ask him which admin page confuses him most before building. Not started.
+Khai's idea, November 26, 2026. William hasn't asked for it. Built the same night on `feature/admin-checklist`, at Khai's request: the sidebar in work order and the Dashboard checklist described below. Show it to William and ask whether the steps match how he works.
 
 ### The problem
 

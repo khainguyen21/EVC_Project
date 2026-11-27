@@ -36,6 +36,7 @@ import {
 import { planPublish, samePublicRows, type PublishStatus } from "@/utils/publish";
 import type { AvailabilityRow } from "@/utils/submission";
 import { pickDefaultTerm } from "@/utils/term";
+import { getCampusNow } from "@/utils/availability";
 
 const cardStyle: React.CSSProperties = {
   padding: "20px",
@@ -113,7 +114,7 @@ export default function ShiftPlannerPage() {
         if (stale) return;
         setTerms(terms);
         setCurrentTermId(publishedTermId);
-        setTermId(pickDefaultTerm(terms, readRememberedTerm())?.id ?? null);
+        setTermId(pickDefaultTerm(terms, getCampusNow().date, readRememberedTerm())?.id ?? null);
         if (terms.length === 0) setLoading(false);
       })
       .catch((error) => {

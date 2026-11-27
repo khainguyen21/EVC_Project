@@ -26,6 +26,7 @@ import { readRememberedTerm, rememberTerm } from "@/lib/rememberedTerm";
 import { announceSubmissionsChanged } from "@/lib/submissionEvents";
 import { formatCourseCode, unknownCourses } from "@/utils/courseCodes";
 import { pickDefaultTerm } from "@/utils/term";
+import { getCampusNow } from "@/utils/availability";
 import { searchSubmissions } from "@/utils/submissionSearch";
 import type { BuildingHours } from "@/utils/centerHours";
 import {
@@ -124,7 +125,7 @@ export default function AvailabilityInboxPage() {
       .then(({ terms }) => {
         if (stale) return;
         setTerms(terms);
-        setTermId(pickDefaultTerm(terms, readRememberedTerm())?.id ?? null);
+        setTermId(pickDefaultTerm(terms, getCampusNow().date, readRememberedTerm())?.id ?? null);
         setLoadError(null);
         if (terms.length === 0) setLoading(false);
       })
