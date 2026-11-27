@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Navigation, SearchX, TriangleAlert } from "lucide-react";
+import { ChevronDown, Navigation, SearchX, TriangleAlert } from "lucide-react";
 import { type Term } from "@/types";
 import FilterBar from "@/components/FilterBar";
 import SubjectSection from "@/components/SubjectSection";
@@ -44,10 +44,13 @@ const HomePage = ({ term }: Props) => {
     handleDayChange,
   } = useSchedule(term);
   // On phones the pinned bar covers too much of the list, so it tucks away
-  // while scrolling down and returns on the first scroll up.
+  // while scrolling down; the arrow tab below brings it back.
   const filterBarRef = useRef<HTMLDivElement>(null);
   const filterAnchorRef = useRef<HTMLDivElement>(null);
-  const filterBarHidden = useHideOnScroll(filterBarRef, filterAnchorRef);
+  const { hidden: filterBarHidden, reveal: revealFilterBar } = useHideOnScroll(
+    filterBarRef,
+    filterAnchorRef,
+  );
 
   return (
     <div className={`${overpass.variable} ${styles.page}`}>
@@ -130,9 +133,31 @@ const HomePage = ({ term }: Props) => {
             )}
 
             <div ref={filterAnchorRef} aria-hidden="true" />
+            {/* Phones: once the bar tucks away, this pull tab brings it back.
+                Scrolling up on its own no longer does. */}
+            <button
+              type="button"
+              className={[
+                styles.filterTab,
+                filterBarHidden && styles.filterTabShown,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => {
+                revealFilterBar();
+                // The tab disappears, so hand focus to the bar instead of
+                // dropping it, without opening the phone keyboard.
+                filterBarRef.current?.focus({ preventScroll: true });
+              }}
+              aria-controls="filter-section"
+              aria-label="Show search and filters"
+            >
+              <ChevronDown size={22} strokeWidth={2.75} aria-hidden="true" />
+            </button>
             <div
               id="filter-section"
               ref={filterBarRef}
+              tabIndex={-1}
               className={filterBarHidden ? "filter-section--hidden" : undefined}
             >
               <FilterBar

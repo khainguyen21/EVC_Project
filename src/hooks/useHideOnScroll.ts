@@ -1,42 +1,43 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { SHOWN, isTextEntry, nextBarState } from "@/utils/filterBarScroll";
 
 /** Matches the stacking breakpoint in globals.css; wider screens never hide. */
 const MOBILE_QUERY = "(max-width: 640px)";
 
-/** Scroll travel in one direction before the bar reacts, so jitter is ignored. */
-const THRESHOLD_PX = 12;
-
 /**
- * Hide-on-scroll-down, reveal-on-scroll-up for a sticky bar on phones.
+ * Hide-on-scroll-down for a sticky bar on phones. Once hidden it stays hidden
+ * until `reveal` is called (the arrow button) or the student scrolls back up
+ * to where the bar normally sits. The rules live in nextBarState.
  *
  * `anchorRef` is a zero-height element placed right where the bar sits in the
  * page. While it is still on screen the bar is in its natural spot, not pinned
  * over content, so there is nothing to hide.
- *
- * The bar stays put while a text field inside it has focus: the on-screen
- * keyboard scrolls the page, and hiding the box a student is typing into would
- * be baffling.
  */
 export function useHideOnScroll(
   barRef: RefObject<HTMLElement | null>,
   anchorRef: RefObject<HTMLElement | null>,
-): boolean {
+): { hidden: boolean; reveal: () => void } {
   const [hidden, setHidden] = useState(false);
+  // Read by the scroll listener, so it must not wait for a re-render.
+  const state = useRef(SHOWN);
+
+  const reveal = useCallback(() => {
+    state.current = SHOWN;
+    setHidden(false);
+  }, []);
 
   useEffect(() => {
     const mobile = window.matchMedia(MOBILE_QUERY);
     let lastY = window.scrollY;
-    // Distance travelled in the current direction; sign is the direction.
-    let travel = 0;
 
     const isTyping = () => {
       const active = document.activeElement;
       return (
-        active instanceof HTMLElement &&
+        active instanceof HTMLInputElement &&
         barRef.current?.contains(active) === true &&
-        (active.tagName === "INPUT" || active.tagName === "SELECT")
+        isTextEntry(active)
       );
     };
 
@@ -51,36 +52,52 @@ export function useHideOnScroll(
       lastY = y;
 
       const anchorTop = anchorRef.current?.getBoundingClientRect().top ?? 0;
-      if (!mobile.matches || anchorTop >= 0 || isTyping()) {
-        travel = 0;
-        setHidden(false);
-        return;
-      }
-
-      // Restart the count whenever the direction flips.
-      travel = Math.sign(delta) === Math.sign(travel) ? travel + delta : delta;
-      if (travel > THRESHOLD_PX) setHidden(true);
-      else if (travel < -THRESHOLD_PX) setHidden(false);
+      state.current = nextBarState(state.current, {
+        delta,
+        mobile: mobile.matches,
+        pinned: anchorTop < 0,
+        typing: isTyping(),
+      });
+      setHidden(state.current.hidden);
     };
 
-    // Tabbing or tapping into the bar always brings it back.
+    // A finger dragging the list means the student is done typing, so close
+    // the keyboard the way many apps do. Otherwise a search box left focused
+    // (Android can hide the keyboard without unfocusing it) would count as
+    // typing and keep the bar pinned over the list. Results filter as you
+    // type, so nothing is lost. Drags on the bar itself are left alone.
+    const onTouchMove = (event: TouchEvent) => {
+      const active = document.activeElement;
+      if (
+        mobile.matches &&
+        isTyping() &&
+        active instanceof HTMLElement &&
+        !barRef.current?.contains(event.target as Node)
+      ) {
+        active.blur();
+      }
+    };
+
+    // Tabbing into the bar always brings it back.
     const onFocusIn = (event: FocusEvent) => {
-      if (barRef.current?.contains(event.target as Node)) setHidden(false);
+      if (barRef.current?.contains(event.target as Node)) reveal();
     };
 
     const onBreakpoint = () => {
-      if (!mobile.matches) setHidden(false);
+      if (!mobile.matches) reveal();
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: true });
     document.addEventListener("focusin", onFocusIn);
     mobile.addEventListener("change", onBreakpoint);
     return () => {
       window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("focusin", onFocusIn);
       mobile.removeEventListener("change", onBreakpoint);
     };
-  }, [barRef, anchorRef]);
+  }, [barRef, anchorRef, reveal]);
 
-  return hidden;
+  return { hidden, reveal };
 }
